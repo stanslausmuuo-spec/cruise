@@ -102,6 +102,7 @@ export function FeaturedCars() {
                     <img
                       src={vehicle.image}
                       alt={`${vehicle.make} ${vehicle.model}`}
+                      loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute top-3 left-3">

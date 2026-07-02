@@ -9,7 +9,8 @@ import { ROUTES, APP_NAME } from "@/lib/constants";
 import { Menu, X, Sun, Moon, Search, PlusCircle, User, LogOut } from "lucide-react";
 
 const navLinks = [
-  { href: ROUTES.HOME, label: "Browse" },
+  { href: ROUTES.HOME, label: "Home" },
+  { href: ROUTES.VEHICLES, label: "Browse" },
   { href: ROUTES.VEHICLE_MAP, label: "Map" },
   { href: ROUTES.VEHICLE_NEW, label: "List Your Car" },
 ];

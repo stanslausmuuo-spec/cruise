@@ -86,7 +86,7 @@ export default function BookPage() {
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
                   <div className="glass rounded-premium p-4 text-center">
                     <div className="h-16 w-16 rounded-full bg-brand-gold-400/10 flex items-center justify-center mx-auto mb-3">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Safaricom_logo.png" alt="M-Pesa" className="h-10" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Safaricom_logo.png" alt="M-Pesa" className="h-10" loading="lazy" />
                     </div>
                     <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-1">M-Pesa</h3>
                     <p className="text-sm text-charcoal/60 dark:text-cream/60 mb-4">Pay securely with M-Pesa STK Push</p>

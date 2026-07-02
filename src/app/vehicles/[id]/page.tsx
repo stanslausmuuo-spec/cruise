@@ -73,6 +73,7 @@ export default function VehicleDetailPage() {
               <img
                 src={vehicle.images[selectedImage]}
                 alt={`${vehicle.make} ${vehicle.model}`}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-4 left-4">

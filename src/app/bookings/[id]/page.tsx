@@ -31,7 +31,7 @@ export default function BookingDetailPage() {
 
           <div className="glass rounded-2xl overflow-hidden">
             <div className="relative h-48">
-              <img src={booking.image} alt={booking.vehicle} className="w-full h-full object-cover" />
+              <img src={booking.image} alt={booking.vehicle} loading="lazy" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
                 <h1 className="font-heading text-2xl font-bold text-white">{booking.vehicle}</h1>
