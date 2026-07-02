@@ -11,7 +11,7 @@ export const cleanupOldData = mutation({
 
     const oldUsers = await ctx.db.query("users").collect();
     for (const u of oldUsers) {
-      if ("email" in u && !("roles" in u)) {
+      if ("email" in u && !("roles" in (u as Record<string, unknown>))) {
         await ctx.db.delete(u._id);
       }
     }
