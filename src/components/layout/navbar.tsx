@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { ROUTES, APP_NAME } from "@/lib/constants";
@@ -19,6 +20,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  const isLanding = pathname === "/";
   const { theme, setTheme } = useTheme();
 
   useEffect(() => setMounted(true), []);
@@ -35,12 +38,14 @@ export function Navbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={cn(
-          "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
-          scrolled
-            ? "glass border-b border-glass-border-light dark:border-glass-border-dark"
-            : "bg-transparent"
-        )}
+          className={cn(
+            "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
+            scrolled
+              ? "glass border-b border-glass-border-light dark:border-glass-border-dark shadow-sm"
+              : isLanding
+                ? "bg-glass-light/60 dark:bg-glass-dark/60 backdrop-blur-sm"
+                : "bg-transparent"
+          )}
       >
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">

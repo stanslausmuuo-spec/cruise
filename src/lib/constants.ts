@@ -8,9 +8,19 @@ export const FEATURED_LISTING_FEE = 1500;
 export const FEATURED_DURATION_DAYS = 7;
 export const CURRENCY = "KES";
 
-export const VEHICLE_TYPES = ["sedan", "suv", "coupe", "convertible", "hatchback", "sports", "luxury", "truck"] as const;
+export const VEHICLE_TYPES = ["sedan", "suv", "coupe", "convertible", "hatchback", "sports", "luxury", "truck", "campervan"] as const;
 export const FUEL_TYPES = ["petrol", "diesel", "electric"] as const;
 export const TRANSMISSION_TYPES = ["manual", "automatic", "dct", "cvt"] as const;
+
+export const COUNTIES = [
+  "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo Marakwet", "Embu", "Garissa",
+  "Homa Bay", "Isiolo", "Kajiado", "Kakamega", "Kericho", "Kiambu", "Kilifi",
+  "Kirinyaga", "Kisii", "Kisumu", "Kitui", "Kwale", "Laikipia", "Lamu",
+  "Machakos", "Makueni", "Mandera", "Marsabit", "Meru", "Migori", "Mombasa",
+  "Murang'a", "Nairobi", "Nakuru", "Nandi", "Narok", "Nyamira", "Nyandarua",
+  "Nyeri", "Samburu", "Siaya", "Taita Taveta", "Tana River", "Tharaka Nithi",
+  "Trans Nzoia", "Turkana", "Uasin Gishu", "Vihiga", "Wajir", "West Pokot",
+] as const;
 
 export const PRICE_RANGES = [
   { label: "Under 2,000", min: 0, max: 2000 },
