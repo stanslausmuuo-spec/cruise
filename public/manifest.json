@@ -1,0 +1,26 @@
+{
+  "name": "Cruise - Premium P2P Car Rental Marketplace",
+  "short_name": "Cruise",
+  "description": "The premium peer-to-peer car rental marketplace. Browse, book, and drive verified vehicles with offline access.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#C9A84C",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["travel", "lifestyle", "automotive"],
+  "lang": "en-KE"
+}

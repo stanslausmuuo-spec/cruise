@@ -1,0 +1,48 @@
+import Link from "next/link";
+import { APP_NAME } from "@/lib/constants";
+
+export function Footer() {
+  return (
+    <footer className="border-t border-charcoal/5 dark:border-white/5 bg-surface-muted dark:bg-surface-dark-muted">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="font-heading text-lg font-bold text-gradient-gold mb-3">
+              {APP_NAME}
+            </h4>
+            <p className="text-sm text-charcoal/60 dark:text-cream/60 leading-relaxed">
+              The premium peer-to-peer car rental marketplace. Drive luxury, own freedom.
+            </p>
+          </div>
+          <div>
+            <h5 className="font-medium text-sm mb-3 text-charcoal dark:text-cream">For Renters</h5>
+            <ul className="space-y-2 text-sm text-charcoal/60 dark:text-cream/60">
+              <li><Link href="/vehicles" className="hover:text-brand-gold-400 transition-colors">Browse Cars</Link></li>
+              <li><Link href="/vehicles/map" className="hover:text-brand-gold-400 transition-colors">Nearby Cars</Link></li>
+              <li><Link href="/how-it-works" className="hover:text-brand-gold-400 transition-colors">How It Works</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-medium text-sm mb-3 text-charcoal dark:text-cream">For Hosts</h5>
+            <ul className="space-y-2 text-sm text-charcoal/60 dark:text-cream/60">
+              <li><Link href="/vehicles/new" className="hover:text-brand-gold-400 transition-colors">List Your Car</Link></li>
+              <li><Link href="/dashboard/host/earnings" className="hover:text-brand-gold-400 transition-colors">Earnings</Link></li>
+              <li><Link href="/trust-safety" className="hover:text-brand-gold-400 transition-colors">Trust & Safety</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-medium text-sm mb-3 text-charcoal dark:text-cream">Company</h5>
+            <ul className="space-y-2 text-sm text-charcoal/60 dark:text-cream/60">
+              <li><Link href="/about" className="hover:text-brand-gold-400 transition-colors">About</Link></li>
+              <li><Link href="/contact" className="hover:text-brand-gold-400 transition-colors">Contact</Link></li>
+              <li><Link href="/privacy" className="hover:text-brand-gold-400 transition-colors">Privacy</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-10 pt-6 border-t border-charcoal/5 dark:border-white/5 text-center text-xs text-charcoal/40 dark:text-cream/40">
+          &copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
+}
