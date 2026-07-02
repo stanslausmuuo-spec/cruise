@@ -10,6 +10,7 @@ import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { ROUTES } from "@/lib/constants";
 import { registerSchema } from "@/lib/validators";
 import {
   Mail,
@@ -397,7 +398,7 @@ export default function RegisterPage() {
             <div className="mt-6 text-center text-sm text-charcoal/60 dark:text-cream/60">
               Already have an account?{" "}
               <Link
-                href="/auth/login"
+                href={ROUTES.LOGIN}
                 className="text-brand-gold-400 font-medium hover:underline"
               >
                 Sign in

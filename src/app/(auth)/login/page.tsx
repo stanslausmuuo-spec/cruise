@@ -10,6 +10,7 @@ import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { ROUTES } from "@/lib/constants";
 import { loginSchema } from "@/lib/validators";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 
@@ -151,7 +152,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center text-sm text-charcoal/60 dark:text-cream/60">
             Don&apos;t have an account?{" "}
             <Link
-              href="/auth/register"
+              href={ROUTES.REGISTER}
               className="text-brand-gold-400 font-medium hover:underline"
             >
               Create one

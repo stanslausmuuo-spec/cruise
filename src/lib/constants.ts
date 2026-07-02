@@ -21,9 +21,9 @@ export const PRICE_RANGES = [
 
 export const ROUTES = {
   HOME: "/",
-  LOGIN: "/auth/login",
-  REGISTER: "/auth/register",
-  VERIFY: "/auth/verify",
+  LOGIN: "/login",
+  REGISTER: "/register",
+  VERIFY: "/verify",
   VEHICLES: "/vehicles",
   VEHICLE_DETAIL: (id: string) => `/vehicles/${id}`,
   VEHICLE_BOOK: (id: string) => `/vehicles/${id}/book`,
@@ -45,4 +45,9 @@ export const ROUTES = {
   ADMIN_VERIFICATIONS: "/admin/verifications",
   ADMIN_DISPUTES: "/admin/disputes",
   ADMIN_LISTINGS: "/admin/listings",
+  ABOUT: "/about",
+  CONTACT: "/contact",
+  PRIVACY: "/privacy",
+  HOW_IT_WORKS: "/how-it-works",
+  TRUST_SAFETY: "/trust-safety",
 } as const;
