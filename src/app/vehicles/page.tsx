@@ -38,19 +38,36 @@ const vehicles: Vehicle[] = [
   { id: "1", make: "Mercedes-Benz", model: "E-Class", year: 2023, type: "luxury", transmission: "automatic", fuelType: "diesel", seats: 5, pricePerDay: 8500, image: "https://images.unsplash.com/photo-1609521263047-f8f205293f7b?w=600&q=80", rating: 4.9, location: "Nairobi" },
   { id: "2", make: "Range Rover", model: "Velar", year: 2024, type: "suv", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 12000, image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&q=80", rating: 4.8, location: "Nairobi" },
   { id: "3", make: "BMW", model: "7 Series", year: 2024, type: "luxury", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 15000, image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80", rating: 4.9, location: "Mombasa" },
-  { id: "4", make: "Porsche", model: "Cayenne", year: 2023, type: "suv", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 18000, image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80", rating: 5.0, location: "Nairobi" },
+  { id: "4", make: "Porsche", model: "Cayenne", year: 2023, type: "suv", transmission: "dct", fuelType: "petrol", seats: 5, pricePerDay: 18000, image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80", rating: 5.0, location: "Nairobi" },
   { id: "5", make: "Toyota", model: "Land Cruiser", year: 2023, type: "suv", transmission: "automatic", fuelType: "diesel", seats: 7, pricePerDay: 9500, image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58d7?w=600&q=80", rating: 4.7, location: "Nairobi" },
   { id: "6", make: "Lexus", model: "LS 500", year: 2024, type: "luxury", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 16000, image: "https://images.unsplash.com/photo-1581540222194-0def2dda95b8?w=600&q=80", rating: 4.9, location: "Nairobi" },
   { id: "7", make: "Toyota", model: "Camry", year: 2023, type: "sedan", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 4500, image: "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=600&q=80", rating: 4.6, location: "Nairobi" },
-  { id: "8", make: "Nissan", model: "X-Trail", year: 2022, type: "suv", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 5500, image: "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=600&q=80", rating: 4.5, location: "Mombasa" },
-  { id: "9", make: "Volkswagen", model: "Polo", year: 2022, type: "sedan", transmission: "manual", fuelType: "petrol", seats: 5, pricePerDay: 3000, image: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=600&q=80", rating: 4.4, location: "Nairobi" },
+  { id: "8", make: "Nissan", model: "X-Trail", year: 2022, type: "suv", transmission: "cvt", fuelType: "petrol", seats: 5, pricePerDay: 5500, image: "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=600&q=80", rating: 4.5, location: "Mombasa" },
+  { id: "9", make: "Volkswagen", model: "Golf GTI", year: 2024, type: "hatchback", transmission: "dct", fuelType: "petrol", seats: 5, pricePerDay: 6000, image: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=600&q=80", rating: 4.7, location: "Nairobi" },
   { id: "10", make: "Mercedes-Benz", model: "S-Class", year: 2024, type: "luxury", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 22000, image: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=600&q=80", rating: 5.0, location: "Nairobi" },
   { id: "11", make: "Land Rover", model: "Defender", year: 2024, type: "suv", transmission: "automatic", fuelType: "diesel", seats: 7, pricePerDay: 14000, image: "https://images.unsplash.com/photo-1605020420620-20c943d46675?w=600&q=80", rating: 4.8, location: "Nairobi" },
   { id: "12", make: "Rolls-Royce", model: "Ghost", year: 2024, type: "luxury", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 35000, image: "https://images.unsplash.com/photo-1631295868223-63265b40d9e4?w=600&q=80", rating: 5.0, location: "Nairobi" },
   { id: "13", make: "Toyota", model: "Hilux", year: 2023, type: "truck", transmission: "manual", fuelType: "diesel", seats: 5, pricePerDay: 7000, image: "https://images.unsplash.com/photo-1583264799780-1a8823b8e7e1?w=600&q=80", rating: 4.6, location: "Mombasa" },
-  { id: "14", make: "Subaru", model: "Outback", year: 2023, type: "suv", transmission: "automatic", fuelType: "petrol", seats: 5, pricePerDay: 6000, image: "https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=600&q=80", rating: 4.7, location: "Nairobi" },
-  { id: "15", make: "BMW", model: "M4", year: 2024, type: "luxury", transmission: "manual", fuelType: "petrol", seats: 4, pricePerDay: 19000, image: "https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=600&q=80", rating: 4.9, location: "Nairobi" },
+  { id: "14", make: "Subaru", model: "Outback", year: 2023, type: "suv", transmission: "cvt", fuelType: "petrol", seats: 5, pricePerDay: 6000, image: "https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=600&q=80", rating: 4.7, location: "Nairobi" },
+  { id: "15", make: "BMW", model: "M4 Competition", year: 2024, type: "coupe", transmission: "dct", fuelType: "petrol", seats: 4, pricePerDay: 19000, image: "https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=600&q=80", rating: 4.9, location: "Nairobi" },
+  { id: "16", make: "Porsche", model: "911 Carrera", year: 2024, type: "sports", transmission: "dct", fuelType: "petrol", seats: 4, pricePerDay: 28000, image: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=600&q=80", rating: 5.0, location: "Nairobi" },
+  { id: "17", make: "Lamborghini", model: "Huracan", year: 2023, type: "sports", transmission: "dct", fuelType: "petrol", seats: 2, pricePerDay: 45000, image: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&q=80", rating: 5.0, location: "Nairobi" },
+  { id: "18", make: "Ford", model: "Mustang GT", year: 2023, type: "coupe", transmission: "manual", fuelType: "petrol", seats: 4, pricePerDay: 15000, image: "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?w=600&q=80", rating: 4.8, location: "Mombasa" },
+  { id: "19", make: "Mazda", model: "MX-5", year: 2024, type: "convertible", transmission: "manual", fuelType: "petrol", seats: 2, pricePerDay: 11000, image: "https://images.unsplash.com/photo-1555353540-64580b51c258?w=600&q=80", rating: 4.7, location: "Nairobi" },
+  { id: "20", make: "Mercedes-Benz", model: "AMG GT", year: 2024, type: "sports", transmission: "dct", fuelType: "petrol", seats: 2, pricePerDay: 32000, image: "https://images.unsplash.com/photo-1617737178924-8d95b3659b4d?w=600&q=80", rating: 4.9, location: "Nairobi" },
+  { id: "21", make: "Honda", model: "Civic Type R", year: 2024, type: "hatchback", transmission: "manual", fuelType: "petrol", seats: 4, pricePerDay: 9000, image: "https://images.unsplash.com/photo-1617469767053-d3b523a0b982?w=600&q=80", rating: 4.8, location: "Nairobi" },
+  { id: "22", make: "Audi", model: "R8", year: 2023, type: "sports", transmission: "dct", fuelType: "petrol", seats: 2, pricePerDay: 38000, image: "https://images.unsplash.com/photo-1609587312208-cea54be969e7?w=600&q=80", rating: 5.0, location: "Nairobi" },
+  { id: "23", make: "Jeep", model: "Wrangler", year: 2024, type: "suv", transmission: "manual", fuelType: "petrol", seats: 5, pricePerDay: 8500, image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58d7?w=600&q=80", rating: 4.6, location: "Mombasa" },
+  { id: "24", make: "Tesla", model: "Model 3", year: 2024, type: "sedan", transmission: "automatic", fuelType: "electric", seats: 5, pricePerDay: 8000, image: "https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=600&q=80", rating: 4.7, location: "Nairobi" },
+  { id: "25", make: "Porsche", model: "718 Boxster", year: 2024, type: "convertible", transmission: "dct", fuelType: "petrol", seats: 2, pricePerDay: 24000, image: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=600&q=80", rating: 4.9, location: "Nairobi" },
 ];
+
+const transmissionLabels: Record<string, string> = {
+  manual: "Manual",
+  automatic: "Automatic",
+  dct: "DCT",
+  cvt: "CVT",
+};
 
 const locations = [...new Set(vehicles.map((v) => v.location))];
 
@@ -261,8 +278,8 @@ export default function VehiclesPage() {
                             onChange={() => toggleFilter("transmissions", t)}
                             className="rounded border-charcoal/20 dark:border-white/20 text-brand-gold-400 focus:ring-brand-gold-400/50"
                           />
-                          <span className="text-sm text-charcoal/70 dark:text-cream/70 capitalize group-hover:text-charcoal dark:group-hover:text-cream transition-colors">
-                            {t}
+                          <span className="text-sm text-charcoal/70 dark:text-cream/70 group-hover:text-charcoal dark:group-hover:text-cream transition-colors">
+                            {transmissionLabels[t] ?? t}
                           </span>
                         </label>
                       ))}
@@ -372,7 +389,7 @@ export default function VehiclesPage() {
                 key={t}
                 className="inline-flex items-center gap-1.5 rounded-pill bg-brand-gold-400/10 text-brand-gold-400 text-xs font-medium px-3 py-1"
               >
-                {t}
+                {transmissionLabels[t] ?? t}
                 <button onClick={() => toggleFilter("transmissions", t)}>
                   <X className="h-3 w-3" />
                 </button>
@@ -468,7 +485,7 @@ export default function VehiclesPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Settings className="h-3 w-3" />
-                        {vehicle.transmission}
+                        {transmissionLabels[vehicle.transmission] ?? vehicle.transmission}
                       </span>
                       <span className="flex items-center gap-1">
                         <Fuel className="h-3 w-3" />
