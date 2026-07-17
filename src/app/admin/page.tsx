@@ -1,12 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ShieldCheck, AlertTriangle, Car, Users, ChevronRight } from "lucide-react";
 
 export default function AdminPage() {
+  const pendingVerifications = useQuery(api.verification.getPendingVerifications);
+  const openDisputes = useQuery(api.disputes.getOpenDisputes);
+
+  const verificationCount = pendingVerifications?.length ?? "–";
+  const disputeCount = openDisputes?.length ?? "–";
+
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">
       <div className="max-w-4xl mx-auto">
@@ -18,30 +24,34 @@ export default function AdminPage() {
           <Link href="/admin/verifications">
             <Card glass className="p-5 hover:shadow-premium-hover transition-shadow">
               <ShieldCheck className="h-8 w-8 text-brand-gold-400 mb-3" />
-              <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">12</p>
+              <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">
+                {verificationCount}
+              </p>
               <p className="text-xs text-charcoal/50 dark:text-cream/50">Pending Verifications</p>
             </Card>
           </Link>
           <Card glass className="p-5">
             <AlertTriangle className="h-8 w-8 text-red-400 mb-3" />
-            <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">3</p>
+            <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">
+              {disputeCount}
+            </p>
             <p className="text-xs text-charcoal/50 dark:text-cream/50">Open Disputes</p>
           </Card>
           <Card glass className="p-5">
             <Car className="h-8 w-8 text-brand-gold-400 mb-3" />
-            <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">48</p>
+            <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">–</p>
             <p className="text-xs text-charcoal/50 dark:text-cream/50">Active Listings</p>
           </Card>
           <Card glass className="p-5">
             <Users className="h-8 w-8 text-brand-gold-400 mb-3" />
-            <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">156</p>
+            <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">–</p>
             <p className="text-xs text-charcoal/50 dark:text-cream/50">Total Users</p>
           </Card>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link href="/admin/verifications">
-            <Card glass className="p-5 flex items-center justify-between">
+            <Card glass className="p-5 flex items-center justify-between hover:shadow-premium-hover transition-shadow">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-brand-gold-400" />
                 <span className="font-medium text-charcoal dark:text-cream">Verification Queue</span>
@@ -50,19 +60,10 @@ export default function AdminPage() {
             </Card>
           </Link>
           <Link href="/admin/disputes">
-            <Card glass className="p-5 flex items-center justify-between">
+            <Card glass className="p-5 flex items-center justify-between hover:shadow-premium-hover transition-shadow">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-red-400" />
                 <span className="font-medium text-charcoal dark:text-cream">Disputes</span>
-              </div>
-              <ChevronRight className="h-5 w-5 text-charcoal/30 dark:text-cream/30" />
-            </Card>
-          </Link>
-          <Link href="/admin/listings">
-            <Card glass className="p-5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Car className="h-5 w-5 text-brand-gold-400" />
-                <span className="font-medium text-charcoal dark:text-cream">Listings Management</span>
               </div>
               <ChevronRight className="h-5 w-5 text-charcoal/30 dark:text-cream/30" />
             </Card>

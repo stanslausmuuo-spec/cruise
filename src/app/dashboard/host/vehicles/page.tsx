@@ -1,66 +1,118 @@
 "use client";
 
+import { useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { SkeletonScreen } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { staggerContainer, fadeUp } from "@/lib/animations";
-import { ArrowLeft, Plus, Edit3, Eye } from "lucide-react";
-
-const vehicles = [
-  { id: "1", name: "Toyota Land Cruiser", year: 2023, status: "active", bookings: 12, earnings: 114000, image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58d7?w=300&q=80" },
-  { id: "2", name: "Lexus LS 500", year: 2024, status: "active", bookings: 8, earnings: 128000, image: "https://images.unsplash.com/photo-1581540222194-0def2dda95b8?w=300&q=80" },
-];
+import { formatCurrency } from "@/lib/utils";
+import { Plus, Car, Edit3, Eye } from "lucide-react";
 
 export default function HostVehiclesPage() {
+  const currentUser = useQuery(api.auth.getMe);
+  const vehicles = useQuery(
+    api.vehicles.getOwnerVehicles,
+    currentUser ? { ownerId: currentUser._id } : "skip"
+  );
+
+  if (currentUser === undefined) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <SkeletonScreen type="search" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">
       <div className="max-w-4xl mx-auto">
+        <BackLink href="/dashboard" />
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-charcoal/60 dark:text-cream/60 hover:text-charcoal dark:hover:text-cream transition-colors mb-2">
-              <ArrowLeft className="h-4 w-4" /> Back
-            </Link>
-            <h1 className="font-heading text-3xl font-bold text-charcoal dark:text-cream">My <span className="text-gradient-gold">Vehicles</span></h1>
-          </div>
+          <h1 className="font-heading text-3xl font-bold bg-gradient-to-r from-brand-gold-400 to-brand-gold-600 bg-clip-text text-transparent">
+            My Vehicles
+          </h1>
           <Link href="/vehicles/new">
-            <Button icon={<Plus className="h-4 w-4" />}>Add Vehicle</Button>
+            <Button size="sm" icon={<Plus className="h-4 w-4" />}>
+              Add Vehicle
+            </Button>
           </Link>
         </div>
 
-        <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-4">
-          {vehicles.map((v, i) => (
-            <motion.div key={v.id} variants={fadeUp}>
-              <Card glass className="flex gap-4 p-4">
-                <div className="h-20 w-28 rounded-xl overflow-hidden shrink-0">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+        {vehicles === undefined ? (
+          <div className="space-y-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="glass rounded-premium p-4 flex items-center gap-4">
+                <div className="h-20 w-24 rounded-lg bg-charcoal/10 dark:bg-white/10" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/3 rounded bg-charcoal/10 dark:bg-white/10" />
+                  <div className="h-3 w-1/2 rounded bg-charcoal/5 dark:bg-white/5" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium text-charcoal dark:text-cream">{v.name}</h3>
-                      <p className="text-xs text-charcoal/50 dark:text-cream/50">{v.year}</p>
+              </div>
+            ))}
+          </div>
+        ) : vehicles.length === 0 ? (
+          <EmptyState
+            icon={<Car className="h-8 w-8 text-charcoal/30 dark:text-cream/30" />}
+            title="No vehicles listed"
+            description="List your first vehicle to start earning."
+          />
+        ) : (
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="space-y-4"
+          >
+            {vehicles.map((vehicle) => (
+              <motion.div key={vehicle._id} variants={fadeUp}>
+                <div className="glass rounded-premium p-4 flex items-center gap-4">
+                  <div className="h-20 w-24 rounded-lg overflow-hidden shrink-0 bg-charcoal/10 dark:bg-white/10">
+                    {vehicle.images[0] ? (
+                      <img
+                        src={vehicle.images[0]}
+                        alt={`${vehicle.make} ${vehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-charcoal/30 dark:text-cream/30">
+                        <Car className="h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-heading font-bold text-charcoal dark:text-cream truncate">
+                        {vehicle.make} {vehicle.model}
+                      </h3>
+                      <Badge variant={vehicle.isActive ? "verified" : "status"}>
+                        {vehicle.isActive ? "Active" : "Inactive"}
+                      </Badge>
                     </div>
-                    <Badge variant={v.status === "active" ? "verified" : "status"}>{v.status}</Badge>
+                    <p className="text-xs text-charcoal/60 dark:text-cream/60">
+                      {vehicle.year} &middot; {vehicle.seats} seats
+                    </p>
+                    <p className="text-sm font-heading font-bold text-brand-gold-400 mt-1">
+                      {formatCurrency(vehicle.pricePerDay)} /day
+                    </p>
                   </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-charcoal/50 dark:text-cream/50">
-                    <span>{v.bookings} bookings</span>
-                    <span className="font-medium text-brand-gold-400">KES {v.earnings.toLocaleString()}</span>
+                  <div className="flex gap-2">
+                    <Link href={`/vehicles/${vehicle._id}`}>
+                      <Button variant="ghost" size="sm" icon={<Eye className="h-4 w-4" />} />
+                    </Link>
+                    <Link href={`/vehicles/${vehicle._id}/edit`}>
+                      <Button variant="ghost" size="sm" icon={<Edit3 className="h-4 w-4" />} />
+                    </Link>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-                    <Edit3 className="h-4 w-4 text-charcoal/50 dark:text-cream/50" />
-                  </button>
-                  <button className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-                    <Eye className="h-4 w-4 text-charcoal/50 dark:text-cream/50" />
-                  </button>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ import type * as cleanup from "../cleanup.js";
 import type * as cron from "../cron.js";
 import type * as disputes from "../disputes.js";
 import type * as messages from "../messages.js";
+import type * as notifications from "../notifications.js";
 import type * as payments from "../payments.js";
 import type * as reviews from "../reviews.js";
 import type * as seed from "../seed.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   cron: typeof cron;
   disputes: typeof disputes;
   messages: typeof messages;
+  notifications: typeof notifications;
   payments: typeof payments;
   reviews: typeof reviews;
   seed: typeof seed;

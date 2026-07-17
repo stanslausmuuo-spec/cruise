@@ -1,14 +1,59 @@
 "use client";
 
+import { useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
+import { StatCard } from "@/components/ui/stat-card";
+import { SkeletonScreen } from "@/components/ui/skeleton";
 import { staggerContainer, fadeUp } from "@/lib/animations";
-import { Car, CalendarClock, MessageSquare, Star, Wallet, Settings, LogOut, ChevronRight } from "lucide-react";
+import {
+  Calendar,
+  MessageSquare,
+  Star,
+  Plus,
+  Search,
+  Settings,
+} from "lucide-react";
 
 export default function DashboardPage() {
+  const currentUser = useQuery(api.auth.getMe);
+  const bookings = useQuery(
+    api.bookings.getUserBookings,
+    currentUser ? { userId: currentUser._id } : "skip"
+  );
+
+  if (currentUser === undefined) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <SkeletonScreen type="dashboard" />
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <div className="max-w-4xl mx-auto text-center py-20">
+          <h1 className="font-heading text-3xl font-bold text-charcoal dark:text-cream mb-4">
+            Welcome to Cruise
+          </h1>
+          <p className="text-charcoal/60 dark:text-cream/60 mb-8">
+            Sign in to access your dashboard
+          </p>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center rounded-pill font-medium transition-colors duration-200 bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 text-white hover:brightness-110 shadow-premium px-5 py-2.5 text-sm"
+          >
+            Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const activeBookings = bookings?.asGuest?.filter((b) => b.status === "active" || b.status === "confirmed").length || 0;
+
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">
       <div className="max-w-4xl mx-auto">
@@ -17,110 +62,74 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-4 mb-6">
-            <Avatar name="John Doe" size="lg" verified />
-            <div>
-              <h1 className="font-heading text-2xl font-bold text-charcoal dark:text-cream">Welcome, John</h1>
-              <p className="text-sm text-charcoal/60 dark:text-cream/60">Renter &middot; Host</p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Link href="/dashboard/renter/trips">
-              <Button size="sm" icon={<CalendarClock className="h-4 w-4" />}>My Trips</Button>
-            </Link>
-            <Link href="/dashboard/host/vehicles">
-              <Button variant="outline" size="sm" icon={<Car className="h-4 w-4" />}>My Vehicles</Button>
-            </Link>
-            <Link href="/dashboard/host/earnings">
-              <Button variant="outline" size="sm" icon={<Wallet className="h-4 w-4" />}>Earnings</Button>
-            </Link>
-          </div>
+          <h1 className="font-heading text-3xl font-bold text-charcoal dark:text-cream">
+            Welcome, <span className="text-gradient-gold">{currentUser.name.split(" ")[0]}</span>
+          </h1>
+          <p className="text-charcoal/60 dark:text-cream/60 mt-1">
+            {currentUser.roles.join(" . ")}
+          </p>
         </motion.div>
 
         <motion.div
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="space-y-8"
         >
           <motion.div variants={fadeUp}>
-            <Card glass className="p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="h-10 w-10 rounded-full bg-brand-gold-400/10 flex items-center justify-center">
-                  <Car className="h-5 w-5 text-brand-gold-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">2</p>
-                  <p className="text-xs text-charcoal/50 dark:text-cream/50">Active Bookings</p>
-                </div>
-              </div>
-              <Link href="/dashboard/renter/trips" className="text-xs text-brand-gold-400 hover:underline flex items-center gap-1">
-                View all <ChevronRight className="h-3 w-3" />
-              </Link>
-            </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <StatCard
+                icon={<Calendar className="h-5 w-5 text-brand-gold-400" />}
+                label="Active Bookings"
+                value={activeBookings}
+                href="/dashboard/renter/trips"
+              />
+              <StatCard
+                icon={<MessageSquare className="h-5 w-5 text-brand-gold-400" />}
+                label="Messages"
+                value={0}
+                href="/messages"
+              />
+              <StatCard
+                icon={<Star className="h-5 w-5 text-brand-gold-400" />}
+                label="Rating"
+                value={currentUser.rating.toFixed(1)}
+                href="/profile"
+              />
+            </div>
           </motion.div>
 
           <motion.div variants={fadeUp}>
-            <Card glass className="p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="h-10 w-10 rounded-full bg-brand-gold-400/10 flex items-center justify-center">
-                  <MessageSquare className="h-5 w-5 text-brand-gold-400" />
+            <h2 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-4">
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Link href="/vehicles/new">
+                <div className="glass rounded-premium p-4 text-center hover:shadow-premium-hover transition-shadow cursor-pointer">
+                  <Plus className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
+                  <p className="text-sm font-medium text-charcoal dark:text-cream">List a Car</p>
                 </div>
-                <div>
-                  <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">3</p>
-                  <p className="text-xs text-charcoal/50 dark:text-cream/50">Unread Messages</p>
-                </div>
-              </div>
-              <Link href="/messages" className="text-xs text-brand-gold-400 hover:underline flex items-center gap-1">
-                Open inbox <ChevronRight className="h-3 w-3" />
               </Link>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={fadeUp}>
-            <Card glass className="p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="h-10 w-10 rounded-full bg-brand-gold-400/10 flex items-center justify-center">
-                  <Star className="h-5 w-5 text-brand-gold-400" />
+              <Link href="/vehicles">
+                <div className="glass rounded-premium p-4 text-center hover:shadow-premium-hover transition-shadow cursor-pointer">
+                  <Search className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
+                  <p className="text-sm font-medium text-charcoal dark:text-cream">Book a Car</p>
                 </div>
-                <div>
-                  <p className="text-2xl font-heading font-bold text-charcoal dark:text-cream">4.9</p>
-                  <p className="text-xs text-charcoal/50 dark:text-cream/50">Average Rating</p>
-                </div>
-              </div>
-              <Link href="/profile" className="text-xs text-brand-gold-400 hover:underline flex items-center gap-1">
-                View profile <ChevronRight className="h-3 w-3" />
               </Link>
-            </Card>
+              <Link href="/messages">
+                <div className="glass rounded-premium p-4 text-center hover:shadow-premium-hover transition-shadow cursor-pointer">
+                  <MessageSquare className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
+                  <p className="text-sm font-medium text-charcoal dark:text-cream">Messages</p>
+                </div>
+              </Link>
+              <Link href="/profile">
+                <div className="glass rounded-premium p-4 text-center hover:shadow-premium-hover transition-shadow cursor-pointer">
+                  <Settings className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
+                  <p className="text-sm font-medium text-charcoal dark:text-cream">Settings</p>
+                </div>
+              </Link>
+            </div>
           </motion.div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="glass rounded-2xl p-6"
-        >
-          <h2 className="font-heading text-xl font-bold text-charcoal dark:text-cream mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Link href="/vehicles/new" className="p-4 rounded-premium border border-charcoal/5 dark:border-white/5 hover:border-brand-gold-400/30 transition-all text-center">
-              <Car className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
-              <p className="text-xs font-medium text-charcoal dark:text-cream">List a Car</p>
-            </Link>
-            <Link href="/vehicles" className="p-4 rounded-premium border border-charcoal/5 dark:border-white/5 hover:border-brand-gold-400/30 transition-all text-center">
-              <CalendarClock className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
-              <p className="text-xs font-medium text-charcoal dark:text-cream">Book a Car</p>
-            </Link>
-            <Link href="/messages" className="p-4 rounded-premium border border-charcoal/5 dark:border-white/5 hover:border-brand-gold-400/30 transition-all text-center">
-              <MessageSquare className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
-              <p className="text-xs font-medium text-charcoal dark:text-cream">Messages</p>
-            </Link>
-            <Link href="/profile" className="p-4 rounded-premium border border-charcoal/5 dark:border-white/5 hover:border-brand-gold-400/30 transition-all text-center">
-              <Settings className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
-              <p className="text-xs font-medium text-charcoal dark:text-cream">Settings</p>
-            </Link>
-          </div>
         </motion.div>
       </div>
     </div>

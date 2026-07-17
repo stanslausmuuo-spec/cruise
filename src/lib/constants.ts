@@ -8,9 +8,28 @@ export const FEATURED_LISTING_FEE = 1500;
 export const FEATURED_DURATION_DAYS = 7;
 export const CURRENCY = "KES";
 
-export const VEHICLE_TYPES = ["sedan", "suv", "coupe", "convertible", "hatchback", "sports", "luxury", "truck", "campervan"] as const;
+export const VEHICLE_TYPES = ["sedan", "suv", "luxury", "wedding", "truck"] as const;
 export const FUEL_TYPES = ["petrol", "diesel", "electric"] as const;
-export const TRANSMISSION_TYPES = ["manual", "automatic", "dct", "cvt"] as const;
+export const TRANSMISSION_TYPES = ["manual", "automatic"] as const;
+
+export const VEHICLE_TYPE_LABELS: Record<string, string> = {
+  sedan: "Sedan",
+  suv: "SUV",
+  luxury: "Luxury",
+  wedding: "Wedding",
+  truck: "Truck",
+};
+
+export const FUEL_TYPE_LABELS: Record<string, string> = {
+  petrol: "Petrol",
+  diesel: "Diesel",
+  electric: "Electric",
+};
+
+export const TRANSMISSION_LABELS: Record<string, string> = {
+  automatic: "Automatic",
+  manual: "Manual",
+};
 
 export const COUNTIES = [
   "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo Marakwet", "Embu", "Garissa",

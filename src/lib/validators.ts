@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VEHICLE_TYPES, TRANSMISSION_TYPES, FUEL_TYPES } from "./constants";
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -23,9 +24,9 @@ export const vehicleSchema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
   year: z.number().min(2000, "Year must be 2000 or later").max(2030),
-  type: z.enum(["sedan", "suv", "luxury", "wedding", "truck"]),
-  transmission: z.enum(["automatic", "manual"]),
-  fuelType: z.enum(["petrol", "diesel", "electric"]),
+  type: z.enum(VEHICLE_TYPES),
+  transmission: z.enum(TRANSMISSION_TYPES),
+  fuelType: z.enum(FUEL_TYPES),
   seats: z.number().min(1).max(15),
   pricePerDay: z.number().min(100, "Price must be at least 100"),
   address: z.string().min(1, "Location is required"),

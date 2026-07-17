@@ -1,74 +1,162 @@
 "use client";
 
 import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft, Camera, Check } from "lucide-react";
+import { SkeletonScreen } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { staggerContainer, fadeUp } from "@/lib/animations";
+import { Camera, CheckCircle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import type { Id } from "convex/_generated/dataModel";
+
+const steps = [
+  { title: "Capture Odometer", description: "Take a photo of the current odometer reading" },
+  { title: "Vehicle Exterior", description: "Take photos of the vehicle exterior" },
+  { title: "Confirm Pickup", description: "Confirm you've received the vehicle" },
+];
 
 export default function CheckInPage() {
+  const params = useParams();
+  const router = useRouter();
+  const bookingId = params.id as Id<"bookings">;
+  const checkIn = useMutation(api.bookings.checkIn);
+
   const [step, setStep] = useState(0);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const booking = useQuery(api.bookings.getBooking, { bookingId });
+  const vehicle = useQuery(
+    api.vehicles.getVehicle,
+    booking ? { vehicleId: booking.vehicleId } : "skip"
+  );
+
+  const handleCheckIn = async () => {
+    setLoading(true);
+    try {
+      await checkIn({ bookingId, photos });
+      router.push(`/bookings/${bookingId}`);
+    } catch (error) {
+      console.error("Check-in failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (booking === undefined) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <SkeletonScreen type="detail" />
+      </div>
+    );
+  }
+
+  if (booking === null) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <div className="max-w-2xl mx-auto">
+          <BackLink href="/dashboard/renter/trips" />
+          <EmptyState
+            title="Booking not found"
+            description="This booking may have been removed or doesn't exist."
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">
-      <div className="max-w-xl mx-auto">
-        <Link href="/bookings/1" className="inline-flex items-center gap-2 text-sm text-charcoal/60 dark:text-cream/60 hover:text-charcoal dark:hover:text-cream transition-colors mb-6">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
+      <div className="max-w-2xl mx-auto">
+        <BackLink href={`/bookings/${bookingId}`} label="Back to booking" />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="font-heading text-2xl font-bold text-charcoal dark:text-cream mb-6">Check-In</h1>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass rounded-2xl p-8"
+        >
+          <h1 className="font-heading text-2xl font-bold text-charcoal dark:text-cream mb-2">
+            Check In
+          </h1>
+          {vehicle && (
+            <p className="text-sm text-charcoal/60 dark:text-cream/60 mb-8">
+              {vehicle.make} {vehicle.model}
+            </p>
+          )}
 
-          <Card glass className="p-6 space-y-6">
-            <div className="flex items-center gap-4">
-              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                step >= 0 ? "bg-brand-gold-400 text-white" : "glass"
-              }`}>1</div>
-              <div>
-                <p className="font-medium text-sm text-charcoal dark:text-cream">Capture Odometer</p>
-                <p className="text-xs text-charcoal/50 dark:text-cream/50">Take a photo of current mileage</p>
-              </div>
-              {step > 0 && <Check className="ml-auto h-5 w-5 text-green-500" />}
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                step >= 1 ? "bg-brand-gold-400 text-white" : "glass"
-              }`}>2</div>
-              <div>
-                <p className="font-medium text-sm text-charcoal dark:text-cream">Vehicle Exterior</p>
-                <p className="text-xs text-charcoal/50 dark:text-cream/50">Capture all sides of the vehicle</p>
-              </div>
-              {step > 1 && <Check className="ml-auto h-5 w-5 text-green-500" />}
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                step >= 2 ? "bg-brand-gold-400 text-white" : "glass"
-              }`}>3</div>
-              <div>
-                <p className="font-medium text-sm text-charcoal dark:text-cream">Confirm Pickup</p>
-                <p className="text-xs text-charcoal/50 dark:text-cream/50">Both parties confirm handover</p>
-              </div>
-              {step > 2 && <Check className="ml-auto h-5 w-5 text-green-500" />}
-            </div>
-
-            <div className="border-t border-charcoal/10 dark:border-white/10 pt-4">
-              {step < 3 ? (
-                <Button className="w-full" onClick={() => setStep((s) => s + 1)} icon={<Camera className="h-4 w-4" />}>
-                  {step === 0 ? "Take Odometer Photo" : step === 1 ? "Take Exterior Photos" : "Confirm Pickup"}
-                </Button>
-              ) : (
-                <div className="text-center">
-                  <Check className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                  <p className="font-medium text-charcoal dark:text-cream">Check-In Complete</p>
-                  <p className="text-xs text-charcoal/50 dark:text-cream/50 mt-1">Enjoy your drive!</p>
-                  <Link href="/bookings/1"><Button variant="outline" size="sm" className="mt-4">Back to Booking</Button></Link>
+          <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-6">
+            {steps.map((s, i) => (
+              <motion.div key={i} variants={fadeUp} className="flex items-start gap-4">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                      i < step
+                        ? "bg-green-500 text-white"
+                        : i === step
+                        ? "bg-brand-gold-400 text-white"
+                        : "bg-charcoal/10 dark:bg-white/10 text-charcoal/50 dark:text-cream/50"
+                    }`}
+                  >
+                    {i < step ? <CheckCircle className="h-5 w-5" /> : i + 1}
+                  </div>
+                  {i < steps.length - 1 && (
+                    <div className={`w-0.5 h-12 ${i < step ? "bg-green-500" : "bg-charcoal/10 dark:bg-white/10"}`} />
+                  )}
                 </div>
-              )}
-            </div>
-          </Card>
+                <div className="flex-1 pt-1">
+                  <h3 className="font-heading font-bold text-charcoal dark:text-cream">
+                    {s.title}
+                  </h3>
+                  <p className="text-sm text-charcoal/60 dark:text-cream/60">
+                    {s.description}
+                  </p>
+                  {i === step && (
+                    <div className="mt-4">
+                      <div className="border-2 border-dashed border-charcoal/20 dark:border-white/20 rounded-2xl p-8 text-center hover:border-brand-gold-400/50 transition-colors cursor-pointer">
+                        <Camera className="h-8 w-8 mx-auto mb-2 text-charcoal/30 dark:text-cream/30" />
+                        <p className="text-sm text-charcoal/60 dark:text-cream/60">
+                          Tap to take photo
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <div className="flex justify-between mt-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              disabled={step === 0}
+            >
+              <ArrowLeft className="h-4 w-4" /> Back
+            </Button>
+            {step < 2 ? (
+              <Button
+                size="sm"
+                onClick={() => setStep((s) => s + 1)}
+              >
+                Continue
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                loading={loading}
+                onClick={handleCheckIn}
+              >
+                <CheckCircle className="h-4 w-4" />
+                Confirm Check-In
+              </Button>
+            )}
+          </div>
         </motion.div>
       </div>
     </div>

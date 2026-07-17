@@ -1,43 +1,85 @@
 "use client";
 
-import Link from "next/link";
-import { Card } from "@/components/ui/card";
+import { useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
+import { motion } from "framer-motion";
+import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
-
-const disputes = [
-  { id: "1", booking: "CRU-001", raisedBy: "John D.", reason: "Scratch on rear bumper", status: "investigating", date: "2d ago" },
-  { id: "2", booking: "CRU-002", raisedBy: "Sarah W.", reason: "Late return by 4 hours", status: "open", date: "1d ago" },
-];
+import { SkeletonScreen } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { staggerContainer, fadeUp } from "@/lib/animations";
+import { formatDate } from "@/lib/utils";
+import { AlertTriangle } from "lucide-react";
 
 export default function DisputesPage() {
+  const disputes = useQuery(api.disputes.getOpenDisputes);
+
+  if (disputes === undefined) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <SkeletonScreen type="search" />
+      </div>
+    );
+  }
+
+  const statusVariant = (status: string) => {
+    switch (status) {
+      case "open": return "featured";
+      case "investigating": return "status";
+      case "resolved": return "verified";
+      case "dismissed": return "status";
+      default: return "status";
+    }
+  };
+
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-charcoal/60 dark:text-cream/60 hover:text-charcoal dark:hover:text-cream transition-colors mb-6">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
-        <h1 className="font-heading text-3xl font-bold text-charcoal dark:text-cream mb-8">
-          <span className="text-gradient-gold">Disputes</span>
+        <BackLink href="/admin" />
+        <h1 className="font-heading text-3xl font-bold bg-gradient-to-r from-brand-gold-400 to-brand-gold-600 bg-clip-text text-transparent mb-8">
+          Disputes
         </h1>
 
-        <div className="space-y-3">
-          {disputes.map((d) => (
-            <Card key={d.id} glass className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-medium text-sm text-charcoal dark:text-cream">{d.booking}</p>
-                <Badge variant={d.status === "open" ? "featured" : "status"}>
-                  {d.status}
-                </Badge>
-              </div>
-              <p className="text-xs text-charcoal/60 dark:text-cream/60">{d.reason}</p>
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-charcoal/40 dark:text-cream/40">{d.raisedBy} &middot; {d.date}</p>
-                <button className="text-xs text-brand-gold-400 hover:underline">Review →</button>
-              </div>
-            </Card>
-          ))}
-        </div>
+        {disputes.length === 0 ? (
+          <EmptyState
+            icon={<AlertTriangle className="h-8 w-8 text-charcoal/30 dark:text-cream/30" />}
+            title="No open disputes"
+            description="All disputes have been resolved."
+          />
+        ) : (
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="space-y-3"
+          >
+            {disputes.map((dispute) => (
+              <motion.div key={dispute._id} variants={fadeUp}>
+                <div className="glass rounded-premium p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-sm text-charcoal dark:text-cream">
+                      Booking #{dispute.bookingId.slice(-6)}
+                    </p>
+                    <Badge variant={statusVariant(dispute.status) as "verified" | "featured" | "status"}>
+                      {dispute.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-charcoal/60 dark:text-cream/60 mb-2">
+                    {dispute.reason}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-charcoal/40 dark:text-cream/40">
+                      {formatDate(dispute.createdAt, "short")}
+                    </p>
+                    <button className="text-xs text-brand-gold-400 hover:underline">
+                      Review →
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
     </div>
   );
