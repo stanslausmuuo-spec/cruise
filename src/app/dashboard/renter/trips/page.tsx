@@ -27,7 +27,7 @@ export default function RenterTripsPage() {
   const currentUser = useQuery(api.auth.getMe);
   const bookings = useQuery(
     api.bookings.getUserBookings,
-    currentUser ? { userId: currentUser._id } : "skip"
+    currentUser ? {} : "skip"
   );
 
   if (currentUser === undefined) {

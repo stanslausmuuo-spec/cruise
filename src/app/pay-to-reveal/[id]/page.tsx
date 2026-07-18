@@ -71,7 +71,6 @@ export default function PayToRevealPage() {
         <div className="space-y-4">
           <PayToRevealFlow
             vehicleId={vehicleId}
-            userId={currentUser._id}
             onSuccess={() => {
               window.location.href = `/vehicles/${vehicleId}`;
             }}

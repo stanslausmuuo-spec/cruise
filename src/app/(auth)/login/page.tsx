@@ -4,9 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useConvex } from "convex/react";
-import { useMutation } from "convex/react";
-import { api } from "@convex/_generated/api";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
@@ -16,8 +14,7 @@ import { Mail, Lock, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const convex = useConvex();
-  const store = useMutation(api.auth.store);
+  const { signIn } = useAuthActions();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -51,29 +48,13 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/auth/signin`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-          }),
-        }
-      );
+      const formData = new FormData();
+      formData.append("email", form.email);
+      formData.append("password", form.password);
+      formData.append("flow", "signIn");
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data?.message ?? "Invalid email or password");
-      }
+      await signIn("password", formData);
 
-      const data = await res.json();
-      const token = data.token;
-      if (!token) throw new Error("No token returned from server");
-
-      convex.setAuth(() => token, () => {});
-      await store();
       toast("success", "Welcome back!", "You have been signed in successfully.");
       router.push("/");
     } catch (err: unknown) {

@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FileUpload } from "@/components/ui/file-upload";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { staggerContainer, fadeUp } from "@/lib/animations";
@@ -92,12 +93,18 @@ export default function CheckOutPage() {
                 <h2 className="font-heading font-bold text-charcoal dark:text-cream mb-3">
                   Capture Return Photos
                 </h2>
-                <div className="border-2 border-dashed border-charcoal/20 dark:border-white/20 rounded-2xl p-8 text-center hover:border-brand-gold-400/50 transition-colors cursor-pointer">
-                  <Camera className="h-8 w-8 mx-auto mb-2 text-charcoal/30 dark:text-cream/30" />
-                  <p className="text-sm text-charcoal/60 dark:text-cream/60">
-                    Tap to take return photos
-                  </p>
-                </div>
+                <FileUpload
+                  label="Upload return photos (max 10)"
+                  accept="image/png,image/jpeg,image/webp"
+                  maxFiles={10}
+                  maxSizeMB={10}
+                  onFilesChange={(fileStates) => {
+                    const validImages = fileStates
+                      .filter((f) => f.storageId && !f.error)
+                      .map((f) => f.storageId!);
+                    setPhotos(validImages);
+                  }}
+                />
               </div>
 
               <Button className="w-full" size="lg" onClick={() => setStep(1)}>

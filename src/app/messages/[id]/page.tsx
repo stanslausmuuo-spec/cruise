@@ -21,11 +21,13 @@ export default function ConversationPage() {
 
   const currentUser = useQuery(api.auth.getMe);
   const otherUser = useQuery(api.auth.getUser, { userId: otherUserId });
-  const messages = useQuery(
+  const conversation = useQuery(
     api.messages.getConversation,
-    currentUser ? { userId: currentUser._id, otherUserId } : "skip"
+    currentUser ? { otherUserId } : "skip"
   );
   const sendMessage = useMutation(api.messages.sendMessage);
+
+  const messages = conversation?.messages ?? [];
 
   const [inputValue, setInputValue] = useState("");
 
@@ -37,7 +39,6 @@ export default function ConversationPage() {
     if (!currentUser) return;
     try {
       await sendMessage({
-        senderId: currentUser._id,
         receiverId: otherUserId,
         content,
       });

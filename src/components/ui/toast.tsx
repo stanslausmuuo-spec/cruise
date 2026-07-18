@@ -3,9 +3,9 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { CheckCircle, XCircle, AlertCircle, X } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, X, AlertTriangle } from "lucide-react";
 
-type ToastType = "success" | "error" | "info";
+type ToastType = "success" | "error" | "info" | "warning";
 
 interface Toast {
   id: string;
@@ -30,12 +30,14 @@ const icons = {
   success: CheckCircle,
   error: XCircle,
   info: AlertCircle,
+  warning: AlertTriangle,
 };
 
 const colors = {
   success: "border-green-500/30 bg-green-500/10 text-green-500",
   error: "border-red-500/30 bg-red-500/10 text-red-500",
   info: "border-brand-gold-400/30 bg-brand-gold-400/10 text-brand-gold-400",
+  warning: "border-amber-500/30 bg-amber-500/10 text-amber-500",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {

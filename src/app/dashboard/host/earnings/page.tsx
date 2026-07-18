@@ -15,7 +15,7 @@ export default function HostEarningsPage() {
   const currentUser = useQuery(api.auth.getMe);
   const transactions = useQuery(
     api.payments.getUserTransactions,
-    currentUser ? { userId: currentUser._id } : "skip"
+    currentUser ? {} : "skip"
   );
 
   if (currentUser === undefined) {

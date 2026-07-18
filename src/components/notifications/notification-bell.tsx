@@ -7,15 +7,12 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { Bell, CheckCheck } from "lucide-react";
 
-function NotificationBell({ userId }: { userId: string }) {
+function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const unreadCount = useQuery(
-    api.notifications.getUnreadCount,
-    userId ? { userId: userId as never } : "skip"
-  );
+  const unreadCount = useQuery(api.notifications.getUnreadCount);
   const notifications = useQuery(
-    api.notifications.getNotificationsByUser,
-    open && userId ? { userId: userId as never } : "skip"
+    api.notifications.getNotifications,
+    open ? {} : "skip"
   );
   const markAsRead = useMutation(api.notifications.markAsRead);
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
@@ -48,57 +45,38 @@ function NotificationBell({ userId }: { userId: string }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-80 glass rounded-premium shadow-premium-hover z-50 overflow-hidden">
-            <div className="p-3 border-b border-charcoal/5 dark:border-white/5 flex items-center justify-between">
-              <h3 className="font-heading font-bold text-sm text-charcoal dark:text-cream">
-                Notifications
-              </h3>
-              {unreadCount !== undefined && unreadCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={<CheckCheck className="h-3 w-3" />}
-                  onClick={() => markAllAsRead({ userId: userId as never })}
-                >
+          <div className="fixed top-12 right-4 z-50 w-80 max-w-[90vw] glass rounded-premium shadow-premium overflow-hidden">
+            <div className="p-4 border-b border-charcoal/10 dark:border-white/10 flex items-center justify-between">
+              <h3 className="font-heading font-bold text-charcoal dark:text-cream">Notifications</h3>
+              {unreadCount && unreadCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={() => markAllAsRead()}>
+                  <CheckCheck className="h-4 w-4 mr-1" />
                   Mark all read
                 </Button>
               )}
             </div>
-            <div className="max-h-80 overflow-y-auto">
-              {notifications === undefined || notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <p className="text-sm text-charcoal/40 dark:text-cream/40">
-                    No notifications
-                  </p>
+            <div className="max-h-[400px] overflow-y-auto">
+              {notifications?.length === 0 ? (
+                <div className="p-4 text-center text-sm text-charcoal/50 dark:text-cream/50">
+                  No notifications
                 </div>
               ) : (
-                notifications.map((n) => (
+                notifications?.map((n) => (
                   <div
                     key={n._id}
-                    className={`p-3 border-b border-charcoal/5 dark:border-white/5 last:border-0 ${
-                      !n.read ? "bg-brand-gold-400/5" : ""
-                    }`}
-                    onClick={async () => {
-                      if (!n.read) {
-                        await markAsRead({ notificationId: n._id });
-                      }
-                    }}
+                    className={`p-4 border-b border-charcoal/5 dark:border-white/5 hover:bg-charcoal/5 dark:hover:bg-white/5 transition-colors ${n.read ? "" : "bg-brand-gold-400/5"}`}
                   >
                     <div className="flex items-start gap-3">
-                      <span className="text-lg">{typeIcon(n.type)}</span>
+                      <span className="text-lg mt-0.5">{typeIcon(n.type)}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-charcoal dark:text-cream truncate">
-                          {n.title}
-                        </p>
-                        <p className="text-xs text-charcoal/50 dark:text-cream/50 truncate">
-                          {n.body}
-                        </p>
-                        <p className="text-[10px] text-charcoal/30 dark:text-cream/30 mt-1">
-                          {formatDate(n.createdAt, "short")}
-                        </p>
+                        <p className="font-medium text-sm text-charcoal dark:text-cream">{n.title}</p>
+                        <p className="text-xs text-charcoal/60 dark:text-cream/60 mt-0.5 truncate">{n.body}</p>
+                        <p className="text-xs text-charcoal/40 dark:text-cream/40 mt-1">{formatDate(n.createdAt, "relative")}</p>
                       </div>
                       {!n.read && (
-                        <div className="h-2 w-2 rounded-full bg-brand-gold-400 shrink-0 mt-1" />
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => markAsRead({ notificationId: n._id })}>
+                          <CheckCheck className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </div>

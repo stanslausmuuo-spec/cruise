@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -13,7 +13,7 @@ import { VehicleSearchBar } from "@/components/vehicles/vehicle-search-bar";
 import { FilterPanel } from "@/components/vehicles/filter-panel";
 import { ActiveFilterTags } from "@/components/vehicles/active-filter-tags";
 import { staggerContainer, fadeUp } from "@/lib/animations";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Loader2 } from "lucide-react";
 import { PRICE_RANGES } from "@/lib/constants";
 import type { VehicleFilters } from "@/lib/types";
 
@@ -30,14 +30,21 @@ export default function VehiclesPage() {
     minPrice: "",
     maxPrice: "",
   });
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const vehicles = useQuery(api.vehicles.listVehicles, {
+  const queryArgs = {
     type: filters.types.length === 1 ? filters.types[0] as any : undefined,
     minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
-  });
+    cursor,
+    limit: 20,
+  };
 
-  const clearFilters = () => {
+  const result = useQuery(api.vehicles.listVehicles, queryArgs);
+
+  const clearFilters = useCallback(() => {
     setFilters({
       types: [],
       transmissions: [],
@@ -47,7 +54,17 @@ export default function VehiclesPage() {
       maxPrice: "",
     });
     setSearch("");
-  };
+    setCursor(undefined);
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (!result?.nextCursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    setCursor(result.nextCursor);
+    // The query will automatically refetch with new cursor
+    // We need a small delay to let the state update
+    setTimeout(() => setIsLoadingMore(false), 100);
+  }, [result?.nextCursor, isLoadingMore]);
 
   const activeFilterCount =
     filters.types.length +
@@ -57,9 +74,9 @@ export default function VehiclesPage() {
     (filters.minPrice ? 1 : 0) +
     (filters.maxPrice ? 1 : 0);
 
+  const vehicles = result?.vehicles ?? [];
   const filtered = useMemo(() => {
-    if (!vehicles) return [];
-    return vehicles.filter((v) => {
+    return vehicles.filter((v: typeof vehicles[0]) => {
       const matchesSearch =
         !search ||
         v.make.toLowerCase().includes(search.toLowerCase()) ||
@@ -77,7 +94,7 @@ export default function VehiclesPage() {
     });
   }, [vehicles, search, filters]);
 
-  if (vehicles === undefined) {
+  if (result === undefined) {
     return (
       <div className="min-h-screen pt-24 pb-16 px-4">
         <SkeletonScreen type="search" />
@@ -165,18 +182,34 @@ export default function VehiclesPage() {
             }
           />
         ) : (
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {filtered.map((vehicle) => (
-              <motion.div key={vehicle._id} variants={fadeUp}>
-                <VehicleCard vehicle={vehicle} />
-              </motion.div>
-            ))}
-          </motion.div>
+          <>
+            <motion.div
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {filtered.map((vehicle: typeof filtered[0]) => (
+                <motion.div key={vehicle._id} variants={fadeUp}>
+                  <VehicleCard vehicle={vehicle} />
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {result?.hasMore && (
+              <div className="mt-8 text-center">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  icon={isLoadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                >
+                  {isLoadingMore ? "Loading..." : "Load More"}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

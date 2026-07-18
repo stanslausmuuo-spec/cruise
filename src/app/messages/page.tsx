@@ -12,8 +12,9 @@ import { MessageSquare } from "lucide-react";
 
 export default function MessagesPage() {
   const currentUser = useQuery(api.auth.getMe);
-  const messages = useQuery(api.messages.getConversation, 
-    currentUser ? { userId: currentUser._id, otherUserId: currentUser._id } : "skip"
+  const conversation = useQuery(
+    api.messages.getConversation,
+    currentUser ? { otherUserId: currentUser._id } : "skip"
   );
 
   if (currentUser === undefined) {
@@ -23,6 +24,8 @@ export default function MessagesPage() {
       </div>
     );
   }
+
+  const messages = conversation?.messages ?? [];
 
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">
@@ -35,7 +38,7 @@ export default function MessagesPage() {
             title="Sign in to view messages"
             description="Create an account or sign in to start messaging hosts and renters."
           />
-        ) : messages === undefined ? (
+        ) : conversation === undefined ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="glass rounded-premium p-4 flex items-center gap-3">

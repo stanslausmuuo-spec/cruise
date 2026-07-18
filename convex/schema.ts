@@ -1,7 +1,9 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  ...authTables,
   users: defineTable({
     name: v.string(),
     email: v.string(),
@@ -60,7 +62,11 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_type", ["type"])
     .index("by_featured", ["isFeatured"])
-    .index("by_active", ["isActive"]),
+    .index("by_active", ["isActive"])
+    .index("by_active_type", ["isActive", "type"])
+    .index("by_active_price", ["isActive", "pricePerDay"])
+    .index("by_active_type_price", ["isActive", "type", "pricePerDay"])
+    .index("by_created_at", ["createdAt"]),
 
   bookings: defineTable({
     vehicleId: v.id("vehicles"),
@@ -86,6 +92,7 @@ export default defineSchema({
       v.literal("partial_refund")
     ),
     mobileMoneyRef: v.optional(v.string()),
+    checkoutRequestId: v.optional(v.string()),
     checkInTime: v.optional(v.number()),
     checkOutTime: v.optional(v.number()),
     checkInPhotos: v.optional(v.array(v.string())),
@@ -95,7 +102,8 @@ export default defineSchema({
     .index("by_guest", ["guestId"])
     .index("by_host", ["hostId"])
     .index("by_vehicle", ["vehicleId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_checkout_request_id", ["checkoutRequestId"]),
 
   availability: defineTable({
     vehicleId: v.id("vehicles"),
@@ -103,7 +111,8 @@ export default defineSchema({
     isAvailable: v.boolean(),
     bookingId: v.optional(v.id("bookings")),
   })
-    .index("by_vehicle_date", ["vehicleId", "date"]),
+    .index("by_vehicle_date", ["vehicleId", "date"])
+    .index("by_booking", ["bookingId"]),
 
   reviews: defineTable({
     bookingId: v.id("bookings"),
@@ -115,7 +124,9 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_reviewee", ["revieweeId"])
-    .index("by_booking", ["bookingId"]),
+    .index("by_booking", ["bookingId"])
+    .index("by_reviewer", ["reviewerId"])
+    .index("by_reviewee_created", ["revieweeId", "createdAt"]),
 
   messages: defineTable({
     senderId: v.id("users"),
@@ -126,6 +137,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_participants", ["senderId", "receiverId"])
+    .index("by_participants_reverse", ["receiverId", "senderId"])
+    .index("by_conversation", ["senderId", "receiverId", "createdAt"])
     .index("by_booking", ["bookingId"]),
 
   transactions: defineTable({
@@ -144,20 +157,33 @@ export default defineSchema({
     currency: v.string(),
     reference: v.string(),
     status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
-    metadata: v.optional(v.any()),
+    metadata: v.optional(v.object({
+      bookingId: v.optional(v.id("bookings")),
+      vehicleId: v.optional(v.id("vehicles")),
+      durationDays: v.optional(v.number()),
+      category: v.optional(v.string()),
+      mobileMoneyRef: v.optional(v.string()),
+      payoutCompleted: v.optional(v.boolean()),
+    })),
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_reference", ["reference"]),
+    .index("by_reference", ["reference"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_status", ["status"]),
 
   reveals: defineTable({
     userId: v.id("users"),
     vehicleId: v.id("vehicles"),
     amount: v.number(),
+    checkoutRequestId: v.optional(v.string()),
+    mobileMoneyRef: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_vehicle", ["vehicleId"]),
+    .index("by_vehicle", ["vehicleId"])
+    .index("by_checkout_request_id", ["checkoutRequestId"]),
 
   notifications: defineTable({
     userId: v.id("users"),
@@ -170,11 +196,21 @@ export default defineSchema({
     ),
     title: v.string(),
     body: v.string(),
-    data: v.optional(v.any()),
+    data: v.optional(v.union(
+      v.object({ bookingId: v.id("bookings") }),
+      v.object({ messageId: v.id("messages") }),
+      v.object({ bookingId: v.id("bookings"), amount: v.number(), mpesaReceipt: v.string() }),
+      v.object({ vehicleId: v.id("vehicles") }),
+      v.object({ documentType: v.string() }),
+      v.object({ messageId: v.id("messages"), senderId: v.id("users") }),
+      v.string(),
+    )),
     read: v.boolean(),
     createdAt: v.number(),
   })
-    .index("by_user_unread", ["userId", "read"]),
+    .index("by_user_unread", ["userId", "read"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_user_created", ["userId", "createdAt"]),
 
   disputes: defineTable({
     bookingId: v.id("bookings"),
@@ -218,7 +254,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_user_type", ["userId", "documentType"]),
 
   featured_listings: defineTable({
     vehicleId: v.id("vehicles"),
@@ -228,7 +265,23 @@ export default defineSchema({
     endDate: v.number(),
     category: v.optional(v.string()),
     active: v.boolean(),
+    checkoutRequestId: v.optional(v.string()),
+    mobileMoneyRef: v.optional(v.string()),
   })
     .index("by_active", ["active"])
-    .index("by_vehicle", ["vehicleId"]),
+    .index("by_vehicle", ["vehicleId"])
+    .index("by_checkout_request_id", ["checkoutRequestId"]),
+
+  otp_verifications: defineTable({
+    userId: v.id("users"),
+    email: v.string(),
+    otp: v.string(),
+    type: v.union(v.literal("email_verification"), v.literal("password_reset")),
+    expiresAt: v.number(),
+    verified: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_user_id", ["userId"])
+    .index("by_email_type", ["email", "type"])
+    .index("by_otp", ["otp"]),
 });

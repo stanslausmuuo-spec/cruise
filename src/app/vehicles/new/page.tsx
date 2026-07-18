@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,17 @@ import { BackLink } from "@/components/ui/back-link";
 import { VehicleTypeSelector } from "@/components/vehicles/vehicle-type-selector";
 import { formatCurrency, calculatePlatformFee } from "@/lib/utils";
 import { TRANSMISSION_TYPES, FUEL_TYPES, TRANSMISSION_LABELS, FUEL_TYPE_LABELS } from "@/lib/constants";
-import { ChevronLeft, ChevronRight, Upload, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Upload, X, AlertCircle } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+import { FileUpload } from "@/components/ui/file-upload";
 import type { VehicleType, Transmission, FuelType } from "@/lib/types";
 
 const steps = ["Details", "Photos", "Pricing", "Review"];
 
 export default function NewVehiclePage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const currentUser = useQuery(api.auth.getMe);
   const createVehicle = useMutation(api.vehicles.createVehicle);
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -35,6 +39,15 @@ export default function NewVehiclePage() {
     features: [] as string[],
   });
   const [newFeature, setNewFeature] = useState("");
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+
+useEffect(() => {
+    if (currentUser === null) {
+      router.push("/login");
+    } else if (currentUser && currentUser.kycStatus !== "approved") {
+      router.push("/profile");
+    }
+  }, [currentUser, router]);
 
   const update = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -51,10 +64,24 @@ export default function NewVehiclePage() {
   };
 
   const handleSubmit = async () => {
+    if (!currentUser) {
+      toast("error", "Not authenticated", "Please sign in to list a vehicle");
+      return;
+    }
+
+    if (currentUser.kycStatus !== "approved") {
+      toast("error", "Verification required", "Complete KYC verification before listing vehicles");
+      router.push("/profile");
+      return;
+    }
+
+    if (form.features.length === 0) {
+      toast("info", "No features added", "Consider adding some features to make your listing more attractive");
+    }
+
     setLoading(true);
     try {
       await createVehicle({
-        ownerId: "placeholder" as any,
         make: form.make,
         model: form.model,
         year: form.year,
@@ -66,10 +93,13 @@ export default function NewVehiclePage() {
         address: form.address,
         description: form.description,
         features: form.features.length > 0 ? form.features : undefined,
+        images: uploadedImages.length > 0 ? uploadedImages : undefined,
       });
+      toast("success", "Vehicle listed!", "Your vehicle has been submitted for review");
       router.push("/dashboard/host/vehicles");
     } catch (error) {
       console.error("Failed to create vehicle:", error);
+      toast("error", "Failed to list vehicle", error instanceof Error ? error.message : "Please try again");
     } finally {
       setLoading(false);
     }
@@ -79,6 +109,42 @@ export default function NewVehiclePage() {
     <div className="min-h-screen pt-20 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         <BackLink href="/dashboard/host/vehicles" />
+
+        {currentUser === undefined && (
+          <div className="mb-6 p-4 glass rounded-xl border border-brand-gold-400/30 animate-pulse">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="w-5 h-5 border-2 border-brand-gold-400 border-t-transparent rounded-full animate-spin" />
+              <span className="text-charcoal/70 dark:text-cream/70">Loading your profile...</span>
+            </div>
+          </div>
+        )}
+
+        {!currentUser && (
+          <div className="mb-6 p-4 glass rounded-xl border border-red-400/30 bg-red-50 dark:bg-red-900/20">
+            <div className="flex items-center gap-3 text-sm">
+              <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-red-600 dark:text-red-400">Please sign in to list a vehicle</p>
+                <p className="text-red-500/80 dark:text-red-400/80 mt-1">You'll be redirected to login...</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentUser && currentUser.kycStatus !== "approved" && (
+          <div className="mb-6 p-4 glass rounded-xl border border-amber-400/30 bg-amber-50 dark:bg-amber-900/20">
+            <div className="flex items-center gap-3 text-sm">
+              <AlertCircle className="h-5 w-5 text-amber-400 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-amber-700 dark:text-amber-300">KYC verification required</p>
+                <p className="text-amber-600/80 dark:text-amber-400/80 mt-1">
+                  Complete your KYC verification to list vehicles. Status:{" "}
+                  <span className="capitalize">{currentUser.kycStatus}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -164,11 +230,18 @@ export default function NewVehiclePage() {
 
             {step === 1 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-                <div className="border-2 border-dashed border-charcoal/20 dark:border-white/20 rounded-2xl p-12 text-center hover:border-brand-gold-400/50 transition-colors cursor-pointer">
-                  <Upload className="h-10 w-10 mx-auto mb-3 text-charcoal/30 dark:text-cream/30" />
-                  <p className="text-sm text-charcoal/60 dark:text-cream/60">Upload vehicle photos</p>
-                  <p className="text-xs text-charcoal/40 dark:text-cream/40 mt-1">PNG, JPG or WebP up to 10MB</p>
-                </div>
+                <FileUpload
+                  label="Upload vehicle photos (max 10)"
+                  accept="image/png,image/jpeg,image/webp"
+                  maxFiles={10}
+                  maxSizeMB={10}
+                  onFilesChange={(fileStates) => {
+                    const validImages = fileStates
+                      .filter((f) => f.storageId && !f.error)
+                      .map((f) => f.storageId!);
+                    setUploadedImages(validImages);
+                  }}
+                />
 
                 <div>
                   <label className="block text-sm font-medium text-charcoal/70 dark:text-cream/70 mb-1.5">

@@ -57,28 +57,46 @@ export default function BookVehiclePage() {
     setPhoneNumber(phone);
     setLoading(true);
     try {
-      const ref = `CRU-${Date.now()}`;
+      const ref = `CRU-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       setBookingRef(ref);
-      setStep(2);
+      
+      const response = await fetch("/api/mpesa/stkpush", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: phone,
+          amount: totalPrice,
+          accountReference: ref,
+          transactionDesc: "Cruise Booking",
+          type: "booking",
+          metadata: { vehicleId: vehicleId },
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setStep(2);
+      } else {
+        throw new Error(data.error || "Payment initiation failed");
+      }
     } catch (error) {
       console.error("Payment failed:", error);
+      alert(error instanceof Error ? error.message : "Payment failed");
     } finally {
       setLoading(false);
     }
   };
 
   const handleConfirm = async () => {
-    if (!vehicle) return;
+    if (!vehicle || !bookingRef) return;
     setLoading(true);
     try {
       await createBooking({
         vehicleId: vehicle._id,
-        guestId: "placeholder" as any,
-        hostId: vehicle.ownerId,
         startDate: new Date(startDate).getTime(),
         endDate: new Date(endDate).getTime(),
         totalAmount: totalPrice,
-        mobileMoneyRef: bookingRef,
+        checkoutRequestId: bookingRef,
       });
       router.push("/dashboard/renter/trips");
     } catch (error) {

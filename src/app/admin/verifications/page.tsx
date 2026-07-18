@@ -10,14 +10,16 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { staggerContainer, fadeUp } from "@/lib/animations";
 import { formatDate } from "@/lib/utils";
 import { Check, X, AlertTriangle } from "lucide-react";
+import { useConvexAuth } from "@convex-dev/auth/react";
 
 export default function VerificationsPage() {
+  const { isLoading, isAuthenticated } = useConvexAuth();
   const currentUser = useQuery(api.auth.getMe);
   const documents = useQuery(api.verification.getPendingVerifications);
   const approveDocument = useMutation(api.verification.approveDocument);
   const rejectDocument = useMutation(api.verification.rejectDocument);
 
-  if (documents === undefined || currentUser === undefined) {
+  if (isLoading || !isAuthenticated || documents === undefined) {
     return (
       <div className="min-h-screen pt-20 pb-16 px-4">
         <SkeletonScreen type="search" />
@@ -28,7 +30,7 @@ export default function VerificationsPage() {
   const handleApprove = async (documentId: string) => {
     if (!currentUser) return;
     try {
-      await approveDocument({ documentId: documentId as never, reviewerId: currentUser._id });
+      await approveDocument({ documentId: documentId as never });
     } catch (error) {
       console.error("Failed to approve document:", error);
     }
@@ -39,7 +41,6 @@ export default function VerificationsPage() {
     try {
       await rejectDocument({
         documentId: documentId as never,
-        reviewerId: currentUser._id,
         reason: "Document does not meet requirements",
       });
     } catch (error) {

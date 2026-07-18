@@ -1,9 +1,22 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+
+async function getCurrentUser(ctx: MutationCtx | QueryCtx) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error("Not authenticated");
+  
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", identity.email!))
+    .first();
+  
+  if (!user) throw new Error("User not found");
+  return user;
+}
 
 export const uploadDocument = mutation({
   args: {
-    userId: v.id("users"),
     documentType: v.union(
       v.literal("national_id"),
       v.literal("passport"),
@@ -13,30 +26,34 @@ export const uploadDocument = mutation({
     fileStorageId: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    
     await ctx.db.insert("kyc_documents", {
-      userId: args.userId,
+      userId: user._id,
       documentType: args.documentType,
       fileStorageId: args.fileStorageId,
       status: "pending",
       createdAt: Date.now(),
     });
 
-    await ctx.db.patch(args.userId, { kycStatus: "pending" });
+    await ctx.db.patch(user._id, { kycStatus: "pending" });
   },
 });
 
 export const approveDocument = mutation({
   args: {
     documentId: v.id("kyc_documents"),
-    reviewerId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Not authorized");
+    
     const doc = await ctx.db.get(args.documentId);
     if (!doc) throw new Error("Document not found");
 
     await ctx.db.patch(args.documentId, {
       status: "approved",
-      reviewedBy: args.reviewerId,
+      reviewedBy: user._id,
       reviewedAt: Date.now(),
     });
 
@@ -58,13 +75,15 @@ export const approveDocument = mutation({
 export const rejectDocument = mutation({
   args: {
     documentId: v.id("kyc_documents"),
-    reviewerId: v.id("users"),
     reason: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Not authorized");
+    
     await ctx.db.patch(args.documentId, {
       status: "rejected",
-      reviewedBy: args.reviewerId,
+      reviewedBy: user._id,
       reviewedAt: Date.now(),
       rejectionReason: args.reason,
     });
@@ -79,6 +98,9 @@ export const rejectDocument = mutation({
 export const getPendingVerifications = query({
   args: {},
   handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Not authorized");
+    
     return await ctx.db
       .query("kyc_documents")
       .withIndex("by_status", (q) => q.eq("status", "pending"))
@@ -87,11 +109,12 @@ export const getPendingVerifications = query({
 });
 
 export const getUserDocuments = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
     return await ctx.db
       .query("kyc_documents")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
   },
 });

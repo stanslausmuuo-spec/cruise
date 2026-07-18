@@ -9,13 +9,12 @@ import { Star } from "lucide-react";
 
 interface ReviewFormProps {
   bookingId: string;
-  reviewerId: string;
   revieweeId: string;
   type: "guest_to_host" | "host_to_guest";
   onSuccess?: () => void;
 }
 
-function ReviewForm({ bookingId, reviewerId, revieweeId, type, onSuccess }: ReviewFormProps) {
+function ReviewForm({ bookingId, revieweeId, type, onSuccess }: ReviewFormProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [hoverRating, setHoverRating] = useState(0);
@@ -26,7 +25,6 @@ function ReviewForm({ bookingId, reviewerId, revieweeId, type, onSuccess }: Revi
     try {
       await createReview({
         bookingId: bookingId as never,
-        reviewerId: reviewerId as never,
         revieweeId: revieweeId as never,
         rating,
         comment: comment.trim(),

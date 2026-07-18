@@ -100,7 +100,7 @@ export default function ProfilePage() {
                   ].map((t) => (
                     <button
                       key={t.value}
-                      onClick={() => updateTheme({ userId: currentUser._id, theme: t.value })}
+                      onClick={() => updateTheme({ theme: t.value })}
                       className={`flex-1 p-3 rounded-premium border transition-all text-center ${
                         currentUser.theme === t.value
                           ? "border-brand-gold-400 bg-brand-gold-400/10"

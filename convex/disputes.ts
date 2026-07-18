@@ -1,16 +1,37 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+
+async function getCurrentUser(ctx: MutationCtx | QueryCtx) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error("Not authenticated");
+  
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", identity.email!))
+    .first();
+  
+  if (!user) throw new Error("User not found");
+  return user;
+}
 
 export const createDispute = mutation({
   args: {
     bookingId: v.id("bookings"),
-    raisedById: v.id("users"),
     reason: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    const booking = await ctx.db.get(args.bookingId);
+    
+    if (!booking) throw new Error("Booking not found");
+    if (booking.guestId !== user._id && booking.hostId !== user._id) {
+      throw new Error("Not authorized to dispute this booking");
+    }
+
     await ctx.db.insert("disputes", {
       bookingId: args.bookingId,
-      raisedById: args.raisedById,
+      raisedById: user._id,
       reason: args.reason,
       status: "open",
       createdAt: Date.now(),
@@ -33,6 +54,9 @@ export const resolveDispute = mutation({
     adminNotes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Not authorized");
+
     await ctx.db.patch(args.disputeId, {
       status: "resolved",
       resolution: args.resolution,
@@ -51,6 +75,9 @@ export const resolveDispute = mutation({
 export const getOpenDisputes = query({
   args: {},
   handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Not authorized");
+    
     return await ctx.db
       .query("disputes")
       .withIndex("by_status", (q) => q.eq("status", "open"))

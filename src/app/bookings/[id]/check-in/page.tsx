@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { staggerContainer, fadeUp } from "@/lib/animations";
 import { Camera, CheckCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { FileUpload } from "@/components/ui/file-upload";
 import type { Id } from "convex/_generated/dataModel";
 
 const steps = [
@@ -117,12 +118,18 @@ export default function CheckInPage() {
                   </p>
                   {i === step && (
                     <div className="mt-4">
-                      <div className="border-2 border-dashed border-charcoal/20 dark:border-white/20 rounded-2xl p-8 text-center hover:border-brand-gold-400/50 transition-colors cursor-pointer">
-                        <Camera className="h-8 w-8 mx-auto mb-2 text-charcoal/30 dark:text-cream/30" />
-                        <p className="text-sm text-charcoal/60 dark:text-cream/60">
-                          Tap to take photo
-                        </p>
-                      </div>
+                      <FileUpload
+                        label="Upload photos"
+                        accept="image/png,image/jpeg,image/webp"
+                        maxFiles={10}
+                        maxSizeMB={10}
+                        onFilesChange={(fileStates) => {
+                          const validImages = fileStates
+                            .filter((f) => f.storageId && !f.error)
+                            .map((f) => f.storageId!);
+                          setPhotos(validImages);
+                        }}
+                      />
                     </div>
                   )}
                 </div>

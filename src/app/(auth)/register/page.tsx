@@ -4,8 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useConvex } from "convex/react";
-import { useMutation } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,8 +44,9 @@ const initialForm: FormData = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const convex = useConvex();
-  const registerUser = useMutation(api.auth.registerUser);
+  const { signIn } = useAuthActions();
+  const updateProfile = useMutation(api.users.updateProfile);
+  const currentUser = useQuery(api.auth.getMe);
   const { toast } = useToast();
 
   const [step, setStep] = useState(0);
@@ -88,8 +89,8 @@ export default function RegisterPage() {
       else if (!/\S+@\S+\.\S+/.test(form.email))
         newErrors.email = "Invalid email address";
       if (!form.password) newErrors.password = "Password is required";
-      else if (form.password.length < 6)
-        newErrors.password = "Password must be at least 6 characters";
+      else if (form.password.length < 8)
+        newErrors.password = "Password must be at least 8 characters";
       if (form.password !== form.confirmPassword)
         newErrors.confirmPassword = "Passwords do not match";
     }
@@ -142,33 +143,21 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/auth/signup`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-          }),
-        }
-      );
+      const formData = new FormData();
+      formData.append("email", form.email);
+      formData.append("password", form.password);
+      formData.append("flow", "signUp");
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data?.message ?? "Registration failed");
+      await signIn("password", formData);
+
+      // Update profile with additional info
+      if (currentUser) {
+        await updateProfile({
+          name: form.name,
+          phone: form.phone,
+        });
       }
 
-      const data = await res.json();
-      const token = data.token;
-      if (!token) throw new Error("No token returned from server");
-
-      convex.setAuth(() => token, () => {});
-      await registerUser({
-        name: form.name,
-        phone: form.phone,
-        roles: form.roles as ("renter" | "host")[],
-      });
       toast(
         "success",
         "Account created!",
