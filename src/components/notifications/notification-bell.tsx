@@ -9,13 +9,21 @@ import { Bell, CheckCheck } from "lucide-react";
 
 function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const unreadCount = useQuery(api.notifications.getUnreadCount);
+  const currentUser = useQuery(api.auth.getMe);
+  const isLoggedIn = currentUser !== null && currentUser !== undefined;
+
+  const unreadCount = useQuery(
+    api.notifications.getUnreadCount,
+    isLoggedIn ? {} : "skip"
+  );
   const notifications = useQuery(
     api.notifications.getNotifications,
-    open ? {} : "skip"
+    isLoggedIn && open ? {} : "skip"
   );
   const markAsRead = useMutation(api.notifications.markAsRead);
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
+
+  if (!isLoggedIn) return null;
 
   const typeIcon = (type: string) => {
     switch (type) {

@@ -11,17 +11,21 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log error internally but never expose to users
+    console.error("[ErrorBoundary]", error, errorInfo);
   }
 
   render() {
@@ -35,9 +39,9 @@ export class ErrorBoundary extends Component<Props, State> {
               Something went wrong
             </h2>
             <p className="text-sm text-charcoal/60 dark:text-cream/60 mb-4">
-              {this.state.error?.message || "An unexpected error occurred"}
+              An unexpected error occurred. Please try again.
             </p>
-            <Button onClick={() => this.setState({ hasError: false, error: null })} variant="outline" size="sm">
+            <Button onClick={() => this.setState({ hasError: false })} variant="outline" size="sm">
               Try again
             </Button>
           </div>
