@@ -68,12 +68,14 @@ export default function RootLayout({
           <ConvexClientProvider>
             <ToastProvider>
               <AuthTokenCookie />
-              <Navbar />
-              <main className="flex-1 pb-16 md:pb-0">
-                <ErrorBoundary>{children}</ErrorBoundary>
-              </main>
-              <MobileNav />
-              <Footer />
+              <ErrorBoundary>
+                <Navbar />
+                <main className="flex-1 pb-16 md:pb-0">
+                  {children}
+                </main>
+                <MobileNav />
+                <Footer />
+              </ErrorBoundary>
             </ToastProvider>
           </ConvexClientProvider>
         </ThemeProvider>
