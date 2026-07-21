@@ -22,7 +22,6 @@
     "next-themes": "^0.4.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "resend": "^6.17.2",
     "serwist": "^9.0.0",
     "tailwind-merge": "^2.6.1",
     "zod": "^3.24.0"

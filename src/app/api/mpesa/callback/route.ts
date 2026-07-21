@@ -22,22 +22,11 @@ interface MpesaCallbackBody {
   };
 }
 
-function verifyMpesaSignature(requestBody: string, signature: string): boolean {
-  const passkey = process.env.DARAJA_PASSKEY || "";
-  if (!passkey) {
-    console.warn("DARAJA_PASSKEY not set, skipping signature verification");
-    return true;
-  }
-
-  const expectedSignature = crypto
-    .createHash("sha256")
-    .update(requestBody + passkey)
-    .digest("base64");
-
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+function verifyMpesaSignature(data: string, signature: string, secret: string): boolean {
+  if (!secret) return false;
+  const expected = crypto.createHmac("sha512", secret).update(data).digest("hex");
+  if (expected.length !== signature.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
 async function handleSuccessfulPayment(
@@ -87,8 +76,8 @@ async function handleSuccessfulPayment(
       console.log("Booking payment confirmed:", CheckoutRequestID);
       return;
     }
-  } catch (e) {
-    // Not a booking payment, continue
+  } catch (error) {
+    console.error("Failed to process booking payment:", error);
   }
 
   // Try reveal payment
@@ -121,8 +110,8 @@ async function handleSuccessfulPayment(
       console.log("Reveal payment confirmed:", CheckoutRequestID);
       return;
     }
-  } catch (e) {
-    // Not a reveal payment, continue
+  } catch (error) {
+    console.error("Failed to process pay-to-reveal payment:", error);
   }
 
   // Try featured listing payment
@@ -155,8 +144,8 @@ async function handleSuccessfulPayment(
       console.log("Featured listing payment confirmed:", CheckoutRequestID);
       return;
     }
-  } catch (e) {
-    // Not a featured payment
+  } catch (error) {
+    console.error("Failed to process featured listing payment:", error);
   }
 
   console.warn("No matching payment record found for:", CheckoutRequestID);
@@ -185,12 +174,18 @@ export async function POST(request: Request) {
 
     // Verify M-Pesa callback signature
     const signature = request.headers.get("X-Safaricom-Signature");
-    if (signature && !verifyMpesaSignature(requestBody, signature)) {
+    if (!signature) {
+      console.error("Missing M-Pesa callback signature");
+      return NextResponse.json({ ResultCode: 1, ResultDesc: "Missing signature" }, { status: 400 });
+    }
+
+    const secret = process.env.DARAJA_PASSKEY || "";
+    if (!verifyMpesaSignature(requestBody, signature, secret)) {
       console.error("Invalid M-Pesa callback signature");
       return NextResponse.json({ ResultCode: 1, ResultDesc: "Invalid signature" }, { status: 401 });
     }
 
-    console.log("M-Pesa Callback:", JSON.stringify(body, null, 2));
+    console.log("M-Pesa callback received for:", body.Body?.stkCallback?.CheckoutRequestID);
 
     const stkCallback = body.Body?.stkCallback;
     if (!stkCallback) {
@@ -200,16 +195,26 @@ export async function POST(request: Request) {
     const { ResultCode, ResultDesc, CheckoutRequestID, CallbackMetadata } = stkCallback;
 
     if (ResultCode === 0) {
+      // Idempotency: check if this checkout has already been processed
+      try {
+        const existing = await convex.query(api.payments.getTransactionByReference, {
+          reference: CheckoutRequestID,
+        });
+        if (existing && existing.status === "completed") {
+          console.log("Duplicate callback ignored for:", CheckoutRequestID);
+          return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
+        }
+      } catch {
+        // If transaction lookup fails, continue processing
+      }
+
       const metadata = CallbackMetadata?.Item || [];
       const amount = metadata.find((i) => i.Name === "Amount")?.Value as number;
       const mpesaReceipt = metadata.find((i) => i.Name === "MpesaReceiptNumber")?.Value as string;
       const phone = metadata.find((i) => i.Name === "PhoneNumber")?.Value as string;
 
-      console.log("Payment successful:", { CheckoutRequestID, mpesaReceipt, amount, phone });
-
       await handleSuccessfulPayment(CheckoutRequestID, mpesaReceipt, amount, phone);
     } else {
-      console.log("Payment failed:", { ResultCode, ResultDesc, CheckoutRequestID });
       await handleFailedPayment(CheckoutRequestID, ResultCode, ResultDesc);
     }
 

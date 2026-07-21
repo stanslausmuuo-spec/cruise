@@ -22,6 +22,10 @@ export default function DashboardPage() {
     api.bookings.getUserBookings,
     currentUser ? {} : "skip"
   );
+  const unreadMessages = useQuery(
+    api.messages.getUnreadCount,
+    currentUser ? {} : "skip"
+  );
 
   if (currentUser === undefined) {
     return (
@@ -87,7 +91,7 @@ export default function DashboardPage() {
               <StatCard
                 icon={<MessageSquare className="h-5 w-5 text-brand-gold-400" />}
                 label="Messages"
-                value={0}
+                value={unreadMessages ?? 0}
                 href="/messages"
               />
               <StatCard

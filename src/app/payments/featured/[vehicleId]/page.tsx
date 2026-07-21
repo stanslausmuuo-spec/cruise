@@ -94,7 +94,6 @@ export default function FeaturedListingPage() {
 
         await createFeaturedPayment({
           vehicleId: vehicleId as never,
-          amount: FEATURED_LISTING_FEE,
           durationDays: duration,
           category: category || undefined,
           checkoutRequestId: data.checkoutRequestId,

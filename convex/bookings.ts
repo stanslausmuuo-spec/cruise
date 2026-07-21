@@ -7,20 +7,29 @@ export const createBooking = mutation({
     vehicleId: v.id("vehicles"),
     startDate: v.number(),
     endDate: v.number(),
-    totalAmount: v.number(),
     checkoutRequestId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
-    
-    const platformFee = Math.ceil(args.totalAmount * 0.15);
-    const depositAmount = Math.ceil(args.totalAmount * 0.3);
+
+    // Validate date ordering
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    if (args.startDate < todayStart.getTime()) throw new Error("startDate must be today or later");
+    if (args.endDate <= args.startDate) throw new Error("endDate must be after startDate");
 
     // Verify vehicle exists and is active
     const vehicle = await ctx.db.get(args.vehicleId);
     if (!vehicle) throw new Error("Vehicle not found");
     if (!vehicle.isActive) throw new Error("Vehicle is not available for booking");
     if (vehicle.ownerId === user._id) throw new Error("Cannot book your own vehicle");
+
+    // Calculate amounts server-side from trusted pricePerDay
+    const msPerDay = 86400000;
+    const numberOfDays = Math.ceil((args.endDate - args.startDate) / msPerDay);
+    const totalAmount = vehicle.pricePerDay * numberOfDays;
+    const platformFee = Math.ceil(totalAmount * 0.15);
+    const depositAmount = Math.ceil(totalAmount * 0.10);
 
     // Check availability atomically
     const conflicting = await ctx.db
@@ -43,7 +52,7 @@ export const createBooking = mutation({
       hostId: vehicle.ownerId,
       startDate: args.startDate,
       endDate: args.endDate,
-      totalAmount: args.totalAmount,
+      totalAmount,
       platformFee,
       depositAmount,
       status: "pending",
@@ -71,7 +80,7 @@ export const createBooking = mutation({
     await ctx.db.insert("transactions", {
       userId: user._id,
       type: "booking_payment",
-      amount: args.totalAmount,
+      amount: totalAmount,
       currency: "KES",
       reference: args.checkoutRequestId,
       status: "pending",
@@ -89,6 +98,8 @@ export const confirmBookingPayment = mutation({
     mobileMoneyRef: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
     const booking = await ctx.db
       .query("bookings")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
@@ -96,6 +107,11 @@ export const confirmBookingPayment = mutation({
 
     if (!booking) throw new Error("Booking not found");
     if (booking.status !== "pending") throw new Error("Booking already processed");
+
+    // Only the guest (renter) or an admin can confirm payment
+    if (booking.guestId !== user._id && !user.roles.includes("admin")) {
+      throw new Error("Not authorized");
+    }
 
     // Availability records already created in createBooking
     // Just confirm the booking
@@ -124,6 +140,8 @@ export const cancelPendingBooking = mutation({
     checkoutRequestId: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
     const booking = await ctx.db
       .query("bookings")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
@@ -131,6 +149,11 @@ export const cancelPendingBooking = mutation({
 
     if (!booking) throw new Error("Booking not found");
     if (booking.status !== "pending") throw new Error("Booking already processed");
+
+    // Only the guest or an admin can cancel a pending booking
+    if (booking.guestId !== user._id && !user.roles.includes("admin")) {
+      throw new Error("Not authorized");
+    }
 
     // Delete availability records created for this booking
     const availabilityRecords = await ctx.db
@@ -200,6 +223,8 @@ export const getBooking = query({
 export const getBookingByCheckoutRequestId = query({
   args: { checkoutRequestId: v.string() },
   handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+
     return await ctx.db
       .query("bookings")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
@@ -227,6 +252,20 @@ export const updateBookingStatus = mutation({
     if (booking.hostId !== user._id && !user.roles.includes("admin")) {
       throw new Error("Not authorized");
     }
+
+    // State machine: pending → confirmed → active → completed
+    const allowedTransitions: Record<string, string[]> = {
+      pending: ["confirmed", "cancelled"],
+      confirmed: ["active", "cancelled"],
+      active: ["completed", "disputed"],
+      completed: [],
+      cancelled: [],
+      disputed: [],
+    };
+
+    if (!allowedTransitions[booking.status]?.includes(args.status)) {
+      throw new Error(`Cannot transition from "${booking.status}" to "${args.status}"`);
+    }
     
     await ctx.db.patch(args.bookingId, { status: args.status });
   },
@@ -243,6 +282,7 @@ export const checkIn = mutation({
     
     if (!booking) throw new Error("Booking not found");
     if (booking.guestId !== user._id) throw new Error("Not authorized");
+    if (booking.status !== "confirmed") throw new Error("Only confirmed bookings can be checked in");
     
     await ctx.db.patch(args.bookingId, {
       status: "active",
@@ -263,7 +303,8 @@ export const checkOut = mutation({
     const booking = await ctx.db.get(args.bookingId);
     
     if (!booking) throw new Error("Booking not found");
-    if (booking.guestId !== user._id) throw new Error("Not authorized");
+    if (booking.guestId !== user._id && booking.hostId !== user._id) throw new Error("Not authorized");
+    if (booking.status !== "active") throw new Error("Only active bookings can be checked out");
 
     const updates: Record<string, unknown> = {
       checkOutTime: Date.now(),

@@ -10,6 +10,18 @@ export const sendMessage = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+
+    // Validate receiver exists
+    const receiver = await ctx.db.get(args.receiverId);
+    if (!receiver) throw new Error("Receiver not found");
+
+    // No self-messaging
+    if (args.receiverId === user._id) throw new Error("Cannot send messages to yourself");
+
+    // Message length validation
+    if (args.content.length < 1 || args.content.length > 5000) {
+      throw new Error("Message must be between 1 and 5000 characters");
+    }
     
     const messageId = await ctx.db.insert("messages", {
       senderId: user._id,
@@ -99,18 +111,18 @@ export const getConversations = query({
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
 
-    // Get all messages sent or received by this user
+    // Get recent messages sent or received by this user (limit to prevent full table scans)
     const sentMessages = await ctx.db
       .query("messages")
       .withIndex("by_participants", (q) => q.eq("senderId", user._id))
       .order("desc")
-      .collect();
+      .take(200);
 
     const receivedMessages = await ctx.db
       .query("messages")
       .withIndex("by_participants_reverse", (q) => q.eq("receiverId", user._id))
       .order("desc")
-      .collect();
+      .take(200);
 
     // Build a map of conversation partner -> latest message
     const conversationMap = new Map<string, { lastMessage: string; lastTimestamp: number; unreadCount: number }>();
@@ -146,19 +158,25 @@ export const getConversations = query({
       .map(([partnerId, data]) => ({ partnerId, ...data }))
       .sort((a, b) => b.lastTimestamp - a.lastTimestamp);
 
-    // Fetch partner names
-    const conversationsWithNames = await Promise.all(
-      conversations.map(async (conv) => {
-        const partner = await ctx.db.get(conv.partnerId as any);
-        const partnerName = partner && "name" in partner ? (partner as { name: string }).name : "Unknown";
-        const partnerAvatar = partner && "avatarUrl" in partner ? (partner as { avatarUrl?: string }).avatarUrl : undefined;
-        return {
-          ...conv,
-          partnerName,
-          partnerAvatar,
-        };
-      })
+    // Batch-fetch partner profiles to avoid N+1 queries
+    const partnerIds = [...new Set(conversations.map((c) => c.partnerId))];
+    const partnerProfiles = await Promise.all(
+      partnerIds.map((id) => ctx.db.get(id as any))
     );
+    const partnerMap = new Map(
+      partnerIds.map((id, i) => [id, partnerProfiles[i]])
+    );
+
+    const conversationsWithNames = conversations.map((conv) => {
+      const partner = partnerMap.get(conv.partnerId);
+      const partnerName = partner && "name" in partner ? (partner as { name: string }).name : "Unknown";
+      const partnerAvatar = partner && "avatarUrl" in partner ? (partner as { avatarUrl?: string }).avatarUrl : undefined;
+      return {
+        ...conv,
+        partnerName,
+        partnerAvatar,
+      };
+    });
 
     return conversationsWithNames;
   },

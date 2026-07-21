@@ -54,6 +54,8 @@ export const releaseDeposits = internalMutation({
 
     for (const booking of completedBookings) {
       // Release deposit back to guest
+      // The guest paid totalAmount which includes the deposit.
+      // The deposit is refunded separately; the host payout is NOT reduced by the deposit.
       await ctx.db.insert("transactions", {
         userId: booking.guestId,
         type: "deposit_release",
@@ -64,11 +66,13 @@ export const releaseDeposits = internalMutation({
         createdAt: Date.now(),
       });
       
-      // Release platform fee to host (minus deposit if already paid)
+      // Host payout: totalAmount minus the platform fee.
+      // The deposit was already part of totalAmount collected from the guest,
+      // and is refunded to the guest separately — it is NOT deducted from the host payout.
       await ctx.db.insert("transactions", {
         userId: booking.hostId,
         type: "payout",
-        amount: booking.totalAmount - booking.platformFee - booking.depositAmount,
+        amount: booking.totalAmount - booking.platformFee,
         currency: "KES",
         reference: `PAYOUT-${Date.now()}`,
         status: "completed",

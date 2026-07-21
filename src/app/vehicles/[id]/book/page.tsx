@@ -55,6 +55,17 @@ export default function BookVehiclePage() {
     try {
       const ref = `CRU-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
+      // Step 1: Create booking first (with "pending" status)
+      // Server calculates totalAmount/platformFee; if STK push fails,
+      // the pending booking stays and a cron job can clean it up.
+      await createBooking({
+        vehicleId: vehicle._id,
+        startDate: new Date(startDate).getTime(),
+        endDate: new Date(endDate).getTime(),
+        checkoutRequestId: ref,
+      });
+
+      // Step 2: Initiate STK push payment
       const response = await fetch("/api/mpesa/stkpush", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,14 +83,6 @@ export default function BookVehiclePage() {
       if (!data.success) {
         throw new Error(data.error || "Payment initiation failed");
       }
-
-      await createBooking({
-        vehicleId: vehicle._id,
-        startDate: new Date(startDate).getTime(),
-        endDate: new Date(endDate).getTime(),
-        totalAmount: totalPrice,
-        checkoutRequestId: ref,
-      });
 
       router.push("/dashboard/renter/trips");
     } catch (error) {

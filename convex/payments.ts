@@ -5,17 +5,19 @@ import { getCurrentUser } from "./lib/auth";
 export const createPayToReveal = mutation({
   args: {
     vehicleId: v.id("vehicles"),
-    amount: v.number(),
     phoneNumber: v.string(),
     checkoutRequestId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+
+    // Server-calculated amount — client cannot set price
+    const amount = 500; // PAY_TO_REVEAL_FEE in KES
     
     await ctx.db.insert("reveals", {
       userId: user._id,
       vehicleId: args.vehicleId,
-      amount: args.amount,
+      amount,
       checkoutRequestId: args.checkoutRequestId,
       createdAt: Date.now(),
     });
@@ -23,7 +25,7 @@ export const createPayToReveal = mutation({
     await ctx.db.insert("transactions", {
       userId: user._id,
       type: "pay_to_reveal",
-      amount: args.amount,
+      amount,
       currency: "KES",
       reference: args.checkoutRequestId,
       status: "pending",
@@ -41,12 +43,24 @@ export const confirmPayToReveal = mutation({
     mobileMoneyRef: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
     const reveal = await ctx.db
       .query("reveals")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
       .first();
 
     if (!reveal) throw new Error("Reveal record not found");
+
+    // Only the reveal owner or an admin can confirm
+    if (reveal.userId !== user._id && !user.roles.includes("admin")) {
+      throw new Error("Not authorized");
+    }
+
+    // Idempotency: skip if already confirmed
+    if (reveal.mobileMoneyRef) {
+      return { success: true };
+    }
 
     await ctx.db.patch(reveal._id, { mobileMoneyRef: args.mobileMoneyRef });
 
@@ -70,6 +84,8 @@ export const confirmPayToReveal = mutation({
 export const getRevealByCheckoutRequestId = query({
   args: { checkoutRequestId: v.string() },
   handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+
     return await ctx.db
       .query("reveals")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
@@ -80,6 +96,8 @@ export const getRevealByCheckoutRequestId = query({
 export const getRevealWithOwnerPhone = query({
   args: { checkoutRequestId: v.string() },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
     const reveal = await ctx.db
       .query("reveals")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
@@ -87,8 +105,31 @@ export const getRevealWithOwnerPhone = query({
 
     if (!reveal || !reveal.mobileMoneyRef) return null;
 
+    // Only the reveal requester or an admin may view the phone
+    if (reveal.userId !== user._id && !user.roles.includes("admin")) {
+      throw new Error("Not authorized");
+    }
+
     const vehicle = await ctx.db.get(reveal.vehicleId);
     if (!vehicle) return null;
+
+    // Only return the phone if the requester has an active (paid) booking for this vehicle
+    if (!user.roles.includes("admin")) {
+      const booking = await ctx.db
+        .query("bookings")
+        .withIndex("by_vehicle", (q) => q.eq("vehicleId", vehicle._id))
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("guestId"), user._id),
+            q.eq(q.field("paymentStatus"), "paid")
+          )
+        )
+        .first();
+
+      if (!booking) {
+        throw new Error("Not authorized: no active booking for this vehicle");
+      }
+    }
 
     const owner = await ctx.db.get(vehicle.ownerId);
     if (!owner) return null;
@@ -104,7 +145,6 @@ export const getRevealWithOwnerPhone = query({
 export const createFeaturedPayment = mutation({
   args: {
     vehicleId: v.id("vehicles"),
-    amount: v.number(),
     durationDays: v.number(),
     category: v.optional(v.string()),
     checkoutRequestId: v.string(),
@@ -117,13 +157,16 @@ export const createFeaturedPayment = mutation({
     if (!vehicle) throw new Error("Vehicle not found");
     if (vehicle.ownerId !== user._id) throw new Error("Not authorized");
 
+    // Server-calculated amount — client cannot set price
+    const amount = 2000; // FEATURED_LISTING_FEE in KES
+
     const startDate = Date.now();
     const endDate = startDate + args.durationDays * 86400000;
 
     await ctx.db.insert("featured_listings", {
       vehicleId: args.vehicleId,
       ownerId: user._id,
-      amount: args.amount,
+      amount,
       startDate,
       endDate,
       category: args.category,
@@ -134,7 +177,7 @@ export const createFeaturedPayment = mutation({
     await ctx.db.insert("transactions", {
       userId: user._id,
       type: "featured_listing",
-      amount: args.amount,
+      amount,
       currency: "KES",
       reference: args.checkoutRequestId,
       status: "pending",
@@ -152,12 +195,24 @@ export const confirmFeaturedPayment = mutation({
     mobileMoneyRef: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+
     const featured = await ctx.db
       .query("featured_listings")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
       .first();
 
     if (!featured) throw new Error("Featured listing not found");
+
+    // Only the owner or an admin can confirm
+    if (featured.ownerId !== user._id && !user.roles.includes("admin")) {
+      throw new Error("Not authorized");
+    }
+
+    // Idempotency: skip if already active
+    if (featured.active) {
+      return { success: true };
+    }
 
     await ctx.db.patch(featured._id, {
       active: true,
@@ -191,6 +246,8 @@ export const confirmFeaturedPayment = mutation({
 export const getFeaturedByCheckoutRequestId = query({
   args: { checkoutRequestId: v.string() },
   handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+
     return await ctx.db
       .query("featured_listings")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
@@ -201,9 +258,21 @@ export const getFeaturedByCheckoutRequestId = query({
 export const getBookingByMpesaRef = query({
   args: { mobileMoneyRef: v.string() },
   handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+
     return await ctx.db
       .query("bookings")
       .filter((q) => q.eq(q.field("mobileMoneyRef"), args.mobileMoneyRef))
+      .first();
+  },
+});
+
+export const getTransactionByReference = query({
+  args: { reference: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("transactions")
+      .withIndex("by_reference", (q) => q.eq("reference", args.reference))
       .first();
   },
 });
@@ -231,6 +300,11 @@ export const updateTransactionStatus = mutation({
       throw new Error("Not authorized");
     }
 
+    // Only admins can mark a transaction as completed
+    if (args.status === "completed" && !user.roles.includes("admin")) {
+      throw new Error("Only admins can mark transactions as completed");
+    }
+
     await ctx.db.patch(transaction._id, {
       status: args.status,
       metadata: args.metadata,
@@ -255,30 +329,28 @@ export const getHostEarnings = query({
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
     
-    // Get all completed booking payment transactions
-    const transactions = await ctx.db
-      .query("transactions")
-      .withIndex("by_user_type", (q) => q.eq("userId", user._id).eq("type", "booking_payment"))
+    // Get completed bookings where this user is the host
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_host", (q) => q.eq("hostId", user._id))
       .order("desc")
       .collect();
 
-    const completed = transactions.filter((t) => t.status === "completed");
-    const pending = transactions.filter((t) => t.status === "pending");
-    
-    // Calculate total earnings
-    const totalEarnings = completed.reduce((sum, t) => sum + t.amount, 0);
+    const completedBookings = bookings.filter((b) => b.status === "confirmed" || b.status === "active" || b.status === "completed");
+    const pendingBookings = bookings.filter((b) => b.status === "pending");
+
+    // Host earnings = totalAmount - platformFee from each completed booking
+    const totalEarnings = completedBookings.reduce((sum, b) => sum + (b.totalAmount - b.platformFee), 0);
     
     // Calculate this month's earnings
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const thisMonthEarnings = completed
-      .filter((t) => t.createdAt >= startOfMonth)
-      .reduce((sum, t) => sum + t.amount, 0);
+    const thisMonthEarnings = completedBookings
+      .filter((b) => b.createdAt >= startOfMonth)
+      .reduce((sum, b) => sum + (b.totalAmount - b.platformFee), 0);
     
-    // Calculate pending payouts (completed but not yet paid out
-    const pendingPayouts = completed
-      .filter((t) => !t.metadata?.payoutCompleted)
-      .reduce((sum, t) => sum + t.amount, 0);
+    // Pending payouts = pending bookings' host earnings (waiting for payment confirmation)
+    const pendingPayouts = pendingBookings.reduce((sum, b) => sum + (b.totalAmount - b.platformFee), 0);
 
     // Get earnings by month for the last 12 months
     const monthlyEarnings = [];
@@ -286,9 +358,9 @@ export const getHostEarnings = query({
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1).getTime();
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1).getTime();
       
-      const monthEarnings = completed
-        .filter((t) => t.createdAt >= monthStart && t.createdAt < monthEnd)
-        .reduce((sum, t) => sum + t.amount, 0);
+      const monthEarnings = completedBookings
+        .filter((b) => b.createdAt >= monthStart && b.createdAt < monthEnd)
+        .reduce((sum, b) => sum + (b.totalAmount - b.platformFee), 0);
       
       monthlyEarnings.push({
         month: new Date(now.getFullYear(), now.getMonth() - i, 1).toLocaleString("default", { month: "short", year: "2-digit" }),
@@ -296,16 +368,16 @@ export const getHostEarnings = query({
       });
     }
 
-    // Pending payouts (completed transactions not yet paid out to host)
-    const pendingPayoutTransactions = completed.filter((t) => !t.metadata?.payoutCompleted);
+    // Recent completed bookings for the table
+    const recentBookings = completedBookings.slice(0, 20);
 
     return {
       totalEarnings,
       thisMonthEarnings,
-      pendingPayouts: pendingPayouts,
-      pendingPayoutCount: pendingPayoutTransactions.length,
+      pendingPayouts,
+      pendingPayoutCount: pendingBookings.length,
       monthlyEarnings,
-      recentTransactions: completed.slice(0, 20),
+      recentBookings,
     };
   },
 });

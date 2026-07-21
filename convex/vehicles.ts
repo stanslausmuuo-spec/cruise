@@ -55,6 +55,22 @@ export const createVehicle = mutation({
     if (!user.verified || user.kycStatus !== "approved") {
       throw new Error("Host must complete KYC verification before listing vehicles");
     }
+
+    // Input validation
+    if (!args.make.trim()) throw new Error("make must be a non-empty string");
+    if (!args.model.trim()) throw new Error("model must be a non-empty string");
+    if (!args.description.trim()) throw new Error("description must be a non-empty string");
+    
+    const currentYear = new Date().getFullYear();
+    if (args.year < 1990 || args.year > currentYear + 1) {
+      throw new Error(`year must be between 1990 and ${currentYear + 1}`);
+    }
+    if (args.seats < 1 || args.seats > 15) throw new Error("seats must be between 1 and 15");
+    if (args.pricePerDay < 100) throw new Error("pricePerDay must be at least 100 KES");
+    
+    const images = args.images ?? [];
+    if (images.length < 1) throw new Error("At least 1 image is required");
+    if (images.length > 20) throw new Error("Maximum 20 images allowed");
     
     const location = await geocodeAddress(args.address) ?? { lat: -1.2921, lng: 36.8219 };
     return await ctx.db.insert("vehicles", {
@@ -182,9 +198,10 @@ export const toggleFeatured = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Admin only");
+
     const vehicle = await ctx.db.get(args.vehicleId);
     if (!vehicle) throw new Error("Vehicle not found");
-    if (vehicle.ownerId !== user._id) throw new Error("Not authorized");
     
     await ctx.db.patch(args.vehicleId, {
       isFeatured: args.isFeatured,
@@ -236,6 +253,23 @@ export const updateVehicle = mutation({
 
     if (!vehicle) throw new Error("Vehicle not found");
     if (vehicle.ownerId !== user._id) throw new Error("Not authorized");
+
+    // Block price changes when active bookings exist
+    if (args.pricePerDay !== undefined && args.pricePerDay !== vehicle.pricePerDay) {
+      const activeBooking = await ctx.db
+        .query("bookings")
+        .withIndex("by_vehicle", (q) => q.eq("vehicleId", args.vehicleId))
+        .filter((q) => q.or(
+          q.eq(q.field("status"), "active"),
+          q.eq(q.field("status"), "confirmed"),
+          q.eq(q.field("status"), "pending")
+        ))
+        .first();
+
+      if (activeBooking) {
+        throw new Error("Cannot change price while vehicle has active bookings");
+      }
+    }
 
     const updateData: Record<string, unknown> = {};
     if (args.make !== undefined) updateData.make = args.make;

@@ -83,7 +83,6 @@ function PayToRevealFlow({ vehicleId, onSuccess }: PayToRevealFlowProps) {
         // Create the reveal record with checkoutRequestId
         await createPayToReveal({
           vehicleId: vehicleId as never,
-          amount: 100,
           phoneNumber,
           checkoutRequestId: data.checkoutRequestId,
         });

@@ -40,9 +40,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const protectedPaths = ["/dashboard", "/vehicles/new", "/messages"];
+  const isProtected = protectedPaths.some(p => pathname.startsWith(p));
+
+  if (isProtected) {
+    const token = request.cookies.get("__convexAuthToken")?.value;
+    if (!token) {
+      const redirectUrl = encodeURIComponent(pathname);
+      return NextResponse.redirect(new URL(`/login?redirect=${redirectUrl}`, request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/register", "/api/auth/:path*", "/api/mpesa/:path*", "/api/payments/:path*"],
+  matcher: ["/admin/:path*", "/login", "/register", "/api/auth/:path*", "/api/mpesa/:path*", "/api/payments/:path*", "/dashboard/:path*", "/vehicles/new", "/messages"],
 };

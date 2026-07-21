@@ -13,8 +13,8 @@ import { Wallet, TrendingUp, Clock, CreditCard } from "lucide-react";
 
 export default function HostEarningsPage() {
   const currentUser = useQuery(api.auth.getMe);
-  const transactions = useQuery(
-    api.payments.getUserTransactions,
+  const hostEarnings = useQuery(
+    api.payments.getHostEarnings,
     currentUser ? {} : "skip"
   );
 
@@ -26,8 +26,10 @@ export default function HostEarningsPage() {
     );
   }
 
-  const earnings = transactions?.filter((t) => t.type === "booking_payment" && t.status === "completed") || [];
-  const totalEarnings = earnings.reduce((sum, t) => sum + t.amount, 0);
+  const totalEarnings = hostEarnings?.totalEarnings ?? 0;
+  const thisMonthEarnings = hostEarnings?.thisMonthEarnings ?? 0;
+  const pendingPayouts = hostEarnings?.pendingPayouts ?? 0;
+  const recentBookings = hostEarnings?.recentBookings ?? [];
 
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">
@@ -48,12 +50,12 @@ export default function HostEarningsPage() {
               <StatCard
                 icon={<TrendingUp className="h-5 w-5 text-brand-gold-400" />}
                 label="This Month"
-                value={formatCurrency(0)}
+                value={formatCurrency(thisMonthEarnings)}
               />
               <StatCard
                 icon={<Clock className="h-5 w-5 text-brand-gold-400" />}
                 label="Pending Payouts"
-                value={formatCurrency(0)}
+                value={formatCurrency(pendingPayouts)}
               />
             </div>
           </motion.div>
@@ -62,7 +64,7 @@ export default function HostEarningsPage() {
             <h2 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-4">
               Recent Transactions
             </h2>
-            {earnings.length === 0 ? (
+            {recentBookings.length === 0 ? (
               <EmptyState
                 icon={<CreditCard className="h-8 w-8 text-charcoal/30 dark:text-cream/30" />}
                 title="No transactions yet"
@@ -70,22 +72,22 @@ export default function HostEarningsPage() {
               />
             ) : (
               <div className="glass rounded-premium overflow-hidden">
-                {earnings.map((transaction) => (
+                {recentBookings.map((booking) => (
                   <div
-                    key={transaction._id}
+                    key={booking._id}
                     className="p-4 border-b border-charcoal/5 dark:border-white/5 last:border-0"
                   >
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-sm text-charcoal dark:text-cream">
-                          {transaction.reference}
+                          Booking {booking._id.slice(0, 8)}
                         </p>
                         <p className="text-xs text-charcoal/60 dark:text-cream/60">
-                          {formatDate(transaction.createdAt, "short")}
+                          {formatDate(booking.createdAt, "short")}
                         </p>
                       </div>
                       <p className="font-heading font-bold text-brand-gold-400">
-                        {formatCurrency(transaction.amount)}
+                        {formatCurrency(booking.totalAmount - booking.platformFee)}
                       </p>
                     </div>
                   </div>

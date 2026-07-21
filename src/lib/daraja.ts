@@ -72,7 +72,7 @@ export class DarajaProvider implements PaymentProvider {
       }
 
       return { success: false, message: data.ResponseDescription || "Payment failed" };
-    } catch (error) {
+    } catch {
       return { success: false, message: "Failed to process payment" };
     }
   }
@@ -111,7 +111,7 @@ export class DarajaProvider implements PaymentProvider {
       }
 
       return { success: false, message: data.ResultDesc || "Payment not found" };
-    } catch (error) {
+    } catch {
       return { success: false, message: "Failed to check payment status" };
     }
   }

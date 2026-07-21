@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { initiateSTKPush, generateReference } from "@/lib/mpesa";
 import { z } from "zod";
+import { cookies } from "next/headers";
 
 const stkPushSchema = z.object({
   phoneNumber: z.string().min(10, "Valid phone number required"),
@@ -13,6 +14,12 @@ const stkPushSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("__convexAuthToken");
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const validation = stkPushSchema.safeParse(body);
 

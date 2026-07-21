@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Settings, Fuel } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { VEHICLE_TYPE_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
+import { VEHICLE_TYPE_LABELS, TRANSMISSION_LABELS, FUEL_TYPE_LABELS } from "@/lib/constants";
 import type { Vehicle } from "@/lib/types";
 
 interface VehicleCardProps {
@@ -66,7 +66,7 @@ function VehicleCard({ vehicle, href }: VehicleCardProps) {
             </span>
             <span className="flex items-center gap-1">
               <Fuel className="h-3 w-3" />
-              {vehicle.fuelType}
+              {FUEL_TYPE_LABELS[vehicle.fuelType] || vehicle.fuelType}
             </span>
           </div>
           <div className="flex items-center justify-between pt-3 border-t border-charcoal/5 dark:border-white/5">

@@ -11,7 +11,39 @@ export const updateProfile = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
-    await ctx.db.patch(user._id, args);
+
+    const updates: Record<string, unknown> = {};
+
+    if (args.name !== undefined) {
+      if (args.name.length < 1 || args.name.length > 100) {
+        throw new Error("name must be between 1 and 100 characters");
+      }
+      updates.name = args.name;
+    }
+
+    if (args.phone !== undefined) {
+      // Kenyan phone number format: +254 followed by 9 digits, or 07XX/01XX local format
+      const kenyanPhoneRegex = /^(\+254[17]\d{8}|0[17]\d{8})$/;
+      if (!kenyanPhoneRegex.test(args.phone)) {
+        throw new Error("phone must be a valid Kenyan phone number (e.g. +254712345678 or 0712345678)");
+      }
+      updates.phone = args.phone;
+    }
+
+    if (args.avatarUrl !== undefined) {
+      try {
+        new URL(args.avatarUrl);
+      } catch {
+        throw new Error("avatarUrl must be a valid URL");
+      }
+      updates.avatarUrl = args.avatarUrl;
+    }
+
+    if (args.bio !== undefined) {
+      updates.bio = args.bio;
+    }
+
+    await ctx.db.patch(user._id, updates);
   },
 });
 
@@ -74,9 +106,7 @@ export const listUsers = query({
 export const getHosts = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("roles"), ["host"]))
-      .collect();
+    const allUsers = await ctx.db.query("users").collect();
+    return allUsers.filter((u) => u.roles.includes("host"));
   },
 });
