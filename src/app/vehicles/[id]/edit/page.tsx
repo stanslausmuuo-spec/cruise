@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
@@ -11,18 +11,21 @@ import { BackLink } from "@/components/ui/back-link";
 import { VehicleTypeSelector } from "@/components/vehicles/vehicle-type-selector";
 import { formatCurrency, calculatePercentage, calculateHostEarnings } from "@/lib/utils";
 import { TRANSMISSION_TYPES, FUEL_TYPES, TRANSMISSION_LABELS, FUEL_TYPE_LABELS } from "@/lib/constants";
-import { ChevronLeft, ChevronRight, Upload, X, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { FileUpload } from "@/components/ui/file-upload";
 import type { VehicleType, Transmission, FuelType } from "@/lib/types";
 
 const steps = ["Details", "Photos", "Pricing", "Review"];
 
-export default function NewVehiclePage() {
+export default function EditVehiclePage() {
   const router = useRouter();
+  const params = useParams();
+  const vehicleId = params.id as string;
   const { toast } = useToast();
   const currentUser = useQuery(api.auth.getMe);
-  const createVehicle = useMutation(api.vehicles.createVehicle);
+  const vehicle = useQuery(api.vehicles.getVehicle, { vehicleId: vehicleId as any });
+  const updateVehicle = useMutation(api.vehicles.updateVehicle);
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -41,13 +44,30 @@ export default function NewVehiclePage() {
   const [newFeature, setNewFeature] = useState("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
-useEffect(() => {
+  useEffect(() => {
     if (currentUser === null) {
       router.push("/login");
-    } else if (currentUser && currentUser.kycStatus !== "approved") {
-      router.push("/profile");
     }
   }, [currentUser, router]);
+
+  useEffect(() => {
+    if (vehicle) {
+      setForm({
+        make: vehicle.make,
+        model: vehicle.model,
+        year: vehicle.year,
+        type: vehicle.type,
+        transmission: vehicle.transmission,
+        fuelType: vehicle.fuelType,
+        seats: vehicle.seats,
+        pricePerDay: vehicle.pricePerDay,
+        address: vehicle.address,
+        description: vehicle.description,
+        features: vehicle.features ?? [],
+      });
+      setUploadedImages(vehicle.images ?? []);
+    }
+  }, [vehicle]);
 
   const update = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -65,23 +85,19 @@ useEffect(() => {
 
   const handleSubmit = async () => {
     if (!currentUser) {
-      toast("error", "Not authenticated", "Please sign in to list a vehicle");
+      toast("error", "Not authenticated", "Please sign in to edit this vehicle");
       return;
     }
 
-    if (currentUser.kycStatus !== "approved") {
-      toast("error", "Verification required", "Complete KYC verification before listing vehicles");
-      router.push("/profile");
+    if (!vehicle || vehicle.ownerId !== currentUser._id) {
+      toast("error", "Not authorized", "You can only edit your own vehicles");
       return;
-    }
-
-    if (form.features.length === 0) {
-      toast("info", "No features added", "Consider adding some features to make your listing more attractive");
     }
 
     setLoading(true);
     try {
-      await createVehicle({
+      await updateVehicle({
+        vehicleId: vehicleId as any,
         make: form.make,
         model: form.model,
         year: form.year,
@@ -92,59 +108,68 @@ useEffect(() => {
         pricePerDay: form.pricePerDay,
         address: form.address,
         description: form.description,
-        features: form.features.length > 0 ? form.features : undefined,
-        images: uploadedImages.length > 0 ? uploadedImages : undefined,
+        features: form.features,
+        images: uploadedImages,
       });
-      toast("success", "Vehicle listed!", "Your vehicle has been submitted for review");
-      router.push("/dashboard/host/vehicles");
+      toast("success", "Vehicle updated!", "Your changes have been saved");
+      router.push(`/vehicles/${vehicleId}`);
     } catch (error) {
-      console.error("Failed to create vehicle:", error);
-      toast("error", "Failed to list vehicle", error instanceof Error ? error.message : "Please try again");
+      console.error("Failed to update vehicle:", error);
+      toast("error", "Failed to update vehicle", error instanceof Error ? error.message : "Please try again");
     } finally {
       setLoading(false);
     }
   };
 
+  if (vehicle === undefined) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <div className="max-w-2xl mx-auto">
+          <BackLink href="/dashboard/host/vehicles" />
+          <div className="glass rounded-2xl p-8 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 text-brand-gold-400 animate-spin" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (vehicle === null) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <div className="max-w-2xl mx-auto">
+          <BackLink href="/dashboard/host/vehicles" />
+          <div className="glass rounded-2xl p-8 text-center">
+            <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
+            <p className="text-charcoal dark:text-cream font-medium">Vehicle not found</p>
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => router.push("/dashboard/host/vehicles")}>
+              Back to Vehicles
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentUser && vehicle.ownerId !== currentUser._id) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 px-4">
+        <div className="max-w-2xl mx-auto">
+          <BackLink href="/dashboard/host/vehicles" />
+          <div className="glass rounded-2xl p-8 text-center">
+            <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
+            <p className="text-charcoal dark:text-cream font-medium">Not authorized</p>
+            <p className="text-sm text-charcoal/60 dark:text-cream/60 mt-1">You can only edit your own vehicles</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
-        <BackLink href="/dashboard/host/vehicles" />
-
-        {currentUser === undefined && (
-          <div className="mb-6 p-4 glass rounded-xl border border-brand-gold-400/30 animate-pulse">
-            <div className="flex items-center gap-3 text-sm">
-              <div className="w-5 h-5 border-2 border-brand-gold-400 border-t-transparent rounded-full animate-spin" />
-              <span className="text-charcoal/70 dark:text-cream/70">Loading your profile...</span>
-            </div>
-          </div>
-        )}
-
-        {!currentUser && (
-          <div className="mb-6 p-4 glass rounded-xl border border-red-400/30 bg-red-50 dark:bg-red-900/20">
-            <div className="flex items-center gap-3 text-sm">
-              <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-red-600 dark:text-red-400">Please sign in to list a vehicle</p>
-                <p className="text-red-500/80 dark:text-red-400/80 mt-1">You'll be redirected to login...</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentUser && currentUser.kycStatus !== "approved" && (
-          <div className="mb-6 p-4 glass rounded-xl border border-amber-400/30 bg-amber-50 dark:bg-amber-900/20">
-            <div className="flex items-center gap-3 text-sm">
-              <AlertCircle className="h-5 w-5 text-amber-400 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-amber-700 dark:text-amber-300">KYC verification required</p>
-                <p className="text-amber-600/80 dark:text-amber-400/80 mt-1">
-                  Complete your KYC verification to list vehicles. Status:{" "}
-                  <span className="capitalize">{currentUser.kycStatus}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        <BackLink href={`/vehicles/${vehicleId}`} />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -165,7 +190,7 @@ useEffect(() => {
           </div>
 
           <h1 className="font-heading text-2xl font-bold text-charcoal dark:text-cream mb-1">
-            List Your Vehicle
+            Edit Vehicle
           </h1>
           <p className="text-sm text-charcoal/60 dark:text-cream/60 mb-8">
             {steps[step]}
@@ -245,7 +270,7 @@ useEffect(() => {
 
                 <div>
                   <label className="block text-sm font-medium text-charcoal/70 dark:text-cream/70 mb-1.5">
-                    Features (optional)
+                    Features
                   </label>
                   <div className="flex gap-2 mb-2">
                     <Input
@@ -365,7 +390,7 @@ useEffect(() => {
               loading={loading}
               onClick={() => (step < 3 ? setStep((s) => s + 1) : handleSubmit())}
             >
-              {step === 3 ? "Submit Listing" : "Continue"}
+              {step === 3 ? "Save Changes" : "Continue"}
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

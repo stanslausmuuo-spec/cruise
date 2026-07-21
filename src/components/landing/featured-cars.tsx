@@ -3,53 +3,11 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
+import { VehicleCard } from "@/components/vehicles/vehicle-card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star } from "lucide-react";
-
-const featuredVehicles = [
-  {
-    id: "1",
-    make: "Mercedes-Benz",
-    model: "E-Class",
-    year: 2023,
-    type: "luxury" as const,
-    pricePerDay: 8500,
-    image: "https://images.unsplash.com/photo-1609521263047-f8f205293f7b?w=600&q=80",
-    rating: 4.9,
-  },
-  {
-    id: "2",
-    make: "Range Rover",
-    model: "Velar",
-    year: 2024,
-    type: "suv" as const,
-    pricePerDay: 12000,
-    image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&q=80",
-    rating: 4.8,
-  },
-  {
-    id: "3",
-    make: "BMW",
-    model: "7 Series",
-    year: 2024,
-    type: "luxury" as const,
-    pricePerDay: 15000,
-    image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80",
-    rating: 4.9,
-  },
-  {
-    id: "4",
-    make: "Porsche",
-    model: "Cayenne",
-    year: 2023,
-    type: "suv" as const,
-    pricePerDay: 18000,
-    image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80",
-    rating: 5.0,
-  },
-];
+import { ArrowRight } from "lucide-react";
 
 export function FeaturedCars() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,6 +16,11 @@ export function FeaturedCars() {
     offset: ["start end", "end start"],
   });
   const x = useTransform(scrollYProgress, [0, 1], ["0%", "-20%"]);
+
+  const result = useQuery(api.vehicles.listVehicles, { limit: 4 });
+  const vehicles = result?.vehicles ?? [];
+
+  if (vehicles.length === 0) return null;
 
   return (
     <section ref={containerRef} className="min-h-screen snap-start flex items-center py-20 overflow-hidden">
@@ -87,57 +50,16 @@ export function FeaturedCars() {
         </motion.div>
 
         <motion.div style={{ x }} className="flex gap-6 px-4 pb-4 overflow-x-auto scrollbar-hide">
-          {featuredVehicles.map((vehicle, i) => (
+          {vehicles.map((vehicle, i) => (
             <motion.div
-              key={vehicle.id}
+              key={vehicle._id}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
               className="min-w-[320px] md:min-w-[380px]"
             >
-              <Link href={`/vehicles/${vehicle.id}`}>
-                <Card className="group overflow-hidden">
-                  <div className="relative h-56 overflow-hidden">
-                    <img
-                      src={vehicle.image}
-                      alt={`${vehicle.make} ${vehicle.model}`}
-                      loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute top-3 left-3">
-                      <Badge variant="featured">Featured</Badge>
-                    </div>
-                    <div className="absolute top-3 right-3 glass rounded-pill px-2.5 py-1 flex items-center gap-1">
-                      <Star className="h-3 w-3 text-brand-gold-400 fill-brand-gold-400" />
-                      <span className="text-xs font-medium text-charcoal dark:text-cream">
-                        {vehicle.rating}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream">
-                          {vehicle.make} {vehicle.model}
-                        </h3>
-                        <p className="text-sm text-charcoal/50 dark:text-cream/50">
-                          {vehicle.year} &middot; {vehicle.type.charAt(0).toUpperCase() + vehicle.type.slice(1)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between pt-3 border-t border-charcoal/5 dark:border-white/5">
-                      <span className="font-heading text-xl font-bold text-brand-gold-400">
-                        KES {vehicle.pricePerDay.toLocaleString()}
-                        <span className="text-xs font-normal text-charcoal/50 dark:text-cream/50"> /day</span>
-                      </span>
-                      <span className="text-xs text-charcoal/40 dark:text-cream/40 hover:text-brand-gold-400 transition-colors">
-                        Book Now →
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
+              <VehicleCard vehicle={vehicle} />
             </motion.div>
           ))}
         </motion.div>

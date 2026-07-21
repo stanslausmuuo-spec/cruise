@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "@/lib/animations";
-import { ShieldCheck, Camera, Lock, HeadphonesIcon, BadgeCheck, MapPin } from "lucide-react";
+import { ShieldCheck, Camera, Lock, BadgeCheck } from "lucide-react";
 
 const features = [
   {
@@ -25,13 +25,6 @@ const features = [
     title: "Photo Protection",
     description: "Time-stamped photos at pickup and return protect both parties.",
   },
-];
-
-const stats = [
-  { value: "5,000+", label: "Verified Users" },
-  { value: "1,200+", label: "Active Vehicles" },
-  { value: "15,000+", label: "Successful Trips" },
-  { value: "4.9★", label: "Average Rating" },
 ];
 
 export function TrustSection() {
@@ -61,7 +54,7 @@ export function TrustSection() {
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           {features.map((feature) => (
             <motion.div
@@ -79,28 +72,6 @@ export function TrustSection() {
                 {feature.description}
               </p>
             </motion.div>
-          ))}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6"
-        >
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="text-center p-6 rounded-premium border border-brand-gold-400/10"
-            >
-              <p className="font-heading text-3xl md:text-4xl font-bold text-gradient-gold mb-1">
-                {stat.value}
-              </p>
-              <p className="text-xs text-charcoal/60 dark:text-cream/60 uppercase tracking-wider">
-                {stat.label}
-              </p>
-            </div>
           ))}
         </motion.div>
       </div>

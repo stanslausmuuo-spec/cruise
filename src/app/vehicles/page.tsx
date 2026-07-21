@@ -36,6 +36,7 @@ export default function VehiclesPage() {
 
   const queryArgs = {
     type: filters.types.length === 1 ? filters.types[0] as VehicleType : undefined,
+    transmission: filters.transmissions.length === 1 ? filters.transmissions[0] as "automatic" | "manual" : undefined,
     minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
     cursor,
@@ -84,7 +85,7 @@ export default function VehiclesPage() {
 
       const matchesType = !filters.types.length || filters.types.includes(v.type);
       const matchesTransmission = !filters.transmissions.length || filters.transmissions.includes(v.transmission);
-      const matchesCounty = !filters.counties.length || filters.counties.includes(v.address);
+      const matchesCounty = !filters.counties.length || filters.counties.some((c) => v.address.toLowerCase().includes(c.toLowerCase()));
       const matchesPriceRange =
         filters.priceRange === null ||
         (v.pricePerDay >= PRICE_RANGES[filters.priceRange].min &&

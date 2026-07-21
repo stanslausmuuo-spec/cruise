@@ -1,6 +1,7 @@
 "use client";
 
-import { ShieldCheck, Camera, Lock, Headphones, BadgeCheck, MapPin, Star, Shield, Zap, Users } from "lucide-react";
+import { motion } from "framer-motion";
+import { ShieldCheck, Star, Shield, Zap, Users, Headphones } from "lucide-react";
 
 const trustBadges = [
   {
@@ -10,18 +11,18 @@ const trustBadges = [
   },
   {
     icon: Shield,
-    label: "Fully Insured",
-    desc: "Comprehensive coverage",
+    label: "Secure Payments",
+    desc: "M-Pesa protected",
   },
   {
     icon: Star,
-    label: "4.9★ Rating",
-    desc: "From 2,300+ reviews",
+    label: "Quality Vehicles",
+    desc: "Inspected & maintained",
   },
   {
     icon: Users,
-    label: "10,000+ Users",
-    desc: "Trusted community",
+    label: "Growing Community",
+    desc: "Join car owners & renters",
   },
   {
     icon: Zap,
@@ -29,9 +30,9 @@ const trustBadges = [
     desc: "No waiting for approval",
   },
   {
-    icon: MapPin,
-    label: "24/7 Support",
-    desc: "Always here to help",
+    icon: Headphones,
+    label: "Support",
+    desc: "We are here to help",
   },
 ];
 
@@ -49,7 +50,7 @@ export function TrustStrip() {
               transition={{ delay: i * 0.05, duration: 0.4 }}
               className="flex items-center gap-3 p-4 glass rounded-xl hover:border-brand-gold-400/30 transition-colors"
             >
-              <div className="h-10 w-10 rounded-xl bg-brand-gold-400/10 flex items-center justify-center flex-shrink-0">
+              <div className="h-10 w-10 rounded-xl bg-brand-gold-400/10 flex items-center justify-center shrink-0">
                 <badge.icon className="h-5 w-5 text-brand-gold-400" />
               </div>
               <div className="min-w-0">

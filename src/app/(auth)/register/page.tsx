@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
+import { api } from "convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
@@ -46,6 +46,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { signIn } = useAuthActions();
   const updateProfile = useMutation(api.users.updateProfile);
+  const registerUser = useMutation(api.auth.registerUser);
   const currentUser = useQuery(api.auth.getMe);
   const { toast } = useToast();
 
@@ -150,13 +151,12 @@ export default function RegisterPage() {
 
       await signIn("password", formData);
 
-      // Update profile with additional info
-      if (currentUser) {
-        await updateProfile({
-          name: form.name,
-          phone: form.phone,
-        });
-      }
+      // Persist name, phone, and roles to the user profile
+      await registerUser({
+        name: form.name,
+        phone: form.phone,
+        roles: form.roles as ("renter" | "host")[],
+      });
 
       toast(
         "success",

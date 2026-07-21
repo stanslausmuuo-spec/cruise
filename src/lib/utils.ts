@@ -1,7 +1,8 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return clsx(inputs);
+  return twMerge(clsx(inputs));
 }
 
 export function formatCurrency(amount: number, currency = "KES"): string {
@@ -65,8 +66,12 @@ export function maskEmail(email: string): string {
   return `${name[0]}****${name[name.length - 1]}@${domain}`;
 }
 
-export function calculatePlatformFee(amount: number, feePercent = 0.15): number {
-  return Math.ceil(amount * feePercent);
+export function calculatePercentage(amount: number, percent = 0.15): number {
+  return Math.ceil(amount * percent);
+}
+
+export function calculateHostEarnings(pricePerDay: number): number {
+  return Math.ceil(pricePerDay * 0.85);
 }
 
 export function getInitials(name: string): string {

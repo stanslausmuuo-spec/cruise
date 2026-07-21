@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, Shield, Star, MapPin } from "lucide-react";
 import { VEHICLE_TYPE_LABELS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import type { Vehicle } from "@/lib/types";

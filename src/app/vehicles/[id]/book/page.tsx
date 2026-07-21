@@ -12,15 +12,13 @@ import { BookingWizard } from "@/components/booking/booking-wizard";
 import { DateSelectionStep } from "@/components/booking/date-selection-step";
 import { PriceSummary } from "@/components/booking/price-summary";
 import { MPesaPaymentForm } from "@/components/booking/mpesa-payment-form";
-import { BookingConfirmationStep } from "@/components/booking/booking-confirmation-step";
 import { BookingNavigation } from "@/components/booking/booking-navigation";
-import { calculatePlatformFee, formatCurrency } from "@/lib/utils";
+import { calculatePercentage, formatCurrency } from "@/lib/utils";
 import type { Id } from "convex/_generated/dataModel";
 
 const steps = [
   { label: "Dates" },
-  { label: "Payment" },
-  { label: "Confirm" },
+  { label: "Pay" },
 ];
 
 export default function BookVehiclePage() {
@@ -32,9 +30,7 @@ export default function BookVehiclePage() {
   const [step, setStep] = useState(0);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
-  const [bookingRef, setBookingRef] = useState("");
 
   const vehicle = useQuery(api.vehicles.getVehicle, { vehicleId });
 
@@ -49,17 +45,16 @@ export default function BookVehiclePage() {
   const totalPrice = useMemo(() => {
     if (!vehicle || numberOfDays === 0) return 0;
     const subtotal = vehicle.pricePerDay * numberOfDays;
-    const platformFee = calculatePlatformFee(subtotal);
+    const platformFee = calculatePercentage(subtotal);
     return subtotal + platformFee;
   }, [vehicle, numberOfDays]);
 
-  const handlePaymentInitiated = async (phone: string) => {
-    setPhoneNumber(phone);
+  const handlePayment = async (phone: string) => {
+    if (!vehicle) return;
     setLoading(true);
     try {
       const ref = `CRU-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-      setBookingRef(ref);
-      
+
       const response = await fetch("/api/mpesa/stkpush", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,33 +69,22 @@ export default function BookVehiclePage() {
       });
 
       const data = await response.json();
-      if (data.success) {
-        setStep(2);
-      } else {
+      if (!data.success) {
         throw new Error(data.error || "Payment initiation failed");
       }
-    } catch (error) {
-      console.error("Payment failed:", error);
-      alert(error instanceof Error ? error.message : "Payment failed");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleConfirm = async () => {
-    if (!vehicle || !bookingRef) return;
-    setLoading(true);
-    try {
       await createBooking({
         vehicleId: vehicle._id,
         startDate: new Date(startDate).getTime(),
         endDate: new Date(endDate).getTime(),
         totalAmount: totalPrice,
-        checkoutRequestId: bookingRef,
+        checkoutRequestId: ref,
       });
+
       router.push("/dashboard/renter/trips");
     } catch (error) {
-      console.error("Booking failed:", error);
+      console.error("Payment failed:", error);
+      alert(error instanceof Error ? error.message : "Payment failed");
     } finally {
       setLoading(false);
     }
@@ -174,34 +158,22 @@ export default function BookVehiclePage() {
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                 <MPesaPaymentForm
                   amount={totalPrice}
-                  onPaymentInitiated={handlePaymentInitiated}
+                  onPaymentInitiated={handlePayment}
                   loading={loading}
-                />
-              </motion.div>
-            )}
-
-            {step === 2 && (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                <BookingConfirmationStep
-                  bookingReference={bookingRef}
-                  vehicleName={`${vehicle.make} ${vehicle.model}`}
-                  totalAmount={totalPrice}
                 />
               </motion.div>
             )}
           </div>
 
-          {step < 2 && (
+          {step === 0 && (
             <BookingNavigation
               currentStep={step}
               totalSteps={steps.length}
               onBack={() => setStep((s) => Math.max(0, s - 1))}
               onNext={() => {
                 if (step === 0 && numberOfDays > 0) setStep(1);
-                else if (step === 1) handleConfirm();
               }}
               loading={loading}
-              nextLabel={step === 1 ? `Pay ${formatCurrency(totalPrice)}` : undefined}
             />
           )}
         </motion.div>

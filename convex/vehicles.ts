@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { mutation, query, type QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
+import { getCurrentUser } from "./lib/auth";
 
 type Vehicle = Doc<"vehicles">;
 
@@ -25,20 +25,6 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
     console.error("Geocoding failed:", error);
   }
   return null;
-}
-
-// Auth helper: get current user identity
-async function getCurrentUser(ctx: MutationCtx | QueryCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Not authenticated");
-  
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_email", (q) => q.eq("email", identity.email!))
-    .first();
-  
-  if (!user) throw new Error("User not found");
-  return user;
 }
 
 export const createVehicle = mutation({
@@ -96,6 +82,7 @@ export const listVehicles = query({
         v.literal("truck")
       )
     ),
+    transmission: v.optional(v.union(v.literal("automatic"), v.literal("manual"))),
     minPrice: v.optional(v.number()),
     maxPrice: v.optional(v.number()),
     cursor: v.optional(v.string()),
@@ -136,10 +123,13 @@ handler: async (ctx: QueryCtx, args) => {
   },
 });
 
-function processPage(page: { data: Vehicle[]; continueCursor?: string }, limit: number, args: { minPrice?: number; maxPrice?: number }) {
-  // Filter in-memory for price range (since we can't do range on secondary index)
-  let vehicles: Vehicle[] = page.data;
+function processPage(page: { page: Vehicle[]; continueCursor?: string }, limit: number, args: { transmission?: string; minPrice?: number; maxPrice?: number }) {
+  // Filter in-memory for price range and transmission (since we can't do range on secondary index)
+  let vehicles: Vehicle[] = page.page;
   
+  if (args.transmission) {
+    vehicles = vehicles.filter((v: Vehicle) => v.transmission === args.transmission);
+  }
   if (args.minPrice !== undefined) {
     vehicles = vehicles.filter((v: Vehicle) => v.pricePerDay >= args.minPrice!);
   }
@@ -213,6 +203,60 @@ export const requireHostVerification = mutation({
     }
     
     return { verified: true };
+  },
+});
+
+export const updateVehicle = mutation({
+  args: {
+    vehicleId: v.id("vehicles"),
+    make: v.optional(v.string()),
+    model: v.optional(v.string()),
+    year: v.optional(v.number()),
+    type: v.optional(
+      v.union(
+        v.literal("sedan"),
+        v.literal("suv"),
+        v.literal("luxury"),
+        v.literal("wedding"),
+        v.literal("truck")
+      )
+    ),
+    transmission: v.optional(v.union(v.literal("automatic"), v.literal("manual"))),
+    fuelType: v.optional(v.union(v.literal("petrol"), v.literal("diesel"), v.literal("electric"))),
+    seats: v.optional(v.number()),
+    pricePerDay: v.optional(v.number()),
+    address: v.optional(v.string()),
+    description: v.optional(v.string()),
+    features: v.optional(v.array(v.string())),
+    images: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    const vehicle = await ctx.db.get(args.vehicleId);
+
+    if (!vehicle) throw new Error("Vehicle not found");
+    if (vehicle.ownerId !== user._id) throw new Error("Not authorized");
+
+    const updateData: Record<string, unknown> = {};
+    if (args.make !== undefined) updateData.make = args.make;
+    if (args.model !== undefined) updateData.model = args.model;
+    if (args.year !== undefined) updateData.year = args.year;
+    if (args.type !== undefined) updateData.type = args.type;
+    if (args.transmission !== undefined) updateData.transmission = args.transmission;
+    if (args.fuelType !== undefined) updateData.fuelType = args.fuelType;
+    if (args.seats !== undefined) updateData.seats = args.seats;
+    if (args.pricePerDay !== undefined) updateData.pricePerDay = args.pricePerDay;
+    if (args.address !== undefined) {
+      updateData.address = args.address;
+      const location = await geocodeAddress(args.address);
+      if (location) updateData.location = location;
+    }
+    if (args.description !== undefined) updateData.description = args.description;
+    if (args.features !== undefined) updateData.features = args.features;
+    if (args.images !== undefined) updateData.images = args.images;
+
+    await ctx.db.patch(args.vehicleId, updateData);
+    return args.vehicleId;
   },
 });
 

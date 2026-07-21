@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Footer } from "@/components/layout/footer";
 import { AuthTokenCookie } from "@/components/auth/auth-token-cookie";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -68,7 +69,9 @@ export default function RootLayout({
             <ToastProvider>
               <AuthTokenCookie />
               <Navbar />
-              <main className="flex-1 pb-16 md:pb-0">{children}</main>
+              <main className="flex-1 pb-16 md:pb-0">
+                <ErrorBoundary>{children}</ErrorBoundary>
+              </main>
               <MobileNav />
               <Footer />
             </ToastProvider>

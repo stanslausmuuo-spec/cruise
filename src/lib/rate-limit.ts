@@ -1,3 +1,16 @@
+/**
+ * In-memory rate limiter — best-effort for serverless/edge environments.
+ *
+ * LIMITATIONS:
+ * - Resets on cold start (each new isolate gets a fresh Map).
+ * - No cross-instance coordination; each isolate counts independently.
+ * - For durable rate limiting, use a Convex mutation/query-based approach
+ *   or an external service (Upstash, Redis, etc.).
+ *
+ * For auth endpoints these limits are intentionally conservative to mitigate
+ * brute-force attacks even with cold-start resets.
+ */
+
 interface RateLimitEntry {
   count: number;
   resetTime: number;
@@ -5,11 +18,29 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>();
 
-const WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const MAX_REQUESTS = 10; // 10 requests per hour per IP
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_REQUESTS = 5; // 5 attempts per 15 min window per key
+const CLEANUP_INTERVAL_MS = 60 * 1000; // 1 minute
 
-export function authRateLimit(key: string): { allowed: boolean; remaining: number; resetTime: number } {
+let lastCleanup = Date.now();
+
+function cleanup(now: number): void {
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
+  lastCleanup = now;
+  for (const [key, entry] of store) {
+    if (now > entry.resetTime) {
+      store.delete(key);
+    }
+  }
+}
+
+export function authRateLimit(
+  key: string,
+): { allowed: boolean; remaining: number; resetTime: number } {
   const now = Date.now();
+
+  cleanup(now);
+
   const entry = store.get(key);
 
   if (!entry || now > entry.resetTime) {
@@ -23,18 +54,13 @@ export function authRateLimit(key: string): { allowed: boolean; remaining: numbe
   }
 
   entry.count++;
-  return { allowed: true, remaining: MAX_REQUESTS - entry.count, resetTime: entry.resetTime };
+  return {
+    allowed: true,
+    remaining: MAX_REQUESTS - entry.count,
+    resetTime: entry.resetTime,
+  };
 }
 
-export function clearRateLimit(key: string) {
+export function clearRateLimit(key: string): void {
   store.delete(key);
 }
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store.entries()) {
-    if (now > entry.resetTime) {
-      store.delete(key);
-    }
-  }
-}, 5 * 60 * 1000);

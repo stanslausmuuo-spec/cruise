@@ -5,9 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useQuery } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { api } from "convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { ROUTES, APP_NAME } from "@/lib/constants";
-import { Menu, X, Sun, Moon, Search, PlusCircle, User, LogOut } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { Menu, X, Sun, Moon, LogOut, LayoutDashboard } from "lucide-react";
 
 const navLinks = [
   { href: ROUTES.HOME, label: "Home" },
@@ -23,6 +27,9 @@ export function Navbar() {
   const pathname = usePathname();
   const isLanding = pathname === "/";
   const { theme, setTheme } = useTheme();
+  const { signOut } = useAuthActions();
+
+  const currentUser = useQuery(api.auth.getMe);
 
   useEffect(() => setMounted(true), []);
 
@@ -32,20 +39,22 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const isLoggedIn = currentUser !== null && currentUser !== undefined;
+
   return (
     <>
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-          className={cn(
-            "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
-            scrolled
-              ? "glass border-b border-glass-border-light dark:border-glass-border-dark shadow-sm"
-              : isLanding
-                ? "bg-glass-light/60 dark:bg-glass-dark/60 backdrop-blur-sm"
-                : "bg-transparent"
-          )}
+        className={cn(
+          "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
+          scrolled
+            ? "glass border-b border-glass-border-light dark:border-glass-border-dark shadow-sm"
+            : isLanding
+              ? "bg-glass-light/60 dark:bg-glass-dark/60 backdrop-blur-sm"
+              : "bg-transparent"
+        )}
       >
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
@@ -83,18 +92,41 @@ export function Navbar() {
                   )}
                 </button>
               )}
-              <Link
-                href={ROUTES.LOGIN}
-                className="text-sm font-medium text-charcoal/70 dark:text-cream/70 hover:text-charcoal dark:hover:text-cream transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href={ROUTES.REGISTER}
-                className="inline-flex items-center gap-1.5 rounded-pill bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 transition-all shadow-premium hover:shadow-gold-glow"
-              >
-                Get Started
-              </Link>
+
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href={ROUTES.DASHBOARD}
+                    className="flex items-center gap-2 text-sm font-medium text-charcoal/70 dark:text-cream/70 hover:text-charcoal dark:hover:text-cream transition-colors"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                  <Avatar name={currentUser!.name} src={currentUser!.avatarUrl} size="sm" />
+                  <button
+                    onClick={() => signOut()}
+                    className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-charcoal/60 dark:text-cream/60 hover:text-red-500"
+                    aria-label="Sign out"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href={ROUTES.LOGIN}
+                    className="text-sm font-medium text-charcoal/70 dark:text-cream/70 hover:text-charcoal dark:hover:text-cream transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href={ROUTES.REGISTER}
+                    className="inline-flex items-center gap-1.5 rounded-pill bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 transition-all shadow-premium hover:shadow-gold-glow"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
 
             <button
@@ -124,6 +156,16 @@ export function Navbar() {
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
             <div className="absolute right-0 top-0 bottom-0 w-72 glass p-6 pt-24">
               <div className="flex flex-col gap-4">
+                {isLoggedIn && (
+                  <div className="flex items-center gap-3 pb-4 border-b border-charcoal/5 dark:border-white/5">
+                    <Avatar name={currentUser!.name} src={currentUser!.avatarUrl} size="md" />
+                    <div>
+                      <p className="font-medium text-sm text-charcoal dark:text-cream">{currentUser!.name}</p>
+                      <p className="text-xs text-charcoal/50 dark:text-cream/50">{currentUser!.email}</p>
+                    </div>
+                  </div>
+                )}
+
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
@@ -134,21 +176,44 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
+
+                {isLoggedIn && (
+                  <Link
+                    href={ROUTES.DASHBOARD}
+                    onClick={() => setMobileOpen(false)}
+                    className="text-lg font-medium text-charcoal dark:text-cream py-2 border-b border-charcoal/5 dark:border-white/5"
+                  >
+                    Dashboard
+                  </Link>
+                )}
+
                 <div className="pt-4 space-y-3">
-                  <Link
-                    href={ROUTES.LOGIN}
-                    onClick={() => setMobileOpen(false)}
-                    className="block w-full text-center rounded-pill border border-charcoal/20 dark:border-white/20 px-4 py-2.5 text-sm font-medium text-charcoal dark:text-cream"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href={ROUTES.REGISTER}
-                    onClick={() => setMobileOpen(false)}
-                    className="block w-full text-center rounded-pill bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 px-4 py-2.5 text-sm font-medium text-white"
-                  >
-                    Get Started
-                  </Link>
+                  {isLoggedIn ? (
+                    <button
+                      onClick={() => { signOut(); setMobileOpen(false); }}
+                      className="flex items-center justify-center gap-2 w-full rounded-pill border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  ) : (
+                    <>
+                      <Link
+                        href={ROUTES.LOGIN}
+                        onClick={() => setMobileOpen(false)}
+                        className="block w-full text-center rounded-pill border border-charcoal/20 dark:border-white/20 px-4 py-2.5 text-sm font-medium text-charcoal dark:text-cream"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href={ROUTES.REGISTER}
+                        onClick={() => setMobileOpen(false)}
+                        className="block w-full text-center rounded-pill bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 px-4 py-2.5 text-sm font-medium text-white"
+                      >
+                        Get Started
+                      </Link>
+                    </>
+                  )}
                 </div>
                 {mounted && (
                   <button

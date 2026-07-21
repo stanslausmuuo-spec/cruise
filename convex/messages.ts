@@ -1,19 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
-
-async function getCurrentUser(ctx: MutationCtx | QueryCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Not authenticated");
-  
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_email", (q) => q.eq("email", identity.email!))
-    .first();
-  
-  if (!user) throw new Error("User not found");
-  return user;
-}
+import { getCurrentUser } from "./lib/auth";
 
 export const sendMessage = mutation({
   args: {
@@ -104,5 +91,75 @@ export const getUnreadCount = query({
       .collect();
 
     return messages.filter((m) => !m.read && m.receiverId === user._id).length;
+  },
+});
+
+export const getConversations = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+
+    // Get all messages sent or received by this user
+    const sentMessages = await ctx.db
+      .query("messages")
+      .withIndex("by_participants", (q) => q.eq("senderId", user._id))
+      .order("desc")
+      .collect();
+
+    const receivedMessages = await ctx.db
+      .query("messages")
+      .withIndex("by_participants_reverse", (q) => q.eq("receiverId", user._id))
+      .order("desc")
+      .collect();
+
+    // Build a map of conversation partner -> latest message
+    const conversationMap = new Map<string, { lastMessage: string; lastTimestamp: number; unreadCount: number }>();
+
+    for (const msg of sentMessages) {
+      const partnerId = msg.receiverId;
+      const existing = conversationMap.get(partnerId);
+      if (!existing || msg.createdAt > existing.lastTimestamp) {
+        conversationMap.set(partnerId, {
+          lastMessage: msg.content,
+          lastTimestamp: msg.createdAt,
+          unreadCount: 0,
+        });
+      }
+    }
+
+    for (const msg of receivedMessages) {
+      const partnerId = msg.senderId;
+      const existing = conversationMap.get(partnerId);
+      if (!existing || msg.createdAt > existing.lastTimestamp) {
+        conversationMap.set(partnerId, {
+          lastMessage: msg.content,
+          lastTimestamp: msg.createdAt,
+          unreadCount: msg.read ? (existing?.unreadCount ?? 0) : ((existing?.unreadCount ?? 0) + 1),
+        });
+      } else if (!msg.read) {
+        existing.unreadCount += 1;
+      }
+    }
+
+    // Convert to array and sort by most recent
+    const conversations = Array.from(conversationMap.entries())
+      .map(([partnerId, data]) => ({ partnerId, ...data }))
+      .sort((a, b) => b.lastTimestamp - a.lastTimestamp);
+
+    // Fetch partner names
+    const conversationsWithNames = await Promise.all(
+      conversations.map(async (conv) => {
+        const partner = await ctx.db.get(conv.partnerId as any);
+        const partnerName = partner && "name" in partner ? (partner as { name: string }).name : "Unknown";
+        const partnerAvatar = partner && "avatarUrl" in partner ? (partner as { avatarUrl?: string }).avatarUrl : undefined;
+        return {
+          ...conv,
+          partnerName,
+          partnerAvatar,
+        };
+      })
+    );
+
+    return conversationsWithNames;
   },
 });

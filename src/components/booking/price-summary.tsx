@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCurrency, calculatePlatformFee } from "@/lib/utils";
+import { formatCurrency, calculatePercentage } from "@/lib/utils";
 import { PLATFORM_FEE_PERCENT } from "@/lib/constants";
 
 interface PriceSummaryProps {
@@ -10,7 +10,7 @@ interface PriceSummaryProps {
 
 function PriceSummary({ pricePerDay, numberOfDays }: PriceSummaryProps) {
   const subtotal = pricePerDay * numberOfDays;
-  const platformFee = calculatePlatformFee(subtotal);
+  const platformFee = calculatePercentage(subtotal);
   const total = subtotal + platformFee;
 
   return (
