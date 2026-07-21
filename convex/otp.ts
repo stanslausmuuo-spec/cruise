@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 
 export const createOTP = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
     email: v.string(),
     otp: v.string(),
     type: v.union(v.literal("email_verification"), v.literal("password_reset")),

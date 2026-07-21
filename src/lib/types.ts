@@ -132,7 +132,7 @@ export interface Transaction {
   currency: string;
   reference: string;
   status: TransactionStatus;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: number;
 }
 
@@ -180,7 +180,14 @@ export interface Notification {
   type: NotificationType;
   title: string;
   body: string;
-  data?: any;
+  data?:
+    | { bookingId: string }
+    | { messageId: string }
+    | { bookingId: string; amount: number; mpesaReceipt: string }
+    | { vehicleId: string }
+    | { documentType: string }
+    | { messageId: string; senderId: string }
+    | string;
   read: boolean;
   createdAt: number;
 }

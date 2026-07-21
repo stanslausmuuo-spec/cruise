@@ -34,10 +34,11 @@ export async function POST(request: Request) {
       userId: result.userId,
       message: "OTP verified successfully",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("OTP verify error:", error);
+    const message = error instanceof Error ? error.message : "Invalid or expired OTP";
     return NextResponse.json(
-      { error: error.message || "Invalid or expired OTP" },
+      { error: message },
       { status: 400 }
     );
   }

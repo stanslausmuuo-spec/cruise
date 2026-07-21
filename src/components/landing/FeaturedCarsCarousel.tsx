@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Shield, Flame, Users, Clock, ChevronLeft, ChevronRight, ArrowRight, Star, MapPin, Shield, Flame, Users, Clock } from "lucide-react";
+import { Star, MapPin, Shield, Flame, Users, Clock, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { VEHICLE_TYPE_LABELS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import type { Vehicle } from "@/lib/types";
@@ -26,7 +26,7 @@ function FeaturedCarsCarousel({ limit = 3 }: FeaturedCarsCarouselProps) {
     type: "luxury",
   });
 
-  const featuredVehicles = vehiclesData?.vehicles?.filter((v) => v.isFeatured && v.isActive).slice(0, limit) || [];
+  const featuredVehicles: Vehicle[] = (vehiclesData?.vehicles ?? []).filter((v: Vehicle) => v.isFeatured && v.isActive).slice(0, limit);
 
   const next = () => setSelectedIndex((i) => (i + 1) % featuredVehicles.length);
   const prev = () => setSelectedIndex((i) => (i - 1 + featuredVehicles.length) % featuredVehicles.length);
@@ -107,14 +107,6 @@ function FeaturedCarsCarousel({ limit = 3 }: FeaturedCarsCarouselProps) {
                           4.9
                         </span>
                       </div>
-                      {vehicle.scarcity && (
-                        <div className="absolute bottom-3 left-3">
-                          <Badge variant="scarcity" className="gap-1">
-                            <Flame className="h-3 w-3" />
-                            {vehicle.scarcity}
-                          </Badge>
-                        </div>
-                      )}
                     </div>
                     <div className="p-5 flex flex-col flex-grow">
                       <div className="flex items-start justify-between mb-2">
@@ -138,9 +130,6 @@ function FeaturedCarsCarousel({ limit = 3 }: FeaturedCarsCarouselProps) {
                         <span className="font-heading text-xl font-bold text-brand-gold-400">
                           {formatCurrency(vehicle.pricePerDay)}
                           <span className="text-xs font-normal text-charcoal/50 dark:text-cream/50"> /day</span>
-                        </span>
-                        <span className="text-xs text-charcoal/40 dark:text-cream/40">
-                          {vehicle.bookingCount || 0} booked this week
                         </span>
                       </div>
                     </div>

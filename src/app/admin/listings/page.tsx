@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
+import { Id } from "convex/_generated/dataModel";
 import { motion } from "framer-motion";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { staggerContainer, fadeUp } from "@/lib/animations";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { Search, Filter, Car, Eye, Trash2, Edit, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import type { Vehicle } from "@/lib/types";
 
 export default function AdminListingsPage() {
   const vehiclesData = useQuery(api.vehicles.listVehicles, { limit: 100 });
@@ -29,7 +31,7 @@ export default function AdminListingsPage() {
     );
   }
 
-  const filteredVehicles = (vehiclesData?.vehicles ?? []).filter((vehicle: any) => {
+  const filteredVehicles = (vehiclesData?.vehicles ?? []).filter((vehicle: Vehicle) => {
     const matchesSearch = !search ||
       vehicle.make.toLowerCase().includes(search.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(search.toLowerCase()) ||
@@ -43,10 +45,10 @@ export default function AdminListingsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = async (vehicleId: any) => {
+  const handleDelete = async (vehicleId: string) => {
     if (confirm("Are you sure you want to delete this vehicle listing? This action cannot be undone.")) {
       try {
-        await deleteVehicle({ vehicleId });
+        await deleteVehicle({ vehicleId: vehicleId as Id<"vehicles"> });
       } catch (error) {
         console.error("Failed to delete vehicle:", error);
         alert("Failed to delete vehicle");
@@ -54,13 +56,13 @@ export default function AdminListingsPage() {
     }
   };
 
-  const statusLabel = (vehicle: any) => {
+  const statusLabel = (vehicle: Vehicle) => {
     if (vehicle.isFeatured) return "Featured";
     if (vehicle.isActive) return "Active";
     return "Inactive";
   };
 
-  const statusVariant = (vehicle: typeof filteredVehicles[0]) => {
+  const statusVariant = (vehicle: Vehicle) => {
     if (vehicle.isFeatured) return "featured";
     if (vehicle.isActive) return "verified";
     return "status";
@@ -99,7 +101,7 @@ export default function AdminListingsPage() {
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-charcoal/40" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive" | "featured")}
                 className="appearance-none pl-10 pr-8 py-2 rounded-premium border border-charcoal/10 dark:border-white/10 bg-white dark:bg-surface-dark-muted text-sm text-charcoal dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-gold-400/50 cursor-pointer"
               >
                 <option value="all">All Status</option>
@@ -127,7 +129,7 @@ export default function AdminListingsPage() {
             animate="animate"
             className="space-y-3"
           >
-            {filteredVehicles.map((vehicle: any) => (
+            {filteredVehicles.map((vehicle: Vehicle) => (
               <motion.div key={vehicle._id} variants={fadeUp}>
                 <div className="glass rounded-premium p-4">
                   <div className="flex items-center gap-4">

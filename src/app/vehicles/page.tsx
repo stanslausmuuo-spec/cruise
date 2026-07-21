@@ -15,7 +15,7 @@ import { ActiveFilterTags } from "@/components/vehicles/active-filter-tags";
 import { staggerContainer, fadeUp } from "@/lib/animations";
 import { SlidersHorizontal, Loader2 } from "lucide-react";
 import { PRICE_RANGES } from "@/lib/constants";
-import type { VehicleFilters } from "@/lib/types";
+import type { VehicleFilters, VehicleType } from "@/lib/types";
 
 const initialFilters: VehicleFilters = {};
 
@@ -35,7 +35,7 @@ export default function VehiclesPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const queryArgs = {
-    type: filters.types.length === 1 ? filters.types[0] as any : undefined,
+    type: filters.types.length === 1 ? filters.types[0] as VehicleType : undefined,
     minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
     cursor,

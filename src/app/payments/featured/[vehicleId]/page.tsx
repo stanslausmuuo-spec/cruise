@@ -108,7 +108,6 @@ export default function FeaturedListingPage() {
     }
   };
 
-  // Poll for payment status
   useEffect(() => {
     if (step !== "polling") return;
 
@@ -181,7 +180,7 @@ export default function FeaturedListingPage() {
           className="w-full"
           onClick={handleFeature}
         >
-          Pay KES ${(FEATURED_LISTING_FEE * (duration / 7)).toLocaleString()}"
+          Pay KES ${(FEATURED_LISTING_FEE * (duration / 7)).toLocaleString()}
         </Button>
 
         {error && (

@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import type { Id } from "convex/_generated/dataModel";
 
-const statusVariant = (status: string) => {
+const statusVariant = (status: string): "status" | "verified" | "premium" => {
   switch (status) {
     case "confirmed":
       return "status";
@@ -95,7 +95,7 @@ export default function BookingDetailPage() {
               <p className="text-sm text-white/80">{vehicle.address}</p>
             </div>
             <div className="absolute top-4 right-4">
-              <Badge variant={statusVariant(booking.status) as any}>
+              <Badge variant={statusVariant(booking.status)}>
                 {booking.status}
               </Badge>
             </div>

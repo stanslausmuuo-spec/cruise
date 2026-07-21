@@ -1,6 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
+
+type Vehicle = Doc<"vehicles">;
 
 // Simple geocoding using Nominatim (OpenStreetMap) - free but rate limited
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
@@ -102,56 +105,67 @@ handler: async (ctx: QueryCtx, args) => {
     const limit = args.limit ?? 20;
     
     // Build query using the most specific index available
-    let queryBuilder: any = ctx.db.query("vehicles");
+    const isActive = true as const;
+    const cursor = args.cursor ?? null;
     
     if (args.type) {
-      queryBuilder = queryBuilder.withIndex("by_active_type", (q: any) => q.eq("isActive", true).eq("type", args.type!));
+      const page = await ctx.db
+        .query("vehicles")
+        .withIndex("by_active_type", (q) => q.eq("isActive", isActive).eq("type", args.type!))
+        .order("desc")
+        .paginate({ cursor, numItems: limit + 1 });
+      
+      return processPage(page, limit, args);
     } else if (args.minPrice !== undefined || args.maxPrice !== undefined) {
-      queryBuilder = queryBuilder.withIndex("by_active_price", (q: any) => q.eq("isActive", true));
+      const page = await ctx.db
+        .query("vehicles")
+        .withIndex("by_active_price", (q) => q.eq("isActive", isActive))
+        .order("desc")
+        .paginate({ cursor, numItems: limit + 1 });
+      
+      return processPage(page, limit, args);
     } else {
-      queryBuilder = queryBuilder.withIndex("by_active", (q: any) => q.eq("isActive", true));
+      const page = await ctx.db
+        .query("vehicles")
+        .withIndex("by_active", (q) => q.eq("isActive", isActive))
+        .order("desc")
+        .paginate({ cursor, numItems: limit + 1 });
+      
+      return processPage(page, limit, args);
     }
-    
-    // Order by createdAt desc (newest first)
-    const orderedQuery = queryBuilder.order("desc");
-    
-    // Apply cursor for pagination
-    const paginatedQuery = args.cursor
-      ? orderedQuery.paginate({ cursor: args.cursor, numItems: limit + 1 })
-      : orderedQuery.paginate({ numItems: limit + 1 });
-    
-    const page = await paginatedQuery;
-    
-    // Filter in-memory for price range (since we can't do range on secondary index)
-    let vehicles = page.items;
-    
-    if (args.minPrice !== undefined) {
-      vehicles = vehicles.filter((v: { pricePerDay: number }) => v.pricePerDay >= args.minPrice!);
-    }
-    if (args.maxPrice !== undefined) {
-      vehicles = vehicles.filter((v: { pricePerDay: number }) => v.pricePerDay <= args.maxPrice!);
-    }
-    
-    // Sort: featured first, then by createdAt desc
-    vehicles.sort((a: { isFeatured: boolean; createdAt: number }, b: { isFeatured: boolean; createdAt: number }) => {
-      if (b.isFeatured !== a.isFeatured) {
-        return b.isFeatured ? 1 : -1;
-      }
-      return b.createdAt - a.createdAt;
-    });
-    
-    const hasMore = vehicles.length > limit;
-    if (hasMore) {
-      vehicles = vehicles.slice(0, limit);
-    }
-    
-    return {
-      vehicles,
-      nextCursor: hasMore ? page.continueCursor : undefined,
-      hasMore,
-    };
   },
 });
+
+function processPage(page: { data: Vehicle[]; continueCursor?: string }, limit: number, args: { minPrice?: number; maxPrice?: number }) {
+  // Filter in-memory for price range (since we can't do range on secondary index)
+  let vehicles: Vehicle[] = page.data;
+  
+  if (args.minPrice !== undefined) {
+    vehicles = vehicles.filter((v: Vehicle) => v.pricePerDay >= args.minPrice!);
+  }
+  if (args.maxPrice !== undefined) {
+    vehicles = vehicles.filter((v: Vehicle) => v.pricePerDay <= args.maxPrice!);
+  }
+  
+  // Sort: featured first, then by createdAt desc
+  vehicles.sort((a: Vehicle, b: Vehicle) => {
+    if (b.isFeatured !== a.isFeatured) {
+      return b.isFeatured ? 1 : -1;
+    }
+    return b.createdAt - a.createdAt;
+  });
+  
+  const hasMore = vehicles.length > limit;
+  if (hasMore) {
+    vehicles = vehicles.slice(0, limit);
+  }
+  
+  return {
+    vehicles,
+    nextCursor: hasMore ? page.continueCursor : undefined,
+    hasMore,
+  };
+}
 
 export const getVehicle = query({
   args: { vehicleId: v.id("vehicles") },

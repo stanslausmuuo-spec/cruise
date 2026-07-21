@@ -273,7 +273,7 @@ export default defineSchema({
     .index("by_checkout_request_id", ["checkoutRequestId"]),
 
   otp_verifications: defineTable({
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
     email: v.string(),
     otp: v.string(),
     type: v.union(v.literal("email_verification"), v.literal("password_reset")),

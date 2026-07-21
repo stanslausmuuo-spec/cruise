@@ -278,7 +278,7 @@ export const checkOut = mutation({
     if (!booking) throw new Error("Booking not found");
     if (booking.guestId !== user._id) throw new Error("Not authorized");
 
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       checkOutTime: Date.now(),
       checkOutPhotos: args.photos,
     };

@@ -39,7 +39,7 @@ interface GeoJSONFeature {
     type: "Point";
     coordinates: [number, number];
   };
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
 }
 
 interface ClusterProperties {
@@ -208,17 +208,21 @@ map.addSource("vehicles", {
       map.on("click", "clusters", (e) => {
         const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
         if (!features.length) return;
-        const cluster = features[0] as unknown as ClusterFeature;
+        const cluster = features[0];
+        if (!cluster.properties) return;
         const clusterId = cluster.properties.cluster_id;
         
-        const source = map.getSource("vehicles") as any;
-        source?.getClusterExpansionZoom(clusterId, (err: Error | null, zoom: number | undefined) => {
-          if (err || !zoom) return;
-          map.easeTo({
-            center: (features[0].geometry as any).coordinates as [number, number],
-            zoom,
+        const source = map.getSource("vehicles");
+        if (source && "getClusterExpansionZoom" in source) {
+          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+            if (err || !zoom) return;
+            const coords = (features[0].geometry as unknown as { coordinates: [number, number] }).coordinates;
+            map.easeTo({
+              center: coords,
+              zoom,
+            });
           });
-        });
+        }
       });
 
       // Click on vehicle
@@ -271,9 +275,9 @@ map.addSource("vehicles", {
       },
     }));
 
-    const source = mapRef.current.getSource("vehicles");
-    if (source) {
-      (source as any).setData({
+    const source = mapRef.current?.getSource("vehicles");
+    if (source && "setData" in source) {
+      source.setData({
         type: "FeatureCollection",
         features,
       });

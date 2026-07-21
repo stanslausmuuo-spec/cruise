@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
+import { Id } from "convex/_generated/dataModel";
 import { generateOTP } from "@/lib/email";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -44,9 +45,9 @@ export async function POST(request: Request) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Store OTP in Convex
-    const userId = user?._id || "pending";
+    const userId = user?._id; // undefined for new users (email_verification)
     await convex.mutation(api.otp.createOTP, {
-      userId: userId as any,
+      userId,
       email,
       otp,
       type,

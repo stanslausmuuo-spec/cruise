@@ -68,5 +68,3 @@ export function TrustStrip() {
     </div>
   );
 }
-
-import { motion } from "framer-motion";

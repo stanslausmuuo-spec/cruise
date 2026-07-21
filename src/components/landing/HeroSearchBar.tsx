@@ -108,9 +108,8 @@ export function HeroSearchBar() {
             </svg>
             Find Cars
           </Button>
-</div>
+        </div>
       </div>
-    </div>
-  </form>
+    </form>
   );
 }

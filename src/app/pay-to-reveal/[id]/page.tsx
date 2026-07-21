@@ -9,14 +9,15 @@ import { BackLink } from "@/components/ui/back-link";
 import { PayToRevealFlow } from "@/components/payments/pay-to-reveal-flow";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { ArrowRight } from "lucide-react";
+import type { Id } from "convex/_generated/dataModel";
 
 export default function PayToRevealPage() {
   const params = useParams();
-  const vehicleId = params.id as string;
+  const vehicleId = params.id as Id<"vehicles">;
   const currentUser = useQuery(api.auth.getMe);
   const vehicle = useQuery(
     api.vehicles.getVehicle,
-    vehicleId ? { vehicleId: vehicleId as any } : "skip"
+    vehicleId ? { vehicleId } : "skip"
   );
 
   if (vehicle === undefined || currentUser === undefined) {
