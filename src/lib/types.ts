@@ -38,6 +38,7 @@ export interface Vehicle {
   location: { lat: number; lng: number };
   address: string;
   images: string[];
+  blurDataUrls?: string[];
   description: string;
   features?: string[];
   isVerified: boolean;

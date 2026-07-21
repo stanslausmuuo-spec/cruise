@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
+import { api } from "./_generated/api";
 
 export const createBooking = mutation({
   args: {
@@ -131,6 +132,16 @@ export const confirmBookingPayment = mutation({
       await ctx.db.patch(transaction._id, { status: "completed" });
     }
 
+    const vehicle = await ctx.db.get(booking.vehicleId);
+    if (vehicle) {
+      await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+        userId: vehicle.ownerId,
+        title: "New Booking!",
+        body: `Your ${vehicle.year} ${vehicle.make} ${vehicle.model} has been booked.`,
+        url: "/dashboard/host/vehicles",
+      });
+    }
+
     return { success: true };
   },
 });
@@ -181,6 +192,13 @@ export const cancelPendingBooking = mutation({
     if (transaction) {
       await ctx.db.patch(transaction._id, { status: "failed" });
     }
+
+    await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+      userId: booking.hostId,
+      title: "Booking Cancelled",
+      body: "A pending booking for your vehicle has been cancelled.",
+      url: "/dashboard/host/vehicles",
+    });
 
     return { success: true };
   },
@@ -289,6 +307,13 @@ export const checkIn = mutation({
       checkInTime: Date.now(),
       checkInPhotos: args.photos,
     });
+
+    await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+      userId: booking.hostId,
+      title: "Vehicle Checked In",
+      body: "Your guest has checked in. The booking is now active.",
+      url: `/dashboard/host/vehicles`,
+    });
   },
 });
 
@@ -318,5 +343,20 @@ export const checkOut = mutation({
     }
 
     await ctx.db.patch(args.bookingId, updates);
+
+    const notifyUserId = args.hasDamage ? booking.hostId : booking.guestId;
+    const notifyTitle = args.hasDamage
+      ? "Dispute Opened"
+      : "Booking Completed";
+    const notifyBody = args.hasDamage
+      ? "A check-out reported damage. A dispute has been opened."
+      : "The booking has been completed successfully.";
+
+    await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+      userId: notifyUserId,
+      title: notifyTitle,
+      body: notifyBody,
+      url: `/dashboard/renter/trips`,
+    });
   },
 });

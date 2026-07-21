@@ -23,15 +23,12 @@ const navLinks = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const isLanding = pathname === "/";
   const { theme, setTheme } = useTheme();
   const { signOut } = useAuthActions();
 
   const currentUser = useQuery(api.auth.getMe);
-
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -79,8 +76,7 @@ export function Navbar() {
             </div>
 
             <div className="hidden md:flex items-center gap-3">
-              {mounted && (
-                <button
+              <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                   className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                   aria-label="Toggle theme"
@@ -91,7 +87,6 @@ export function Navbar() {
                     <Moon className="h-4 w-4 text-charcoal" />
                   )}
                 </button>
-              )}
 
               {isLoggedIn ? (
                 <>
@@ -215,15 +210,13 @@ export function Navbar() {
                     </>
                   )}
                 </div>
-                {mounted && (
-                  <button
+                <button
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                     className="flex items-center gap-2 text-sm text-charcoal/60 dark:text-cream/60 mt-2"
                   >
                     {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                     {theme === "dark" ? "Light Mode" : "Dark Mode"}
                   </button>
-                )}
               </div>
             </div>
           </motion.div>

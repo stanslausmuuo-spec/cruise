@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
+import type { Doc } from "convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -31,8 +32,8 @@ export default function VehiclesPage() {
     maxPrice: "",
   });
   const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const vehiclePagesRef = useRef<Doc<"vehicles">[]>([]);
 
   const queryArgs = {
     type: filters.types.length === 1 ? filters.types[0] as VehicleType : undefined,
@@ -56,14 +57,13 @@ export default function VehiclesPage() {
     });
     setSearch("");
     setCursor(undefined);
+    vehiclePagesRef.current = [];
   }, []);
 
   const loadMore = useCallback(() => {
     if (!result?.nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
     setCursor(result.nextCursor);
-    // The query will automatically refetch with new cursor
-    // We need a small delay to let the state update
     setTimeout(() => setIsLoadingMore(false), 100);
   }, [result?.nextCursor, isLoadingMore]);
 
@@ -75,7 +75,16 @@ export default function VehiclesPage() {
     (filters.minPrice ? 1 : 0) +
     (filters.maxPrice ? 1 : 0);
 
-  const vehicles = result?.vehicles ?? [];
+  const vehicles = useMemo(() => {
+    if (result === undefined) return [];
+    if (cursor === undefined) {
+      vehiclePagesRef.current = result.vehicles;
+    } else {
+      vehiclePagesRef.current = [...vehiclePagesRef.current, ...result.vehicles];
+    }
+    return vehiclePagesRef.current;
+  }, [result, cursor]);
+
   const filtered = useMemo(() => {
     return vehicles.filter((v: typeof vehicles[0]) => {
       const matchesSearch =

@@ -40,6 +40,24 @@ export default function NewVehiclePage() {
   });
   const [newFeature, setNewFeature] = useState("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [blurDataUrls, setBlurDataUrls] = useState<string[]>([]);
+
+  function generateBlurDataUrl(file: File): Promise<string> {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new window.Image();
+
+      img.onload = () => {
+        canvas.width = 20;
+        canvas.height = 20;
+        ctx?.drawImage(img, 0, 0, 20, 20);
+        resolve(canvas.toDataURL("image/jpeg", 0.1));
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  }
 
 useEffect(() => {
     if (currentUser === null) {
@@ -94,6 +112,7 @@ useEffect(() => {
         description: form.description,
         features: form.features.length > 0 ? form.features : undefined,
         images: uploadedImages.length > 0 ? uploadedImages : undefined,
+        blurDataUrls: blurDataUrls.length > 0 ? blurDataUrls : undefined,
       });
       toast("success", "Vehicle listed!", "Your vehicle has been submitted for review");
       router.push("/dashboard/host/vehicles");
@@ -125,7 +144,7 @@ useEffect(() => {
               <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
               <div>
                 <p className="font-medium text-red-600 dark:text-red-400">Please sign in to list a vehicle</p>
-                <p className="text-red-500/80 dark:text-red-400/80 mt-1">You'll be redirected to login...</p>
+                <p className="text-red-500/80 dark:text-red-400/80 mt-1">You&apos;ll be redirected to login...</p>
               </div>
             </div>
           </div>
@@ -235,11 +254,18 @@ useEffect(() => {
                   accept="image/png,image/jpeg,image/webp"
                   maxFiles={10}
                   maxSizeMB={10}
-                  onFilesChange={(fileStates) => {
+                  onFilesChange={async (fileStates) => {
                     const validImages = fileStates
                       .filter((f) => f.storageId && !f.error)
                       .map((f) => f.storageId!);
                     setUploadedImages(validImages);
+
+                    const blurUrls = await Promise.all(
+                      fileStates
+                        .filter((f) => f.file && !f.error)
+                        .map((f) => generateBlurDataUrl(f.file!))
+                    );
+                    setBlurDataUrls(blurUrls);
                   }}
                 />
 

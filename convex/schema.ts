@@ -50,6 +50,7 @@ export default defineSchema({
     }),
     address: v.string(),
     images: v.array(v.string()),
+    blurDataUrls: v.optional(v.array(v.string())),
     description: v.string(),
     features: v.optional(v.array(v.string())),
     isVerified: v.boolean(),
@@ -271,6 +272,17 @@ export default defineSchema({
     .index("by_active", ["active"])
     .index("by_vehicle", ["vehicleId"])
     .index("by_checkout_request_id", ["checkoutRequestId"]),
+
+  push_subscriptions: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(),
+    keys: v.object({
+      p256dh: v.string(),
+      auth: v.string(),
+    }),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
 
   otp_verifications: defineTable({
     userId: v.optional(v.id("users")),

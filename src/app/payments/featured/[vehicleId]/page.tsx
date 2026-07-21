@@ -35,6 +35,37 @@ export default function FeaturedListingPage() {
   const [pollCount, setPollCount] = useState(0);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (step !== "polling" || !checkoutRequestId) return;
+
+    const pollInterval = setInterval(async () => {
+      setPollCount((c) => {
+        if (c > 30) {
+          clearInterval(pollInterval);
+          setStep("error");
+          setError("Payment timed out. Please try again.");
+        }
+        return c + 1;
+      });
+
+      try {
+        const response = await fetch(`/api/payments/featured/status?checkoutRequestId=${checkoutRequestId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.activated) {
+            clearInterval(pollInterval);
+            setStep("success");
+            toast("success", "Featured Listing Activated!", "Your vehicle is now featured for 7 days");
+          }
+        }
+      } catch {
+        // Keep polling
+      }
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, [step, checkoutRequestId, toast]);
+
   if (vehicle === undefined || currentUser === undefined) {
     return (
       <div className="min-h-screen pt-20 pb-16 px-4">
@@ -106,36 +137,6 @@ export default function FeaturedListingPage() {
       setError(err instanceof Error ? err.message : "Failed to initiate payment");
     }
   };
-
-  useEffect(() => {
-    if (step !== "polling") return;
-
-    const pollInterval = setInterval(async () => {
-      setPollCount((c) => c + 1);
-      if (pollCount > 30) {
-        clearInterval(pollInterval);
-        setStep("error");
-        setError("Payment timed out. Please try again.");
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/payments/featured/status?checkoutRequestId=${checkoutRequestId}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.activated) {
-            clearInterval(pollInterval);
-            setStep("success");
-            toast("success", "Featured Listing Activated!", "Your vehicle is now featured for 7 days");
-          }
-        }
-      } catch {
-        // Keep polling
-      }
-    }, 5000);
-
-    return () => clearInterval(pollInterval);
-  }, [step, checkoutRequestId, pollCount, toast]);
 
   // Render step-specific content
   const renderStepContent = () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
@@ -11,7 +12,15 @@ import { staggerContainer, fadeUp } from "@/lib/animations";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Wallet, TrendingUp, Clock, CreditCard } from "lucide-react";
 
-export default function HostEarningsPage() {
+function EarningsSkeleton() {
+  return (
+    <div className="min-h-screen pt-20 pb-16 px-4">
+      <SkeletonScreen type="dashboard" />
+    </div>
+  );
+}
+
+function EarningsContent() {
   const currentUser = useQuery(api.auth.getMe);
   const hostEarnings = useQuery(
     api.payments.getHostEarnings,
@@ -98,5 +107,13 @@ export default function HostEarningsPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function HostEarningsPage() {
+  return (
+    <Suspense fallback={<EarningsSkeleton />}>
+      <EarningsContent />
+    </Suspense>
   );
 }

@@ -1,116 +1,198 @@
-import { internalMutation } from "./_generated/server";
+import { mutation } from "./_generated/server";
+import { getCurrentUser } from "./lib/auth";
+import { v } from "convex/values";
 
-export const seed = internalMutation({
-  handler: async (ctx) => {
-    const existingUsers = await ctx.db.query("users").collect();
-    if (existingUsers.length > 0) return;
+const sampleVehicles = [
+  {
+    make: "Toyota",
+    model: "RAV4",
+    year: 2022,
+    type: "suv" as const,
+    transmission: "automatic" as const,
+    fuelType: "petrol" as const,
+    seats: 5,
+    pricePerDay: 4500,
+    description: "Reliable and comfortable SUV perfect for weekend getaways and family trips around Nairobi and beyond.",
+    address: "Westlands, Nairobi",
+    location: { lat: -1.2676, lng: 36.8036 },
+    images: [
+      "https://images.unsplash.com/photo-1568844293986-8d0400f4745b?w=800",
+      "https://images.unsplash.com/photo-1581540222194-0def2dda95b7?w=800",
+    ],
+    features: ["Air Conditioning", "Bluetooth", "Backup Camera", "USB Charging"],
+    isFeatured: true,
+    isActive: true,
+    isVerified: true,
+  },
+  {
+    make: "Mercedes-Benz",
+    model: "C200",
+    year: 2023,
+    type: "luxury" as const,
+    transmission: "automatic" as const,
+    fuelType: "petrol" as const,
+    seats: 5,
+    pricePerDay: 12000,
+    description: "Elegant luxury sedan with premium leather interior, perfect for business travel and special occasions.",
+    address: "Karen, Nairobi",
+    location: { lat: -1.3191, lng: 36.7074 },
+    images: [
+      "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800",
+      "https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800",
+    ],
+    features: ["Leather Seats", "Air Conditioning", "Premium Sound", "Sunroof"],
+    isFeatured: true,
+    isActive: true,
+    isVerified: true,
+  },
+  {
+    make: "Subaru",
+    model: "Forester",
+    year: 2021,
+    type: "suv" as const,
+    transmission: "automatic" as const,
+    fuelType: "petrol" as const,
+    seats: 5,
+    pricePerDay: 5500,
+    description: "Versatile all-wheel-drive SUV ideal for both city driving and adventures to Nanyuki or the Maasai Mara.",
+    address: "Kilimani, Nairobi",
+    location: { lat: -1.292, lng: 36.777 },
+    images: [
+      "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=800",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800",
+    ],
+    features: ["All-Wheel Drive", "Air Conditioning", "Bluetooth", "Roof Rails"],
+    isFeatured: false,
+    isActive: true,
+    isVerified: true,
+  },
+  {
+    make: "Nissan",
+    model: "X-Trail",
+    year: 2022,
+    type: "suv" as const,
+    transmission: "automatic" as const,
+    fuelType: "diesel" as const,
+    seats: 7,
+    pricePerDay: 6500,
+    description: "Spacious 7-seater diesel SUV with excellent fuel economy. Great for family trips and group travel.",
+    address: "CBD, Nairobi",
+    location: { lat: -1.2864, lng: 36.8172 },
+    images: [
+      "https://images.unsplash.com/photo-1606611013016-969c19ba27d5?w=800",
+      "https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=800",
+    ],
+    features: ["7 Seats", "Diesel Engine", "Air Conditioning", "Bluetooth", "Cruise Control"],
+    isFeatured: false,
+    isActive: true,
+    isVerified: true,
+  },
+  {
+    make: "Honda",
+    model: "CR-V",
+    year: 2023,
+    type: "suv" as const,
+    transmission: "automatic" as const,
+    fuelType: "petrol" as const,
+    seats: 5,
+    pricePerDay: 5000,
+    description: "Modern and fuel-efficient SUV with advanced safety features. Smooth ride for Nairobi commute or weekend escapes.",
+    address: "Mombasa Road, Nairobi",
+    location: { lat: -1.2833, lng: 36.8333 },
+    images: [
+      "https://images.unsplash.com/photo-1568844293986-8d0400f4745b?w=800",
+      "https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800",
+    ],
+    features: ["Honda Sensing", "Air Conditioning", "Bluetooth", "Apple CarPlay"],
+    isFeatured: true,
+    isActive: true,
+    isVerified: true,
+  },
+  {
+    make: "BMW",
+    model: "X5",
+    year: 2022,
+    type: "luxury" as const,
+    transmission: "automatic" as const,
+    fuelType: "diesel" as const,
+    seats: 5,
+    pricePerDay: 15000,
+    description: "Premium luxury SUV with powerful diesel engine and executive comfort. Perfect for airport transfers and VIP travel.",
+    address: "Lavington, Nairobi",
+    location: { lat: -1.2763, lng: 36.7697 },
+    images: [
+      "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800",
+      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800",
+    ],
+    features: ["Leather Seats", "Panoramic Sunroof", "Harman Kardon Sound", "Heated Seats", "Adaptive Cruise"],
+    isFeatured: true,
+    isActive: true,
+    isVerified: true,
+  },
+  {
+    make: "Toyota",
+    model: "Land Cruiser Prado",
+    year: 2021,
+    type: "suv" as const,
+    transmission: "automatic" as const,
+    fuelType: "diesel" as const,
+    seats: 7,
+    pricePerDay: 8000,
+    description: "The iconic Prado — rugged, reliable, and perfect for safari trips to Tsavo, Amboseli, or the northern frontier.",
+    address: "South B, Nairobi",
+    location: { lat: -1.2975, lng: 36.8392 },
+    images: [
+      "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=800",
+      "https://images.unsplash.com/photo-1594611606858-a6dbe0a49d8c?w=800",
+    ],
+    features: ["4WD", "7 Seats", "Air Conditioning", "Diff Lock", "Roof Rack", "Snorkel"],
+    isFeatured: true,
+    isActive: true,
+    isVerified: true,
+  },
+  {
+    make: "Toyota",
+    model: "Axio",
+    year: 2020,
+    type: "sedan" as const,
+    transmission: "automatic" as const,
+    fuelType: "petrol" as const,
+    seats: 5,
+    pricePerDay: 3000,
+    description: "Economical and compact sedan perfect for daily commutes and city errands. Excellent fuel efficiency.",
+    address: "Eastleigh, Nairobi",
+    location: { lat: -1.2619, lng: 36.8513 },
+    images: [
+      "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800",
+      "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800",
+    ],
+    features: ["Air Conditioning", "Bluetooth", "Fuel Efficient"],
+    isFeatured: false,
+    isActive: true,
+    isVerified: true,
+  },
+];
 
-    const hostId = await ctx.db.insert("users", {
-      name: "James Mwangi",
-      email: "james@example.com",
-      phone: "+254712345678",
-      roles: ["host"],
-      verified: true,
-      kycStatus: "approved",
-      rating: 4.9,
-      reviewCount: 42,
-      theme: "system",
-      bio: "Premium car enthusiast. All vehicles well maintained.",
-      location: "Nairobi, Kenya",
-      createdAt: Date.now(),
-    });
+export const seedVehicles = mutation({
+  args: {
+    ownerId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Admin only");
 
-    const guestId = await ctx.db.insert("users", {
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "+254723456789",
-      roles: ["renter", "host"],
-      verified: true,
-      kycStatus: "approved",
-      rating: 4.8,
-      reviewCount: 15,
-      theme: "system",
-      createdAt: Date.now(),
-    });
+    const existing = await ctx.db.query("vehicles").first();
+    if (existing) return { message: "Already seeded" };
 
-    const adminId = await ctx.db.insert("users", {
-      name: "Admin User",
-      email: "admin@cruise.com",
-      phone: "+254700000000",
-      roles: ["admin"],
-      verified: true,
-      kycStatus: "approved",
-      rating: 0,
-      reviewCount: 0,
-      theme: "system",
-      createdAt: Date.now(),
-    });
-
-    const vehicleIds = await Promise.all(
-      [
-        { make: "Mercedes-Benz", model: "E-Class", year: 2023, type: "luxury" as const, pricePerDay: 8500 },
-        { make: "Range Rover", model: "Velar", year: 2024, type: "suv" as const, pricePerDay: 12000 },
-        { make: "BMW", model: "7 Series", year: 2024, type: "luxury" as const, pricePerDay: 15000 },
-        { make: "Porsche", model: "Cayenne", year: 2023, type: "suv" as const, pricePerDay: 18000 },
-        { make: "Toyota", model: "Land Cruiser", year: 2023, type: "suv" as const, pricePerDay: 9500 },
-        { make: "Lexus", model: "LS 500", year: 2024, type: "luxury" as const, pricePerDay: 16000 },
-      ].map((v) =>
-        ctx.db.insert("vehicles", {
-          ownerId: hostId,
-          ...v,
-          transmission: "automatic",
-          fuelType: "petrol",
-          seats: 5,
-          currency: "KES",
-          location: { lat: -1.2921, lng: 36.8219 },
-          address: "Nairobi, Kenya",
-          images: [],
-          description: `Premium ${v.make} ${v.model} available for rent. Well maintained and verified.`,
-          features: ["Bluetooth", "Climate Control", "GPS"],
-          isVerified: true,
-          isFeatured: v.make === "Mercedes-Benz" || v.make === "Range Rover",
-          featuredExpiresAt: v.make === "Mercedes-Benz" ? Date.now() + 30 * 86400000 : undefined,
-          isActive: true,
-          createdAt: Date.now(),
-        })
-      )
-    );
-
-    await ctx.db.insert("bookings", {
-      vehicleId: vehicleIds[0],
-      guestId: guestId,
-      hostId: hostId,
-      startDate: Date.now() + 86400000,
-      endDate: Date.now() + 4 * 86400000,
-      totalAmount: 29325,
-      platformFee: 3825,
-      depositAmount: 8798,
-      status: "confirmed",
-      paymentStatus: "paid",
-      mobileMoneyRef: "MPESA-REF-001",
-      checkInPhotos: [],
-      checkOutPhotos: [],
-      createdAt: Date.now(),
-    });
-
-    const now = Date.now();
-    for (let i = 0; i < 3; i++) {
-      const startDate = now + (i + 10) * 86400000;
-      await ctx.db.insert("availability", {
-        vehicleId: vehicleIds[0],
-        date: startDate,
-        isAvailable: false,
-      });
-      await ctx.db.insert("availability", {
-        vehicleId: vehicleIds[0],
-        date: startDate + 86400000,
-        isAvailable: false,
-      });
-      await ctx.db.insert("availability", {
-        vehicleId: vehicleIds[0],
-        date: startDate + 2 * 86400000,
-        isAvailable: false,
+    for (const vehicle of sampleVehicles) {
+      await ctx.db.insert("vehicles", {
+        ...vehicle,
+        ownerId: args.ownerId,
+        currency: "KES",
+        createdAt: Date.now(),
       });
     }
+
+    return { message: `Seeded ${sampleVehicles.length} vehicles` };
   },
 });

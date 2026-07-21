@@ -47,6 +47,7 @@ export const createVehicle = mutation({
     description: v.string(),
     features: v.optional(v.array(v.string())),
     images: v.optional(v.array(v.string())),
+    blurDataUrls: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -79,6 +80,7 @@ export const createVehicle = mutation({
       currency: "KES",
       location,
       images: args.images ?? [],
+      blurDataUrls: args.blurDataUrls,
       isVerified: false,
       isFeatured: false,
       isActive: true,
@@ -246,6 +248,7 @@ export const updateVehicle = mutation({
     description: v.optional(v.string()),
     features: v.optional(v.array(v.string())),
     images: v.optional(v.array(v.string())),
+    blurDataUrls: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -288,6 +291,7 @@ export const updateVehicle = mutation({
     if (args.description !== undefined) updateData.description = args.description;
     if (args.features !== undefined) updateData.features = args.features;
     if (args.images !== undefined) updateData.images = args.images;
+    if (args.blurDataUrls !== undefined) updateData.blurDataUrls = args.blurDataUrls;
 
     await ctx.db.patch(args.vehicleId, updateData);
     return args.vehicleId;

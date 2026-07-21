@@ -20,6 +20,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ email: "", password: "" });
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.id]: e.target.value }));
@@ -52,6 +53,8 @@ export default function LoginPage() {
       formData.append("email", form.email);
       formData.append("password", form.password);
       formData.append("flow", "signIn");
+
+      localStorage.setItem("cruise-remember-me", rememberMe ? "true" : "false");
 
       await signIn("password", formData);
 
@@ -108,15 +111,14 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between text-xs">
               <label className="flex items-center gap-2 text-charcoal/60 dark:text-cream/60">
-                <input type="checkbox" className="rounded border-charcoal/20" />
+                <input
+                  type="checkbox"
+                  className="rounded border-charcoal/20"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 Remember me
               </label>
-              <Link
-                href="/auth/forgot-password"
-                className="text-brand-gold-400 hover:underline"
-              >
-                Forgot password?
-              </Link>
             </div>
 
             <Button

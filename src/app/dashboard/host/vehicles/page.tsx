@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
@@ -13,7 +14,15 @@ import { staggerContainer, fadeUp } from "@/lib/animations";
 import { formatCurrency } from "@/lib/utils";
 import { Plus, Car, Edit3, Eye } from "lucide-react";
 
-export default function HostVehiclesPage() {
+function HostVehiclesSkeleton() {
+  return (
+    <div className="min-h-screen pt-20 pb-16 px-4">
+      <SkeletonScreen type="search" />
+    </div>
+  );
+}
+
+function HostVehiclesContent() {
   const currentUser = useQuery(api.auth.getMe);
   const vehicles = useQuery(
     api.vehicles.getOwnerVehicles,
@@ -115,5 +124,13 @@ export default function HostVehiclesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function HostVehiclesPage() {
+  return (
+    <Suspense fallback={<HostVehiclesSkeleton />}>
+      <HostVehiclesContent />
+    </Suspense>
   );
 }

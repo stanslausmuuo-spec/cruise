@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
+import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 export const sendMessage = mutation({
   args: {
@@ -40,6 +42,13 @@ export const sendMessage = mutation({
       data: { messageId, senderId: user._id },
       read: false,
       createdAt: Date.now(),
+    });
+
+    await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+      userId: args.receiverId,
+      title: "New Message",
+      body: args.content.slice(0, 100),
+      url: "/messages",
     });
 
     return messageId;
@@ -161,7 +170,7 @@ export const getConversations = query({
     // Batch-fetch partner profiles to avoid N+1 queries
     const partnerIds = [...new Set(conversations.map((c) => c.partnerId))];
     const partnerProfiles = await Promise.all(
-      partnerIds.map((id) => ctx.db.get(id as any))
+      partnerIds.map((id) => ctx.db.get(id as Id<"users">))
     );
     const partnerMap = new Map(
       partnerIds.map((id, i) => [id, partnerProfiles[i]])

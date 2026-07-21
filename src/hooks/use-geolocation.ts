@@ -10,18 +10,15 @@ interface GeolocationState {
 }
 
 export function useGeolocation() {
-  const [state, setState] = useState<GeolocationState>({
-    lat: null,
-    lng: null,
-    error: null,
-    loading: true,
+  const [state, setState] = useState<GeolocationState>(() => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      return { lat: null, lng: null, error: "Geolocation not supported", loading: false };
+    }
+    return { lat: null, lng: null, error: null, loading: true };
   });
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setState((prev) => ({ ...prev, error: "Geolocation not supported", loading: false }));
-      return;
-    }
+    if (state.error) return;
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -41,7 +38,7 @@ export function useGeolocation() {
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
     );
-  }, []);
+  }, [state.error]);
 
   return state;
 }

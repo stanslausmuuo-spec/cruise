@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
@@ -7,6 +8,7 @@ import Link from "next/link";
 import { StatCard } from "@/components/ui/stat-card";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { staggerContainer, fadeUp } from "@/lib/animations";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import {
   Calendar,
   MessageSquare,
@@ -14,9 +16,78 @@ import {
   Plus,
   Search,
   Settings,
+  Bell,
+  BellOff,
 } from "lucide-react";
 
-export default function DashboardPage() {
+function DashboardSkeleton() {
+  return (
+    <div className="min-h-screen pt-20 pb-16 px-4">
+      <SkeletonScreen type="dashboard" />
+    </div>
+  );
+}
+
+function PushNotificationToggle() {
+  const { isSupported, permission, isSubscribed, loading, subscribe, unsubscribe } =
+    usePushNotifications();
+  const [actionLoading, setActionLoading] = useState(false);
+
+  if (!isSupported || loading) return null;
+
+  const handleToggle = async () => {
+    setActionLoading(true);
+    if (isSubscribed) {
+      await unsubscribe();
+    } else {
+      await subscribe();
+    }
+    setActionLoading(false);
+  };
+
+  return (
+    <motion.div variants={fadeUp}>
+      <div className="glass rounded-premium p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {isSubscribed ? (
+            <Bell className="h-5 w-5 text-brand-gold-400" />
+          ) : (
+            <BellOff className="h-5 w-5 text-charcoal/40 dark:text-cream/40" />
+          )}
+          <div>
+            <p className="text-sm font-medium text-charcoal dark:text-cream">
+              Push Notifications
+            </p>
+            <p className="text-xs text-charcoal/50 dark:text-cream/50">
+              {permission === "granted"
+                ? isSubscribed
+                  ? "Enabled"
+                  : "Paused"
+                : permission === "denied"
+                  ? "Blocked by browser"
+                  : "Not enabled"}
+            </p>
+          </div>
+        </div>
+        {permission !== "denied" && (
+          <button
+            onClick={handleToggle}
+            disabled={actionLoading}
+            className="text-xs font-medium px-3 py-1.5 rounded-pill transition-colors duration-200 bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 text-white hover:brightness-110 disabled:opacity-50"
+          >
+            {actionLoading
+              ? "..."
+              : isSubscribed
+                ? "Disable"
+                : "Enable"}
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function DashboardContent() {
   const currentUser = useQuery(api.auth.getMe);
   const bookings = useQuery(
     api.bookings.getUserBookings,
@@ -134,8 +205,20 @@ export default function DashboardPage() {
               </Link>
             </div>
           </motion.div>
+
+          <motion.div variants={fadeUp}>
+            <PushNotificationToggle />
+          </motion.div>
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

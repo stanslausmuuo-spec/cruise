@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
@@ -86,11 +87,12 @@ function FeaturedCarsCarousel({ limit = 3 }: FeaturedCarsCarouselProps) {
                 <Link href={`/vehicles/${vehicle._id}`}>
                   <Card className="group overflow-hidden h-full flex flex-col">
                     <div className="relative h-56 overflow-hidden">
-                      <img
+                      <Image
                         src={vehicle.images[0] || "/placeholder-car.jpg"}
                         alt={`${vehicle.make} ${vehicle.model}`}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                       <div className="absolute top-3 left-3 flex gap-2">
                         <Badge variant="featured">Featured</Badge>

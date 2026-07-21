@@ -42,8 +42,9 @@ export async function middleware(request: NextRequest) {
 
   const protectedPaths = ["/dashboard", "/vehicles/new", "/messages"];
   const isProtected = protectedPaths.some(p => pathname.startsWith(p));
+  const isEditPage = /^\/vehicles\/[^/]+\/edit/.test(pathname);
 
-  if (isProtected) {
+  if (isProtected || isEditPage) {
     const token = request.cookies.get("__convexAuthToken")?.value;
     if (!token) {
       const redirectUrl = encodeURIComponent(pathname);
@@ -55,5 +56,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/register", "/api/auth/:path*", "/api/mpesa/:path*", "/api/payments/:path*", "/dashboard/:path*", "/vehicles/new", "/messages"],
+  matcher: ["/admin/:path*", "/login", "/register", "/api/auth/:path*", "/api/mpesa/:path*", "/api/payments/:path*", "/dashboard/:path*", "/vehicles/new", "/vehicles/*/edit", "/messages"],
 };

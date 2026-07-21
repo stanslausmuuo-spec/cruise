@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { motion } from "framer-motion";
@@ -23,7 +24,15 @@ const statusVariant = (status: string) => {
   }
 };
 
-export default function RenterTripsPage() {
+function TripsSkeleton() {
+  return (
+    <div className="min-h-screen pt-20 pb-16 px-4">
+      <SkeletonScreen type="search" />
+    </div>
+  );
+}
+
+function TripsContent() {
   const currentUser = useQuery(api.auth.getMe);
   const bookings = useQuery(
     api.bookings.getUserBookings,
@@ -63,7 +72,7 @@ export default function RenterTripsPage() {
           >
             {trips.map((trip) => (
               <motion.div key={trip._id} variants={fadeUp}>
-                <Link href={`/bookings/${trip._id}`}>
+                <Link href={`/vehicles/${trip.vehicleId}`}>
                   <div className="glass rounded-premium p-4 flex items-center gap-4 hover:shadow-premium-hover transition-shadow cursor-pointer">
                     <div className="h-20 w-24 rounded-lg overflow-hidden shrink-0 bg-charcoal/10 dark:bg-white/10">
                       <div className="h-full w-full flex items-center justify-center text-charcoal/30 dark:text-cream/30">
@@ -94,5 +103,13 @@ export default function RenterTripsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function RenterTripsPage() {
+  return (
+    <Suspense fallback={<TripsSkeleton />}>
+      <TripsContent />
+    </Suspense>
   );
 }

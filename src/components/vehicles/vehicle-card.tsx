@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Settings, Fuel } from "lucide-react";
+import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
 import { VEHICLE_TYPE_LABELS, TRANSMISSION_LABELS, FUEL_TYPE_LABELS } from "@/lib/constants";
 import type { Vehicle } from "@/lib/types";
@@ -21,11 +22,14 @@ function VehicleCard({ vehicle, href }: VehicleCardProps) {
     <Link href={link}>
       <Card className="group h-full">
         <div className="relative h-48 overflow-hidden">
-          <img
+          <Image
             src={imageUrl}
             alt={`${vehicle.make} ${vehicle.model}`}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            placeholder={vehicle.blurDataUrls?.[0] ? "blur" : undefined}
+            blurDataURL={vehicle.blurDataUrls?.[0]}
           />
           <div className="absolute top-3 left-3">
             <Badge variant={vehicle.type === "luxury" ? "premium" : "status"}>

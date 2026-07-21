@@ -2,10 +2,15 @@
 
 import { Avatar } from "@/components/ui/avatar";
 import { Star, ShieldCheck } from "lucide-react";
-import type { User } from "@/lib/types";
 
 interface HostCardProps {
-  host: User;
+  host: {
+    name: string;
+    avatarUrl?: string;
+    rating: number;
+    reviewCount: number;
+    verified: boolean;
+  };
 }
 
 function HostCard({ host }: HostCardProps) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -15,6 +15,7 @@ import { ChevronLeft, ChevronRight, X, AlertCircle, Loader2 } from "lucide-react
 import { useToast } from "@/components/ui/toast";
 import { FileUpload } from "@/components/ui/file-upload";
 import type { VehicleType, Transmission, FuelType } from "@/lib/types";
+import type { Id } from "convex/_generated/dataModel";
 
 const steps = ["Details", "Photos", "Pricing", "Review"];
 
@@ -24,25 +25,26 @@ export default function EditVehiclePage() {
   const vehicleId = params.id as string;
   const { toast } = useToast();
   const currentUser = useQuery(api.auth.getMe);
-  const vehicle = useQuery(api.vehicles.getVehicle, { vehicleId: vehicleId as any });
+  const vehicle = useQuery(api.vehicles.getVehicle, { vehicleId: vehicleId as Id<"vehicles"> });
   const updateVehicle = useMutation(api.vehicles.updateVehicle);
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    make: "",
-    model: "",
-    year: 2024,
-    type: "sedan" as VehicleType,
-    transmission: "automatic" as Transmission,
-    fuelType: "petrol" as FuelType,
-    seats: 5,
-    pricePerDay: 0,
-    address: "",
-    description: "",
-    features: [] as string[],
-  });
+  const [localEdits, setLocalEdits] = useState<Partial<{
+    make: string;
+    model: string;
+    year: number;
+    type: VehicleType;
+    transmission: Transmission;
+    fuelType: FuelType;
+    seats: number;
+    pricePerDay: number;
+    address: string;
+    description: string;
+    features: string[];
+  }>>({});
   const [newFeature, setNewFeature] = useState("");
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [localImageEdits, setLocalImageEdits] = useState<string[] | null>(null);
+  const uploadedImages = localImageEdits ?? vehicle?.images ?? [];
 
   useEffect(() => {
     if (currentUser === null) {
@@ -50,27 +52,40 @@ export default function EditVehiclePage() {
     }
   }, [currentUser, router]);
 
-  useEffect(() => {
-    if (vehicle) {
-      setForm({
-        make: vehicle.make,
-        model: vehicle.model,
-        year: vehicle.year,
-        type: vehicle.type,
-        transmission: vehicle.transmission,
-        fuelType: vehicle.fuelType,
-        seats: vehicle.seats,
-        pricePerDay: vehicle.pricePerDay,
-        address: vehicle.address,
-        description: vehicle.description,
-        features: vehicle.features ?? [],
-      });
-      setUploadedImages(vehicle.images ?? []);
-    }
-  }, [vehicle]);
+  const form = useMemo(() => {
+    const defaults = {
+      make: "",
+      model: "",
+      year: 2024,
+      type: "sedan" as VehicleType,
+      transmission: "automatic" as Transmission,
+      fuelType: "petrol" as FuelType,
+      seats: 5,
+      pricePerDay: 0,
+      address: "",
+      description: "",
+      features: [] as string[],
+    };
+
+    const vehicleData = vehicle ? {
+      make: vehicle.make,
+      model: vehicle.model,
+      year: vehicle.year,
+      type: vehicle.type,
+      transmission: vehicle.transmission,
+      fuelType: vehicle.fuelType,
+      seats: vehicle.seats,
+      pricePerDay: vehicle.pricePerDay,
+      address: vehicle.address,
+      description: vehicle.description,
+      features: vehicle.features ?? [],
+    } : defaults;
+
+    return { ...vehicleData, ...localEdits };
+  }, [vehicle, localEdits]);
 
   const update = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) =>
-    setForm((f) => ({ ...f, [field]: value }));
+    setLocalEdits((f) => ({ ...f, [field]: value }));
 
   const addFeature = () => {
     if (newFeature.trim() && !form.features.includes(newFeature.trim())) {
@@ -97,7 +112,7 @@ export default function EditVehiclePage() {
     setLoading(true);
     try {
       await updateVehicle({
-        vehicleId: vehicleId as any,
+        vehicleId: vehicleId as Id<"vehicles">,
         make: form.make,
         model: form.model,
         year: form.year,
@@ -264,7 +279,7 @@ export default function EditVehiclePage() {
                     const validImages = fileStates
                       .filter((f) => f.storageId && !f.error)
                       .map((f) => f.storageId!);
-                    setUploadedImages(validImages);
+                    setLocalImageEdits(validImages);
                   }}
                 />
 

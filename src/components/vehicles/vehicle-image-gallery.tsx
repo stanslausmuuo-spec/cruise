@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { VEHICLE_TYPE_LABELS } from "@/lib/constants";
 import type { Vehicle } from "@/lib/types";
 
@@ -20,6 +21,17 @@ function VehicleImageGallery({ vehicle }: VehicleImageGalleryProps) {
   const next = () => setSelectedIndex((i) => (i + 1) % images.length);
   const prev = () => setSelectedIndex((i) => (i - 1 + images.length) % images.length);
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+        url: window.location.href,
+      });
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <motion.div
@@ -28,17 +40,23 @@ function VehicleImageGallery({ vehicle }: VehicleImageGalleryProps) {
         className="relative rounded-2xl overflow-hidden h-[300px] md:h-[450px]"
       >
         <AnimatePresence mode="wait">
-          <motion.img
+          <motion.div
             key={selectedIndex}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            src={images[selectedIndex]}
-            alt={`${vehicle.make} ${vehicle.model}`}
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
+            className="absolute inset-0"
+          >
+            <Image
+              src={images[selectedIndex]}
+              alt={`${vehicle.year} ${vehicle.make} ${vehicle.model} - Image ${selectedIndex + 1}`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority={true}
+            />
+          </motion.div>
         </AnimatePresence>
 
         <div className="absolute top-4 left-4">
@@ -48,10 +66,10 @@ function VehicleImageGallery({ vehicle }: VehicleImageGalleryProps) {
         </div>
 
         <div className="absolute top-4 right-4 flex gap-2">
-          <button className="glass rounded-full p-2 hover:bg-white/80 dark:hover:bg-black/80 transition-colors">
-            <Heart className="h-4 w-4 text-charcoal dark:text-cream" />
-          </button>
-          <button className="glass rounded-full p-2 hover:bg-white/80 dark:hover:bg-black/80 transition-colors">
+          <button
+            onClick={handleShare}
+            className="glass rounded-full p-2 hover:bg-white/80 dark:hover:bg-black/80 transition-colors"
+          >
             <Share2 className="h-4 w-4 text-charcoal dark:text-cream" />
           </button>
         </div>
@@ -90,10 +108,12 @@ function VehicleImageGallery({ vehicle }: VehicleImageGalleryProps) {
                   : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >
-              <img
+              <Image
                 src={img}
-                alt={`View ${i + 1}`}
-                className="w-full h-full object-cover"
+                alt={`Thumbnail ${i + 1}`}
+                fill
+                className="object-cover"
+                sizes="80px"
               />
             </button>
           ))}
