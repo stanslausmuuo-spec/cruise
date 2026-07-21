@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ShieldCheck, Camera, Lock, Headphones, BadgeCheck, MapPin, Star, Shield, Zap, Users } from "lucide-react";
 
 const trustBadges = [

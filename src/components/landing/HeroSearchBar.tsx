@@ -95,21 +95,6 @@ export function HeroSearchBar() {
             </select>
           </div>
         </div>
-
-        <div className="mt-4">
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full sm:w-auto min-w-[200px] bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 hover:from-brand-gold-500 hover:to-brand-gold-600 text-white font-semibold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M21 21l-4.35-4.35" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Find Cars
-          </Button>
-        </div>
       </div>
-    </form>
-  );
+    );
 }
