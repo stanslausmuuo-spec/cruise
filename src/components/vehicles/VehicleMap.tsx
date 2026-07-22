@@ -317,10 +317,10 @@ map.addSource("vehicles", {
         <div className="text-center p-8">
           <MapPin className="h-12 w-12 mx-auto mb-4 text-charcoal/30 dark:text-cream/30" />
           <h3 className="font-heading text-xl font-bold text-charcoal dark:text-cream mb-2">
-            Map
+            Map Not Available
           </h3>
           <p className="text-sm text-charcoal/60 dark:text-cream/60">
-            Explore available vehicles in your area.
+            Unable to load the map at this time. Please try again later.
           </p>
         </div>
       </div>
