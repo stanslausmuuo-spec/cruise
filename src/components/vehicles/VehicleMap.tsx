@@ -8,8 +8,6 @@ import { VEHICLE_TYPE_LABELS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
-
 interface Vehicle {
   _id: string;
   make: string;
@@ -88,6 +86,21 @@ export function VehicleMap({ onVehicleClick, vehicles = [] }: VehicleMapProps) {
     maxPrice: "",
   });
   const [sourceExists, setSourceExists] = useState(false);
+  const [tokenStatus, setTokenStatus] = useState<"loading" | "loaded" | "missing">("loading");
+
+  useEffect(() => {
+    fetch("/api/mapbox/token")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.token) {
+          mapboxgl.accessToken = data.token;
+          setTokenStatus("loaded");
+        } else {
+          setTokenStatus("missing");
+        }
+      })
+      .catch(() => setTokenStatus("missing"));
+  }, []);
 
   const filteredVehicles = vehicles.filter((v) => {
     if (filters.type && v.type !== filters.type) return false;
@@ -98,7 +111,7 @@ export function VehicleMap({ onVehicleClick, vehicles = [] }: VehicleMapProps) {
   });
 
   const initializeMap = useCallback(() => {
-    if (mapRef.current || !mapContainerRef.current || !mapboxgl.accessToken) return;
+    if (mapRef.current || !mapContainerRef.current || tokenStatus !== "loaded") return;
 
     const center: [number, number] = [-1.2921, 36.8219]; // Nairobi default
 
@@ -251,7 +264,13 @@ map.addSource("vehicles", {
     });
 
     mapRef.current = map;
-  }, [filteredVehicles, onVehicleClick]);
+  }, [filteredVehicles, onVehicleClick, tokenStatus]);
+
+  useEffect(() => {
+    if (tokenStatus === "loaded") {
+      initializeMap();
+    }
+  }, [tokenStatus, initializeMap]);
 
   // Update map when filters change
   useEffect(() => {
@@ -292,16 +311,16 @@ map.addSource("vehicles", {
     };
   }, []);
 
-  if (!mapboxgl.accessToken) {
+  if (tokenStatus !== "loaded") {
     return (
       <div className="h-[calc(100vh-200px)] rounded-2xl bg-charcoal/5 dark:bg-white/5 flex items-center justify-center">
         <div className="text-center p-8">
           <MapPin className="h-12 w-12 mx-auto mb-4 text-charcoal/30 dark:text-cream/30" />
           <h3 className="font-heading text-xl font-bold text-charcoal dark:text-cream mb-2">
-            Mapbox Token Required
+            Map
           </h3>
           <p className="text-sm text-charcoal/60 dark:text-cream/60">
-            Set NEXT_PUBLIC_MAPBOX_TOKEN in your environment variables
+            Explore available vehicles in your area.
           </p>
         </div>
       </div>

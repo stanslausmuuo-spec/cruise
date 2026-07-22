@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, type QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
+import { checkRateLimit } from "./lib/rateLimit";
 
 type Vehicle = Doc<"vehicles">;
 
@@ -51,6 +52,12 @@ export const createVehicle = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+    
+    const rateLimit = await checkRateLimit(ctx.db, `createVehicle:${user._id}`, 20, 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.ceil((rateLimit.resetTime - Date.now()) / 60000);
+      throw new Error(`Too many listing requests. Please try again in ${retryAfter} minute${retryAfter === 1 ? "" : "s"}.`);
+    }
     
     // Require host verification before listing
     if (!user.verified || user.kycStatus !== "approved") {
@@ -340,5 +347,18 @@ export const deleteVehicle = mutation({
     await ctx.db.delete(args.vehicleId);
     
     return { success: true };
+  },
+});
+
+export const checkMapAccess = mutation({
+  args: {
+    maxRequests: v.optional(v.number()),
+    windowMs: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    const key = user ? `map:${user._id}` : `map:anonymous`;
+    const result = await checkRateLimit(ctx.db, key, args.maxRequests ?? 30, args.windowMs ?? 60 * 60 * 1000);
+    return result;
   },
 });

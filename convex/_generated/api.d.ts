@@ -16,6 +16,7 @@ import type * as crons from "../crons.js";
 import type * as disputes from "../disputes.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_crypto from "../lib/crypto.js";
+import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as otp from "../otp.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   disputes: typeof disputes;
   "lib/auth": typeof lib_auth;
   "lib/crypto": typeof lib_crypto;
+  "lib/rateLimit": typeof lib_rateLimit;
   messages: typeof messages;
   notifications: typeof notifications;
   otp: typeof otp;
