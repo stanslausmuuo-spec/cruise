@@ -35,8 +35,8 @@ function TripsSkeleton() {
 function TripsContent() {
   const currentUser = useQuery(api.auth.getMe);
   const bookings = useQuery(
-    api.bookings.getUserBookings,
-    currentUser ? {} : "skip"
+    api.bookings.listBookings,
+    currentUser ? { role: "guest" } : "skip"
   );
 
   if (currentUser === undefined) {
@@ -47,7 +47,7 @@ function TripsContent() {
     );
   }
 
-  const trips = bookings?.asGuest || [];
+  const trips = bookings?.bookings || [];
 
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">

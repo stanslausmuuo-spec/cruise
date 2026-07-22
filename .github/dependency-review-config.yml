@@ -1,0 +1,28 @@
+# Dependency Review Configuration
+# Fail on moderate severity and above
+fail-on-severity: moderate
+
+# Allow specific vulnerabilities that are false positives or have mitigations
+allow-ghsas:
+  # Example: GHSA-xxxx-xxxx-xxxx
+
+# Ignore specific packages (use sparingly)
+allow-packages:
+  # Example: lodash@4.17.21
+
+# Severity thresholds for different package types
+severity-thresholds:
+  direct:
+    critical: 0
+    high: 0
+    moderate: 1
+  transitive:
+    critical: 0
+    high: 2
+    moderate: 5
+
+# Package allowlist for known safe packages
+allowlist:
+  # Example: 
+  # - package: lodash
+  #   versions: ["4.17.21"]

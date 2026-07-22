@@ -60,6 +60,17 @@ export const getSubscriptionsByUser = query({
 export const getSubscriptionsByUserId = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const callerEmail = identity?.email;
+    if (callerEmail) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", callerEmail))
+        .first();
+      if (!user || (user._id !== args.userId && !user.roles.includes("admin"))) {
+        return [];
+      }
+    }
     return await ctx.db
       .query("push_subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -75,10 +86,21 @@ export const removeSubscription = mutation({
       .withIndex("by_endpoint", (q) => q.eq("endpoint", args.endpoint))
       .first();
 
-    if (sub) {
-      await ctx.db.delete(sub._id);
+    if (!sub) return { success: true };
+
+    const identity = await ctx.auth.getUserIdentity();
+    const callerEmail = identity?.email;
+    if (callerEmail) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", callerEmail))
+        .first();
+      if (!user || (sub.userId !== user._id && !user.roles.includes("admin"))) {
+        throw new Error("Not authorized");
+      }
     }
 
+    await ctx.db.delete(sub._id);
     return { success: true };
   },
 });

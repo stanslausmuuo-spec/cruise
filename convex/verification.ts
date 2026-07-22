@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
+import { validateFile } from "./lib/validateFile";
 
 export const uploadDocument = mutation({
   args: {
@@ -14,6 +15,9 @@ export const uploadDocument = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+    
+    // Server-side file validation
+    await validateFile(ctx, args.fileStorageId);
     
     await ctx.db.insert("kyc_documents", {
       userId: user._id,

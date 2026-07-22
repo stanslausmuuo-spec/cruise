@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
+import { env } from "@/lib/env";
 import { generateOTP } from "@/lib/email";
 import { authRateLimit } from "@/lib/rate-limit";
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     // Check if user exists
-    const { exists: userExists, _id: userId } = await convex.query(api.auth.checkEmailExists, { email });
+    const { exists: userExists, _id: userId } = await convex.query(api.auth.checkEmailExists, { email, secret: env.MPESA_CALLBACK_SECRET });
     
     if (type === "email_verification" && userExists) {
       return NextResponse.json(

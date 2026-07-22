@@ -4,14 +4,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { ROUTES } from "@/lib/constants";
 import { registerSchema } from "@/lib/validators";
+import { setAuthTokens } from "@/lib/auth-client";
 import {
   Mail,
   Lock,
@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   Car,
   Search,
+  AlertCircle,
 } from "lucide-react";
 
 const steps = ["Account", "Profile", "Role"];
@@ -44,14 +45,14 @@ const initialForm: FormData = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { signIn } = useAuthActions();
   const updateProfile = useMutation(api.users.updateProfile);
   const registerUser = useMutation(api.auth.registerUser);
-  const currentUser = useQuery(api.auth.getMe);
   const { toast } = useToast();
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [retryAfter, setRetryAfter] = useState(0);
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -143,27 +144,45 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
+    setRateLimited(false);
     try {
-      const formData = new FormData();
-      formData.append("email", form.email);
-      formData.append("password", form.password);
-      formData.append("flow", "signUp");
-
-      await signIn("password", formData);
-
-      // Persist name, phone, and roles to the user profile
-      await registerUser({
-        name: form.name,
-        phone: form.phone,
-        roles: form.roles as ("renter" | "host")[],
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password, flow: "signUp" }),
       });
 
-      toast(
-        "success",
-        "Account created!",
-        "Welcome to Cruise. You are now signed in."
-      );
-      router.push("/");
+      if (res.status === 429) {
+        const errorData = await res.json();
+        setRateLimited(true);
+        setRetryAfter(Date.now() + 60000);
+        toast("error", "Too many attempts", errorData.error || "Please try again later.");
+        return;
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Registration failed");
+      }
+
+      const data = await res.json();
+
+      if (data.tokens?.token) {
+        setAuthTokens(data.tokens.token, data.tokens.refreshToken || "dummy");
+
+        await registerUser({
+          name: form.name,
+          phone: form.phone,
+          roles: form.roles as ("renter" | "host")[],
+        });
+
+        toast(
+          "success",
+          "Account created!",
+          "Welcome to Cruise. You are now signed in."
+        );
+        window.location.href = "/";
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
@@ -171,6 +190,11 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatTime = (ms: number) => {
+    const mins = Math.ceil((ms - Date.now()) / 60000);
+    return `${mins} minute${mins !== 1 ? "s" : ""}`;
   };
 
   return (
@@ -224,6 +248,22 @@ export default function RegisterPage() {
                   : "How will you use Cruise?"}
             </p>
           </div>
+
+          {rateLimited && (
+            <div className="mb-6 p-4 glass rounded-xl border border-amber-500/30 bg-amber-50/20 dark:bg-amber-900/10">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+                <div>
+                  <p className="font-medium text-charcoal dark:text-cream">
+                    Too many attempts
+                  </p>
+                  <p className="text-sm text-charcoal/60 dark:text-cream/60">
+                    Please wait {formatTime(retryAfter)} before trying again.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <AnimatePresence mode="wait">
@@ -377,7 +417,7 @@ export default function RegisterPage() {
               loading={loading}
               className="w-full mt-4"
               size="lg"
-              disabled={step === 2 && form.roles.length === 0}
+              disabled={rateLimited || (step === 2 && form.roles.length === 0)}
             >
               {step === 2 ? "Create Account" : "Continue"}
             </Button>

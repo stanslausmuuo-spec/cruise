@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
 import { cookies } from "next/headers";
+import { authRateLimit } from "@/lib/rate-limit";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -13,16 +14,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { contentType } = await request.json();
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!contentType || !allowedTypes.includes(contentType)) {
-      return NextResponse.json({ error: "Invalid content type" }, { status: 400 });
+    const rateLimit = authRateLimit(`upload:${ip}`);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many upload requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
-    const uploadUrl = await convex.mutation(api.storage.generateUploadUrl, { contentType });
+    const uploadUrl = await convex.mutation(api.storage.generateUploadUrl, {});
 
-    // Extract storage ID from upload URL (format: https://.../storageId)
     const storageId = uploadUrl.split("/").pop()!;
 
     return NextResponse.json({ uploadUrl, storageId });

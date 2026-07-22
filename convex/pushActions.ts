@@ -1,10 +1,10 @@
 "use node";
 
 import { v } from "convex/values";
-import { action } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import webPush from "web-push";
 
-export const sendPushToUser = action({
+export const sendPushToUser = internalAction({
   args: {
     userId: v.id("users"),
     title: v.string(),

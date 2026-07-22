@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
 export const sendMessage = mutation({
@@ -44,7 +44,7 @@ export const sendMessage = mutation({
       createdAt: Date.now(),
     });
 
-    await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+    await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
       userId: args.receiverId,
       title: "New Message",
       body: args.content.slice(0, 100),

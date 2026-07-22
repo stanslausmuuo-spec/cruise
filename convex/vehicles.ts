@@ -2,6 +2,20 @@ import { v } from "convex/values";
 import { mutation, query, type QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
+import { validateFile } from "./lib/validateFile";
+import { internal } from "./_generated/api";
+import { sanitizeDescription, sanitizeFeatures, sanitizeAddress } from "./lib/sanitize";
+
+async function logAudit(ctx: any, action: string, metadata: any) {
+  try {
+    await ctx.scheduler.runAfter(0, internal.audit.logEvent, {
+      action,
+      metadata,
+    });
+  } catch {
+    // Don't fail the main operation if audit logging fails
+  }
+}
 
 type Vehicle = Doc<"vehicles">;
 
@@ -73,9 +87,21 @@ export const createVehicle = mutation({
     if (images.length < 1) throw new Error("At least 1 image is required");
     if (images.length > 20) throw new Error("Maximum 20 images allowed");
     
-    const location = await geocodeAddress(args.address) ?? { lat: -1.2921, lng: 36.8219 };
-    return await ctx.db.insert("vehicles", {
+    for (const storageId of images) {
+      await validateFile(ctx, storageId);
+    }
+    
+    const sanitizedDescription = sanitizeDescription(args.description);
+    const sanitizedAddress = sanitizeAddress(args.address);
+    const sanitizedFeatures = sanitizeFeatures(args.features ?? []);
+    if (!sanitizedDescription.trim()) throw new Error("description must not be empty after sanitization");
+    
+    const location = await geocodeAddress(sanitizedAddress) ?? { lat: -1.2921, lng: 36.8219 };
+    const vehicleId = await ctx.db.insert("vehicles", {
       ...args,
+      description: sanitizedDescription,
+      address: sanitizedAddress,
+      features: sanitizedFeatures,
       ownerId: user._id,
       currency: "KES",
       location,
@@ -86,6 +112,16 @@ export const createVehicle = mutation({
       isActive: true,
       createdAt: Date.now(),
     });
+
+    await logAudit(ctx, "vehicle_created", {
+      vehicleId,
+      ownerId: user._id,
+      make: args.make,
+      model: args.model,
+      year: args.year,
+    });
+
+    return vehicleId;
   },
 });
 
@@ -178,17 +214,51 @@ function processPage(page: { page: Vehicle[]; continueCursor?: string }, limit: 
 export const getVehicle = query({
   args: { vehicleId: v.id("vehicles") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.vehicleId);
+    const vehicle = await ctx.db.get(args.vehicleId);
+    if (!vehicle) return null;
+    if (!vehicle.isActive) {
+      const identity = await ctx.auth.getUserIdentity();
+      const callerEmail = identity?.email;
+      if (callerEmail) {
+        const user = await ctx.db
+          .query("users")
+          .withIndex("by_email", (q) => q.eq("email", callerEmail))
+          .first();
+        if (user && (vehicle.ownerId === user._id || user.roles.includes("admin"))) {
+          return vehicle;
+        }
+      }
+      return null;
+    }
+    return vehicle;
   },
 });
 
 export const getOwnerVehicles = query({
   args: { ownerId: v.id("users") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    let vehicles;
+    const identity = await ctx.auth.getUserIdentity();
+    const callerEmail = identity?.email;
+    if (callerEmail) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", callerEmail))
+        .first();
+      if (user && (user._id === args.ownerId || user.roles.includes("admin"))) {
+        vehicles = await ctx.db
+          .query("vehicles")
+          .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
+          .collect();
+        return vehicles;
+      }
+    }
+    vehicles = await ctx.db
       .query("vehicles")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
+      .filter((q) => q.eq(q.field("isActive"), true))
       .collect();
+    return vehicles;
   },
 });
 
@@ -284,16 +354,35 @@ export const updateVehicle = mutation({
     if (args.seats !== undefined) updateData.seats = args.seats;
     if (args.pricePerDay !== undefined) updateData.pricePerDay = args.pricePerDay;
     if (args.address !== undefined) {
-      updateData.address = args.address;
-      const location = await geocodeAddress(args.address);
+      const sanitizedAddress = sanitizeAddress(args.address);
+      updateData.address = sanitizedAddress;
+      const location = await geocodeAddress(sanitizedAddress);
       if (location) updateData.location = location;
     }
-    if (args.description !== undefined) updateData.description = args.description;
-    if (args.features !== undefined) updateData.features = args.features;
-    if (args.images !== undefined) updateData.images = args.images;
+    if (args.description !== undefined) {
+      const sanitizedDescription = sanitizeDescription(args.description);
+      if (!sanitizedDescription.trim()) throw new Error("description must not be empty after sanitization");
+      updateData.description = sanitizedDescription;
+    }
+    if (args.features !== undefined) {
+      updateData.features = sanitizeFeatures(args.features);
+    }
+    if (args.images !== undefined) {
+      for (const storageId of args.images) {
+        await validateFile(ctx, storageId);
+      }
+      updateData.images = args.images;
+    }
     if (args.blurDataUrls !== undefined) updateData.blurDataUrls = args.blurDataUrls;
 
     await ctx.db.patch(args.vehicleId, updateData);
+
+    await logAudit(ctx, "vehicle_updated", {
+      vehicleId: args.vehicleId,
+      ownerId: user._id,
+      updatedFields: Object.keys(updateData),
+    });
+
     return args.vehicleId;
   },
 });
@@ -336,9 +425,16 @@ export const deleteVehicle = mutation({
       await ctx.db.delete(record._id);
     }
     
-    // Delete the vehicle
+// Delete the vehicle
     await ctx.db.delete(args.vehicleId);
-    
+
+    await logAudit(ctx, "vehicle_deleted", {
+      vehicleId: args.vehicleId,
+      ownerId: vehicle.ownerId,
+      deletedBy: user._id,
+      isAdmin: user.roles.includes("admin"),
+    });
+
     return { success: true };
   },
 });

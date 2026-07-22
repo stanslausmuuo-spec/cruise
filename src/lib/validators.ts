@@ -1,9 +1,57 @@
 import { z } from "zod";
 import { VEHICLE_TYPES, TRANSMISSION_TYPES, FUEL_TYPES } from "./constants";
 
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 128;
+
+// Password strength requirements
+const passwordStrengthRegex = {
+  hasUpperCase: /[A-Z]/,
+  hasLowerCase: /[a-z]/,
+  hasNumber: /\d/,
+  hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+};
+
+export function validatePasswordStrength(password: string): string[] {
+  const errors: string[] = [];
+  
+  if (password.length < PASSWORD_MIN_LENGTH) {
+    errors.push(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`);
+  }
+  
+  if (password.length > PASSWORD_MAX_LENGTH) {
+    errors.push(`Password must not exceed ${PASSWORD_MAX_LENGTH} characters`);
+  }
+  
+  if (!passwordStrengthRegex.hasUpperCase.test(password)) {
+    errors.push("Password must contain at least one uppercase letter");
+  }
+  
+  if (!passwordStrengthRegex.hasLowerCase.test(password)) {
+    errors.push("Password must contain at least one lowercase letter");
+  }
+  
+  if (!passwordStrengthRegex.hasNumber.test(password)) {
+    errors.push("Password must contain at least one number");
+  }
+  
+  if (!passwordStrengthRegex.hasSpecialChar.test(password)) {
+    errors.push("Password must contain at least one special character (!@#$%^&*...)");
+  }
+  
+  return errors;
+}
+
+export const strongPassword = z.string().refine(
+  (password) => validatePasswordStrength(password).length === 0,
+  {
+    message: "Password does not meet strength requirements",
+  }
+);
+
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const registerSchema = z
@@ -11,13 +59,17 @@ export const registerSchema = z
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     phone: z.string().min(10, "Phone number must be at least 10 digits"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    password: z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
     confirmPassword: z.string(),
     roles: z.array(z.enum(["renter", "host"])).min(1, "Select at least one role"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+  })
+  .refine((data) => validatePasswordStrength(data.password).length === 0, {
+    message: "Password does not meet strength requirements",
+    path: ["password"],
   });
 
 export const vehicleSchema = z.object({

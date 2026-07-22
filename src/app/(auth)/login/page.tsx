@@ -3,21 +3,20 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { ROUTES } from "@/lib/constants";
 import { loginSchema } from "@/lib/validators";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { setAuthTokens } from "@/lib/auth-client";
+import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { signIn } = useAuthActions();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [retryAfter, setRetryAfter] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
@@ -36,6 +35,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    setRateLimited(false);
 
     const result = loginSchema.safeParse(form);
     if (!result.success) {
@@ -49,17 +49,32 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("email", form.email);
-      formData.append("password", form.password);
-      formData.append("flow", "signIn");
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password, flow: "signIn" }),
+      });
 
-      localStorage.setItem("cruise-remember-me", rememberMe ? "true" : "false");
+      if (res.status === 429) {
+        const data = await res.json();
+        setRateLimited(true);
+        setRetryAfter(Date.now() + 60000);
+        toast("error", "Too many attempts", data.error || "Please try again later.");
+        return;
+      }
 
-      await signIn("password", formData);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Invalid email or password");
+      }
 
-      toast("success", "Welcome back!", "You have been signed in successfully.");
-      router.push("/");
+      const data = await res.json();
+      if (data.tokens?.token) {
+        localStorage.setItem("cruise-remember-me", rememberMe ? "true" : "false");
+        setAuthTokens(data.tokens.token, data.tokens.refreshToken || "dummy");
+        toast("success", "Welcome back!", "You have been signed in successfully.");
+        window.location.href = "/";
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Invalid email or password";
@@ -67,6 +82,11 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatTime = (ms: number) => {
+    const mins = Math.ceil((ms - Date.now()) / 60000);
+    return `${mins} minute${mins !== 1 ? "s" : ""}`;
   };
 
   return (
@@ -87,6 +107,22 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {rateLimited && (
+            <div className="mb-6 p-4 glass rounded-xl border border-amber-500/30 bg-amber-50/20 dark:bg-amber-900/10">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+                <div>
+                  <p className="font-medium text-charcoal dark:text-cream">
+                    Too many attempts
+                  </p>
+                  <p className="text-sm text-charcoal/60 dark:text-cream/60">
+                    Please wait {formatTime(retryAfter)} before trying again.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <Input
               id="email"
@@ -97,6 +133,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={handleChange}
               error={errors.email}
+              disabled={rateLimited}
             />
             <Input
               id="password"
@@ -107,6 +144,7 @@ export default function LoginPage() {
               value={form.password}
               onChange={handleChange}
               error={errors.password}
+              disabled={rateLimited}
             />
 
             <div className="flex items-center justify-between text-xs">
@@ -127,6 +165,7 @@ export default function LoginPage() {
               className="w-full"
               size="lg"
               icon={<ArrowRight className="h-4 w-4" />}
+              disabled={rateLimited}
             >
               Sign In
             </Button>

@@ -60,21 +60,3 @@ export const verifyOTP = mutation({
     return { success: true, userId: record.userId };
   },
 });
-
-export const getPendingOTP = query({
-  args: {
-    email: v.string(),
-    type: v.union(v.literal("email_verification"), v.literal("password_reset")),
-  },
-  handler: async (ctx, args) => {
-    const record = await ctx.db
-      .query("otp_verifications")
-      .withIndex("by_email_type", (q) => q.eq("email", args.email).eq("type", args.type))
-      .filter((q) => q.eq(q.field("verified"), false))
-      .order("desc")
-      .first();
-    if (!record) return null;
-    const { otp: _, ...safe } = record;
-    return safe;
-  },
-});

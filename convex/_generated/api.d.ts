@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as alerts from "../alerts.js";
+import type * as audit from "../audit.js";
 import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
 import type * as cleanup from "../cleanup.js";
@@ -16,6 +18,8 @@ import type * as crons from "../crons.js";
 import type * as disputes from "../disputes.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_crypto from "../lib/crypto.js";
+import type * as lib_sanitize from "../lib/sanitize.js";
+import type * as lib_validateFile from "../lib/validateFile.js";
 import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as otp from "../otp.js";
@@ -36,6 +40,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  alerts: typeof alerts;
+  audit: typeof audit;
   auth: typeof auth;
   bookings: typeof bookings;
   cleanup: typeof cleanup;
@@ -44,6 +50,8 @@ declare const fullApi: ApiFromModules<{
   disputes: typeof disputes;
   "lib/auth": typeof lib_auth;
   "lib/crypto": typeof lib_crypto;
+  "lib/sanitize": typeof lib_sanitize;
+  "lib/validateFile": typeof lib_validateFile;
   messages: typeof messages;
   notifications: typeof notifications;
   otp: typeof otp;

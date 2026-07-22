@@ -4,9 +4,9 @@ import { getCurrentUser } from "./lib/auth";
 
 export const generateUploadUrl = mutation({
   args: {
-    contentType: v.string(),
+    contentType: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     await getCurrentUser(ctx);
     const uploadUrl = await ctx.storage.generateUploadUrl();
     return uploadUrl;

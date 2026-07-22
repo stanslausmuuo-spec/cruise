@@ -9,6 +9,7 @@ export const env = createEnv({
     DARAJA_SHORTCODE: z.string().min(1, "M-Pesa shortcode is required"),
     DARAJA_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
     MAPBOX_TOKEN: z.string().optional(),
+    MPESA_CALLBACK_SECRET: z.string().min(1, "M-Pesa callback secret is required"),
   },
   client: {
     NEXT_PUBLIC_CONVEX_URL: z.string().url("Convex URL is required"),
@@ -22,6 +23,7 @@ export const env = createEnv({
     DARAJA_SHORTCODE: process.env.DARAJA_SHORTCODE,
     DARAJA_ENV: process.env.DARAJA_ENV,
     MAPBOX_TOKEN: process.env.MAPBOX_TOKEN ?? process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+    MPESA_CALLBACK_SECRET: process.env.MPESA_CALLBACK_SECRET,
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,

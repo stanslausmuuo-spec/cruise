@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 export const createPayToReveal = mutation({
   args: {
@@ -400,9 +400,14 @@ export const processMpesaCallback = mutation({
     phone: v.string(),
     resultCode: v.number(),
     resultDesc: v.string(),
+    callbackSecret: v.string(),
   },
   handler: async (ctx, args) => {
-    const { checkoutRequestId, mpesaReceipt, amount, phone, resultCode, resultDesc } = args;
+    const { checkoutRequestId, mpesaReceipt, amount, phone, resultCode, resultDesc, callbackSecret } = args;
+
+    if (callbackSecret !== process.env.MPESA_CALLBACK_SECRET) {
+      throw new Error("Unauthorized: invalid callback secret");
+    }
 
     if (resultCode !== 0) {
       const transaction = await ctx.db
@@ -457,7 +462,7 @@ export const processMpesaCallback = mutation({
         });
       }
 
-      await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+      await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
         userId: booking.hostId,
         title: "New Booking!",
         body: `A vehicle has been booked for KES ${amount}.`,
@@ -492,7 +497,7 @@ export const processMpesaCallback = mutation({
         });
       }
 
-      await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+      await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
         userId: reveal.userId,
         title: "Contact Revealed",
         body: `Payment of KES ${amount} successful.`,
@@ -536,7 +541,7 @@ export const processMpesaCallback = mutation({
         });
       }
 
-      await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+      await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
         userId: featured.ownerId,
         title: "Featured Listing Activated",
         body: `Payment of KES ${amount} successful.`,

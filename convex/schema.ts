@@ -4,6 +4,18 @@ import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
   ...authTables,
+  audit_logs: defineTable({
+    action: v.string(),
+    userId: v.optional(v.id("users")),
+    ip: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+    timestamp: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_action", ["action"])
+    .index("by_timestamp", ["timestamp"]),
+
   users: defineTable({
     name: v.string(),
     email: v.string(),
@@ -158,6 +170,7 @@ export default defineSchema({
     currency: v.string(),
     reference: v.string(),
     status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
+    mobileMoneyRef: v.optional(v.string()),
     metadata: v.optional(v.any()),
     createdAt: v.number(),
   })
@@ -289,5 +302,32 @@ export default defineSchema({
     .index("by_user_id", ["userId"])
     .index("by_email_type", ["email", "type"])
     .index("by_otp", ["otp"]),
+
+  security_alerts: defineTable({
+    type: v.union(
+      v.literal("brute_force"),
+      v.literal("suspicious_login"),
+      v.literal("rate_limit_exceeded"),
+      v.literal("file_upload_anomaly"),
+      v.literal("payment_fraud"),
+      v.literal("privilege_escalation"),
+      v.literal("data_exfiltration"),
+    ),
+    severity: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
+    status: v.union(v.literal("open"), v.literal("investigating"), v.literal("resolved"), v.literal("false_positive")),
+    userId: v.optional(v.id("users")),
+    ip: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+    resolution: v.optional(v.string()),
+    resolvedBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_severity", ["severity"])
+    .index("by_type", ["type"])
+    .index("by_created_at", ["createdAt"])
+    .index("by_user", ["userId"]),
 
 });

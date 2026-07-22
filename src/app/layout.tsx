@@ -8,6 +8,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { Footer } from "@/components/layout/footer";
 import { AuthTokenCookie } from "@/components/auth/auth-token-cookie";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -47,7 +48,7 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -64,21 +65,23 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className="min-h-full flex flex-col font-body antialiased">
-        <ThemeProvider>
-          <ConvexClientProvider>
-            <ToastProvider>
-              <AuthTokenCookie />
-              <ErrorBoundary>
-                <Navbar />
-                <main className="flex-1 pb-16 md:pb-0">
-                  {children}
-                </main>
-                <MobileNav />
-                <Footer />
-              </ErrorBoundary>
-            </ToastProvider>
-          </ConvexClientProvider>
-        </ThemeProvider>
+        <ConvexAuthNextjsServerProvider>
+          <ThemeProvider>
+            <ConvexClientProvider>
+              <ToastProvider>
+                <AuthTokenCookie />
+                <ErrorBoundary>
+                  <Navbar />
+                  <main className="flex-1 pb-16 md:pb-0">
+                    {children}
+                  </main>
+                  <MobileNav />
+                  <Footer />
+                </ErrorBoundary>
+              </ToastProvider>
+            </ConvexClientProvider>
+          </ThemeProvider>
+        </ConvexAuthNextjsServerProvider>
       </body>
     </html>
   );

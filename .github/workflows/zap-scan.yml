@@ -1,0 +1,62 @@
+name: SAST - OWASP ZAP Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 3 * * *'  # Daily at 3 AM
+
+jobs:
+  zap-scan:
+    name: OWASP ZAP Active Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start preview server
+        run: |
+          npm run start &
+          sleep 30
+
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          cmd_options: '-r zap-report.html'
+
+      - name: OWASP ZAP Active Scan
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          cmd_options: '-r zap-active-report.html -m 5'
+
+      - name: Upload ZAP Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-reports
+          path: |
+            zap-report.html
+            zap-active-report.html
+
+      - name: Check for Alerts
+        run: |
+          if grep -q "FAIL" zap-report.html; then
+            echo "ZAP scan found issues"
+            exit 1
+          fi

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
+import { env } from "@/lib/env";
 import crypto from "crypto";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       phone,
       resultCode: ResultCode,
       resultDesc: ResultDesc,
+      callbackSecret: env.MPESA_CALLBACK_SECRET,
     });
 
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
