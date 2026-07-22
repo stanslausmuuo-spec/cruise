@@ -290,11 +290,4 @@ export default defineSchema({
     .index("by_email_type", ["email", "type"])
     .index("by_otp", ["otp"]),
 
-  rate_limits: defineTable({
-    key: v.string(),
-    count: v.number(),
-    resetTime: v.number(),
-    createdAt: v.number(),
-  })
-    .index("by_key", ["key"]),
 });

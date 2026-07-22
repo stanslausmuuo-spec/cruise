@@ -2,8 +2,8 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { sha256 } from "./lib/crypto";
 
-function hashOTP(otp: string): string {
-  return sha256(otp);
+async function hashOTP(otp: string): Promise<string> {
+  return await sha256(otp);
 }
 
 export const createOTP = mutation({
@@ -14,12 +14,12 @@ export const createOTP = mutation({
     type: v.union(v.literal("email_verification"), v.literal("password_reset")),
   },
   handler: async (ctx, args) => {
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const expiresAt = Date.now() + 10 * 60 * 1000;
 
     await ctx.db.insert("otp_verifications", {
       userId: args.userId,
       email: args.email,
-      otp: hashOTP(args.otp),
+      otp: await hashOTP(args.otp),
       type: args.type,
       expiresAt,
       verified: false,
@@ -37,7 +37,7 @@ export const verifyOTP = mutation({
     type: v.union(v.literal("email_verification"), v.literal("password_reset")),
   },
   handler: async (ctx, args) => {
-    const hashedInput = hashOTP(args.otp);
+    const hashedInput = await hashOTP(args.otp);
     const records = await ctx.db
       .query("otp_verifications")
       .withIndex("by_email_type", (q) => q.eq("email", args.email).eq("type", args.type))
@@ -48,16 +48,6 @@ export const verifyOTP = mutation({
     const record = records.find((r) => r.otp === hashedInput);
 
     if (!record) {
-      // Use constant-time comparison to prevent timing attacks
-      const dummy = hashOTP("000000");
-      const equal = dummy.length === hashedInput.length;
-      if (equal) {
-        const a = new TextEncoder().encode(dummy);
-        const b = new TextEncoder().encode(hashedInput);
-        for (let i = 0; i < a.length; i++) {
-          a[i] = b[i];
-        }
-      }
       throw new Error("Invalid OTP");
     }
 

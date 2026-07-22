@@ -20,7 +20,6 @@ import {
   ChevronLeft,
   Car,
   Search,
-  AlertCircle,
 } from "lucide-react";
 
 const steps = ["Account", "Profile", "Role"];
@@ -53,8 +52,6 @@ export default function RegisterPage() {
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [rateLimited, setRateLimited] = useState(false);
-  const [retryAfter, setRetryAfter] = useState(0);
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -126,28 +123,8 @@ export default function RegisterPage() {
     setErrors({});
   };
 
-  const checkRateLimit = async (email: string): Promise<boolean> => {
-    try {
-      const res = await fetch("/api/auth/rate-limit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, action: "register" }),
-      });
-      const data = await res.json();
-      if (!data.allowed) {
-        setRateLimited(true);
-        setRetryAfter(data.resetTime);
-        return false;
-      }
-      return true;
-    } catch {
-      return true; // Fail open
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setRateLimited(false);
 
     if (step < 2) {
       handleNext();
@@ -164,10 +141,6 @@ export default function RegisterPage() {
       setErrors(fieldErrors);
       return;
     }
-
-    // Check rate limit
-    const allowed = await checkRateLimit(form.email);
-    if (!allowed) return;
 
     setLoading(true);
     try {
@@ -198,11 +171,6 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatTime = (ms: number) => {
-    const mins = Math.ceil((ms - Date.now()) / 60000);
-    return `${mins} minute${mins !== 1 ? "s" : ""}`;
   };
 
   return (
@@ -256,22 +224,6 @@ export default function RegisterPage() {
                   : "How will you use Cruise?"}
             </p>
           </div>
-
-          {rateLimited && (
-            <div className="mb-6 p-4 glass rounded-xl border border-amber-500/30 bg-amber-50/20 dark:bg-amber-900/10">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
-                <div>
-                  <p className="font-medium text-charcoal dark:text-cream">
-                    Too many attempts
-                  </p>
-                  <p className="text-sm text-charcoal/60 dark:text-cream/60">
-                    Please wait {formatTime(retryAfter)} before trying again.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <AnimatePresence mode="wait">

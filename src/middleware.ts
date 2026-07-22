@@ -32,17 +32,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Rate limiting for auth endpoints (not M-Pesa callback — Safaricom server-to-server)
-  if (pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/api/auth")) {
-    const rateLimit = authRateLimit(`auth:${ip}`);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      );
-    }
-  }
-
   // Rate limiting for payment endpoints (not M-Pesa callback)
   if ((pathname.startsWith("/api/mpesa") || pathname.startsWith("/api/payments")) && !pathname.startsWith("/api/mpesa/callback")) {
     const rateLimit = authRateLimit(`payment:${ip}`);
