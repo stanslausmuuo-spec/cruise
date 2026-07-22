@@ -24,7 +24,6 @@ export default defineSchema({
     location: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_email", ["email"])
     .index("by_phone", ["phone"])
     .index("by_email_unique", ["email"]),
 

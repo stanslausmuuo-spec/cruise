@@ -22,6 +22,7 @@ const navLinks = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const isLanding = pathname === "/";
@@ -31,6 +32,7 @@ export function Navbar() {
   const currentUser = useQuery(api.auth.getMe);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -76,15 +78,19 @@ export function Navbar() {
             </div>
 
             <div className="hidden md:flex items-center gap-3">
-              <button
+                <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                   className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                   aria-label="Toggle theme"
                 >
-                  {theme === "dark" ? (
-                    <Sun className="h-4 w-4 text-cream" />
+                  {mounted ? (
+                    theme === "dark" ? (
+                      <Sun className="h-4 w-4 text-cream" />
+                    ) : (
+                      <Moon className="h-4 w-4 text-charcoal" />
+                    )
                   ) : (
-                    <Moon className="h-4 w-4 text-charcoal" />
+                    <div className="h-4 w-4" />
                   )}
                 </button>
 
@@ -214,8 +220,12 @@ export function Navbar() {
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                     className="flex items-center gap-2 text-sm text-charcoal/60 dark:text-cream/60 mt-2"
                   >
-                    {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                    {mounted ? (
+                      theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />
+                    ) : (
+                      <div className="h-4 w-4" />
+                    )}
+                    {mounted ? (theme === "dark" ? "Light Mode" : "Dark Mode") : ""}
                   </button>
               </div>
             </div>

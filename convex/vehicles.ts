@@ -143,7 +143,7 @@ handler: async (ctx: QueryCtx, args) => {
 
 function processPage(page: { page: Vehicle[]; continueCursor?: string }, limit: number, args: { transmission?: string; minPrice?: number; maxPrice?: number }) {
   // Filter in-memory for price range and transmission (since we can't do range on secondary index)
-  let vehicles: Vehicle[] = page.page;
+  let vehicles: Vehicle[] = page?.page ?? [];
   
   if (args.transmission) {
     vehicles = vehicles.filter((v: Vehicle) => v.transmission === args.transmission);
