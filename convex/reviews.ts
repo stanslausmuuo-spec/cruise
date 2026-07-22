@@ -5,10 +5,8 @@ import { getCurrentUser } from "./lib/auth";
 export const createReview = mutation({
   args: {
     bookingId: v.id("bookings"),
-    revieweeId: v.id("users"),
     rating: v.number(),
     comment: v.string(),
-    type: v.union(v.literal("guest_to_host"), v.literal("host_to_guest")),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -18,8 +16,17 @@ export const createReview = mutation({
     if (booking.guestId !== user._id && booking.hostId !== user._id) {
       throw new Error("Not authorized to review this booking");
     }
+    if (booking.status !== "completed" && booking.status !== "confirmed") {
+      throw new Error("Can only review completed bookings");
+    }
     
-    // Prevent duplicate reviews
+    const isHost = booking.hostId === user._id;
+    const revieweeId = isHost ? booking.guestId : booking.hostId;
+    
+    if (revieweeId === user._id) throw new Error("Cannot review yourself");
+    
+    const type = isHost ? "host_to_guest" : "guest_to_host";
+    
     const existing = await ctx.db
       .query("reviews")
       .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
@@ -28,25 +35,28 @@ export const createReview = mutation({
     
     if (existing) throw new Error("Already reviewed this booking");
 
+    if (args.rating < 1 || args.rating > 5) throw new Error("Rating must be between 1 and 5");
+    if (args.comment.length > 2000) throw new Error("Comment too long");
+
     await ctx.db.insert("reviews", {
       bookingId: args.bookingId,
       reviewerId: user._id,
-      revieweeId: args.revieweeId,
+      revieweeId,
       rating: args.rating,
       comment: args.comment,
-      type: args.type,
+      type,
       createdAt: Date.now(),
     });
 
     const allReviews = await ctx.db
       .query("reviews")
-      .withIndex("by_reviewee", (q) => q.eq("revieweeId", args.revieweeId))
+      .withIndex("by_reviewee", (q) => q.eq("revieweeId", revieweeId))
       .collect();
 
     const avgRating =
       allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
 
-    await ctx.db.patch(args.revieweeId, {
+    await ctx.db.patch(revieweeId, {
       rating: Math.round(avgRating * 10) / 10,
       reviewCount: allReviews.length,
     });

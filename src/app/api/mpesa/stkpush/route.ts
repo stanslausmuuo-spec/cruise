@@ -30,7 +30,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const { phoneNumber, amount, type, metadata } = validation.data;
+    const { phoneNumber, type, metadata } = validation.data;
+    const clientAmount = validation.data.amount;
+
+    const fixedAmounts: Record<string, number> = { reveal: 500, featured: 2000 };
+    const amount = fixedAmounts[type] ?? clientAmount;
+
+    if (!fixedAmounts[type] && (!clientAmount || clientAmount < 100)) {
+      return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+    }
+
     const accountReference = validation.data.accountReference || generateReference(type.toUpperCase());
     const transactionDesc = validation.data.transactionDesc || "Cruise Payment";
 

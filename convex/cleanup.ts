@@ -1,7 +1,10 @@
 import { mutation } from "./_generated/server";
+import { getCurrentUser } from "./lib/auth";
 
 export const cleanupOldData = mutation({
   handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Admin only");
     const oldBookings = await ctx.db.query("bookings").collect();
     for (const b of oldBookings) {
       if ("carId" in b || "carMake" in b) {

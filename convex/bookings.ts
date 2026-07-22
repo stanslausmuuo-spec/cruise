@@ -25,6 +25,14 @@ export const createBooking = mutation({
     if (!vehicle.isActive) throw new Error("Vehicle is not available for booking");
     if (vehicle.ownerId === user._id) throw new Error("Cannot book your own vehicle");
 
+    // Limit pending unpaid bookings to prevent availability abuse
+    const pendingCount = await ctx.db
+      .query("bookings")
+      .withIndex("by_guest", (q) => q.eq("guestId", user._id))
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .collect();
+    if (pendingCount.length >= 10) throw new Error("Too many pending bookings. Complete or cancel existing ones.");
+
     // Calculate amounts server-side from trusted pricePerDay
     const msPerDay = 86400000;
     const numberOfDays = Math.ceil((args.endDate - args.startDate) / msPerDay);
@@ -100,6 +108,7 @@ export const confirmBookingPayment = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Admin only");
 
     const booking = await ctx.db
       .query("bookings")
@@ -107,22 +116,14 @@ export const confirmBookingPayment = mutation({
       .first();
 
     if (!booking) throw new Error("Booking not found");
-    if (booking.status !== "pending") throw new Error("Booking already processed");
+    if (booking.status !== "pending") return { success: true };
 
-    // Only the guest (renter) or an admin can confirm payment
-    if (booking.guestId !== user._id && !user.roles.includes("admin")) {
-      throw new Error("Not authorized");
-    }
-
-    // Availability records already created in createBooking
-    // Just confirm the booking
     await ctx.db.patch(booking._id, {
       status: "confirmed",
       paymentStatus: "paid",
       mobileMoneyRef: args.mobileMoneyRef,
     });
 
-    // Update transaction to completed
     const transaction = await ctx.db
       .query("transactions")
       .withIndex("by_reference", (q) => q.eq("reference", booking.checkoutRequestId!))
@@ -276,7 +277,6 @@ export const updateBookingStatus = mutation({
       throw new Error("Not authorized");
     }
 
-    // State machine: pending → confirmed → active → completed
     const allowedTransitions: Record<string, string[]> = {
       pending: ["confirmed", "cancelled"],
       confirmed: ["active", "cancelled"],
@@ -288,6 +288,20 @@ export const updateBookingStatus = mutation({
 
     if (!allowedTransitions[booking.status]?.includes(args.status)) {
       throw new Error(`Cannot transition from "${booking.status}" to "${args.status}"`);
+    }
+
+    if (args.status === "cancelled" && booking.paymentStatus === "paid") {
+      await ctx.db.insert("transactions", {
+        userId: booking.guestId,
+        type: "refund",
+        amount: booking.totalAmount,
+        currency: "KES",
+        reference: `refund_${booking._id}_${Date.now()}`,
+        status: "pending",
+        metadata: { bookingId: booking._id },
+        createdAt: Date.now(),
+      });
+      await ctx.db.patch(args.bookingId, { paymentStatus: "refunded" });
     }
     
     await ctx.db.patch(args.bookingId, { status: args.status });

@@ -15,6 +15,17 @@ export const createDispute = mutation({
     if (booking.guestId !== user._id && booking.hostId !== user._id) {
       throw new Error("Not authorized to dispute this booking");
     }
+    if (booking.status !== "active") {
+      throw new Error("Can only dispute active bookings");
+    }
+
+    const existing = await ctx.db
+      .query("disputes")
+      .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
+      .first();
+    if (existing) throw new Error("Dispute already exists for this booking");
+
+    if (args.reason.length > 5000) throw new Error("Reason too long");
 
     await ctx.db.insert("disputes", {
       bookingId: args.bookingId,

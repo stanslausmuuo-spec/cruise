@@ -17,7 +17,8 @@ export const create = mutation({
     data: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    // Internal use - called by other mutations
+    const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Admin only");
     return await ctx.db.insert("notifications", {
       userId: args.userId,
       type: args.type,

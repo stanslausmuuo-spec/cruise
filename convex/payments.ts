@@ -45,6 +45,7 @@ export const confirmPayToReveal = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Admin only");
 
     const reveal = await ctx.db
       .query("reveals")
@@ -53,19 +54,12 @@ export const confirmPayToReveal = mutation({
 
     if (!reveal) throw new Error("Reveal record not found");
 
-    // Only the reveal owner or an admin can confirm
-    if (reveal.userId !== user._id && !user.roles.includes("admin")) {
-      throw new Error("Not authorized");
-    }
-
-    // Idempotency: skip if already confirmed
     if (reveal.mobileMoneyRef) {
       return { success: true };
     }
 
     await ctx.db.patch(reveal._id, { mobileMoneyRef: args.mobileMoneyRef });
 
-    // Update transaction to completed
     const transaction = await ctx.db
       .query("transactions")
       .withIndex("by_reference", (q) => q.eq("reference", args.checkoutRequestId))
@@ -202,6 +196,7 @@ export const confirmFeaturedPayment = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+    if (!user.roles.includes("admin")) throw new Error("Admin only");
 
     const featured = await ctx.db
       .query("featured_listings")
@@ -210,12 +205,6 @@ export const confirmFeaturedPayment = mutation({
 
     if (!featured) throw new Error("Featured listing not found");
 
-    // Only the owner or an admin can confirm
-    if (featured.ownerId !== user._id && !user.roles.includes("admin")) {
-      throw new Error("Not authorized");
-    }
-
-    // Idempotency: skip if already active
     if (featured.active) {
       return { success: true };
     }
@@ -225,7 +214,6 @@ export const confirmFeaturedPayment = mutation({
       mobileMoneyRef: args.mobileMoneyRef,
     });
 
-    // Update transaction to completed
     const transaction = await ctx.db
       .query("transactions")
       .withIndex("by_reference", (q) => q.eq("reference", args.checkoutRequestId))
@@ -238,7 +226,6 @@ export const confirmFeaturedPayment = mutation({
       });
     }
 
-    // Update vehicle to be featured
     await ctx.db.patch(featured.vehicleId, {
       isFeatured: true,
       featuredExpiresAt: featured.endDate,
@@ -453,6 +440,10 @@ export const processMpesaCallback = mutation({
         return { success: true };
       }
 
+      if (Math.abs(amount - booking.totalAmount) > 1) {
+        return { success: false, reason: "amount_mismatch" };
+      }
+
       await ctx.db.patch(booking._id, {
         status: "confirmed",
         paymentStatus: "paid",
@@ -487,6 +478,11 @@ export const processMpesaCallback = mutation({
         return { success: true };
       }
 
+      const expectedRevealAmount = 500;
+      if (Math.abs(amount - expectedRevealAmount) > 1) {
+        return { success: false, reason: "amount_mismatch" };
+      }
+
       await ctx.db.patch(reveal._id, { mobileMoneyRef: mpesaReceipt });
 
       if (existingTx) {
@@ -515,6 +511,11 @@ export const processMpesaCallback = mutation({
     if (featured) {
       if (featured.active) {
         return { success: true };
+      }
+
+      const expectedFeaturedAmount = 2000;
+      if (Math.abs(amount - expectedFeaturedAmount) > 1) {
+        return { success: false, reason: "amount_mismatch" };
       }
 
       await ctx.db.patch(featured._id, {
