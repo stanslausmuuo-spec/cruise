@@ -3,12 +3,31 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
 import { generateOTP } from "@/lib/email";
+import { authRateLimit } from "@/lib/rate-limit";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
     const { email, type } = await request.json();
+
+    if (!email || !type) {
+      return NextResponse.json(
+        { error: "Email and type are required" },
+        { status: 400 }
+      );
+    }
+
+    const rateLimit = authRateLimit(`otp:send:${email}:${ip}`);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
 
     if (!email || !type) {
       return NextResponse.json(
@@ -25,16 +44,16 @@ export async function POST(request: Request) {
     }
 
     // Check if user exists
-    const user = await convex.query(api.auth.getUserByEmail, { email });
+    const { exists: userExists, _id: userId } = await convex.query(api.auth.checkEmailExists, { email });
     
-    if (type === "email_verification" && user) {
+    if (type === "email_verification" && userExists) {
       return NextResponse.json(
         { error: "Email already registered" },
         { status: 400 }
       );
     }
 
-    if (type === "password_reset" && !user) {
+    if (type === "password_reset" && !userExists) {
       return NextResponse.json(
         { error: "No account found with this email" },
         { status: 400 }
@@ -45,7 +64,6 @@ export async function POST(request: Request) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Store OTP in Convex
-    const userId = user?._id; // undefined for new users (email_verification)
     await convex.mutation(api.otp.createOTP, {
       userId,
       email,
@@ -54,8 +72,7 @@ export async function POST(request: Request) {
     });
 
     // Send email with OTP
-    // In production, integrate with your email service (Resend, SendGrid, etc.)
-    console.log(`OTP for ${email} (${type}): ${otp}`);
+    // TODO: Integrate with email service (Resend, SendGrid, etc.)
 
     // TODO: Integrate with email service
     // await sendOTPEmail(email, otp, type);

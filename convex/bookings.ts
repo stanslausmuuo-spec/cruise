@@ -241,12 +241,17 @@ export const getBooking = query({
 export const getBookingByCheckoutRequestId = query({
   args: { checkoutRequestId: v.string() },
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
 
-    return await ctx.db
+    const booking = await ctx.db
       .query("bookings")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
       .first();
+
+    if (!booking) return null;
+    if (booking.guestId !== user._id && booking.hostId !== user._id && !user.roles.includes("admin")) return null;
+
+    return booking;
   },
 });
 

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
+import { api } from "./_generated/api";
 
 export const createPayToReveal = mutation({
   args: {
@@ -84,12 +85,17 @@ export const confirmPayToReveal = mutation({
 export const getRevealByCheckoutRequestId = query({
   args: { checkoutRequestId: v.string() },
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
 
-    return await ctx.db
+    const reveal = await ctx.db
       .query("reveals")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
       .first();
+
+    if (!reveal) return null;
+    if (reveal.userId !== user._id && !user.roles.includes("admin")) return null;
+
+    return reveal;
   },
 });
 
@@ -246,34 +252,51 @@ export const confirmFeaturedPayment = mutation({
 export const getFeaturedByCheckoutRequestId = query({
   args: { checkoutRequestId: v.string() },
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
 
-    return await ctx.db
+    const featured = await ctx.db
       .query("featured_listings")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
       .first();
+
+    if (!featured) return null;
+    if (featured.ownerId !== user._id && !user.roles.includes("admin")) return null;
+
+    return featured;
   },
 });
 
 export const getBookingByMpesaRef = query({
   args: { mobileMoneyRef: v.string() },
   handler: async (ctx, args) => {
-    await getCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
 
-    return await ctx.db
+    const booking = await ctx.db
       .query("bookings")
       .filter((q) => q.eq(q.field("mobileMoneyRef"), args.mobileMoneyRef))
       .first();
+
+    if (!booking) return null;
+    if (booking.guestId !== user._id && booking.hostId !== user._id && !user.roles.includes("admin")) return null;
+
+    return booking;
   },
 });
 
 export const getTransactionByReference = query({
   args: { reference: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const user = await getCurrentUser(ctx);
+
+    const transaction = await ctx.db
       .query("transactions")
       .withIndex("by_reference", (q) => q.eq("reference", args.reference))
       .first();
+
+    if (!transaction) return null;
+    if (transaction.userId !== user._id && !user.roles.includes("admin")) return null;
+
+    return transaction;
   },
 });
 
@@ -300,9 +323,9 @@ export const updateTransactionStatus = mutation({
       throw new Error("Not authorized");
     }
 
-    // Only admins can mark a transaction as completed
-    if (args.status === "completed" && !user.roles.includes("admin")) {
-      throw new Error("Only admins can mark transactions as completed");
+    // Only admins can change status directly
+    if (!user.roles.includes("admin")) {
+      throw new Error("Only admins can update transaction status");
     }
 
     await ctx.db.patch(transaction._id, {
@@ -379,6 +402,150 @@ export const getHostEarnings = query({
       monthlyEarnings,
       recentBookings,
     };
+  },
+});
+
+export const processMpesaCallback = mutation({
+  args: {
+    checkoutRequestId: v.string(),
+    mpesaReceipt: v.string(),
+    amount: v.number(),
+    phone: v.string(),
+    resultCode: v.number(),
+    resultDesc: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { checkoutRequestId, mpesaReceipt, amount, phone, resultCode, resultDesc } = args;
+
+    if (resultCode !== 0) {
+      const transaction = await ctx.db
+        .query("transactions")
+        .withIndex("by_reference", (q) => q.eq("reference", checkoutRequestId))
+        .first();
+
+      if (transaction) {
+        await ctx.db.patch(transaction._id, {
+          status: "failed",
+          metadata: { resultCode, resultDesc },
+        });
+      }
+      return { success: true };
+    }
+
+    // Idempotency check
+    const existingTx = await ctx.db
+      .query("transactions")
+      .withIndex("by_reference", (q) => q.eq("reference", checkoutRequestId))
+      .first();
+
+    if (existingTx && existingTx.status === "completed") {
+      return { success: true };
+    }
+
+    // Try booking payment
+    const booking = await ctx.db
+      .query("bookings")
+      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", checkoutRequestId))
+      .first();
+
+    if (booking) {
+      if (booking.status !== "pending") {
+        return { success: true };
+      }
+
+      await ctx.db.patch(booking._id, {
+        status: "confirmed",
+        paymentStatus: "paid",
+        mobileMoneyRef: mpesaReceipt,
+      });
+
+      if (existingTx) {
+        await ctx.db.patch(existingTx._id, {
+          status: "completed",
+          metadata: { mpesaReceipt, phone, amount },
+        });
+      }
+
+      await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+        userId: booking.hostId,
+        title: "New Booking!",
+        body: `A vehicle has been booked for KES ${amount}.`,
+        url: "/dashboard/host/vehicles",
+      });
+
+      return { success: true };
+    }
+
+    // Try reveal payment
+    const reveal = await ctx.db
+      .query("reveals")
+      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", checkoutRequestId))
+      .first();
+
+    if (reveal) {
+      if (reveal.mobileMoneyRef) {
+        return { success: true };
+      }
+
+      await ctx.db.patch(reveal._id, { mobileMoneyRef: mpesaReceipt });
+
+      if (existingTx) {
+        await ctx.db.patch(existingTx._id, {
+          status: "completed",
+          metadata: { ...existingTx.metadata, mobileMoneyRef: mpesaReceipt },
+        });
+      }
+
+      await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+        userId: reveal.userId,
+        title: "Contact Revealed",
+        body: `Payment of KES ${amount} successful.`,
+        url: "/messages",
+      });
+
+      return { success: true };
+    }
+
+    // Try featured listing payment
+    const featured = await ctx.db
+      .query("featured_listings")
+      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", checkoutRequestId))
+      .first();
+
+    if (featured) {
+      if (featured.active) {
+        return { success: true };
+      }
+
+      await ctx.db.patch(featured._id, {
+        active: true,
+        mobileMoneyRef: mpesaReceipt,
+      });
+
+      await ctx.db.patch(featured.vehicleId, {
+        isFeatured: true,
+        featuredExpiresAt: featured.endDate,
+        featuredCategory: featured.category,
+      });
+
+      if (existingTx) {
+        await ctx.db.patch(existingTx._id, {
+          status: "completed",
+          metadata: { ...existingTx.metadata, mobileMoneyRef: mpesaReceipt },
+        });
+      }
+
+      await ctx.scheduler.runAfter(0, api.pushActions.sendPushToUser, {
+        userId: featured.ownerId,
+        title: "Featured Listing Activated",
+        body: `Payment of KES ${amount} successful.`,
+        url: "/dashboard/host/vehicles",
+      });
+
+      return { success: true };
+    }
+
+    return { success: false };
   },
 });
 

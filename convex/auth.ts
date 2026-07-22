@@ -115,9 +115,24 @@ export const getUser = query({
 export const getUserByEmail = query({
   args: { email: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const user = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
+    if (!user) return null;
+    return { _id: user._id, name: user.name, email: user.email, verified: user.verified };
+  },
+});
+
+export const checkEmailExists = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+    return { exists: !!user, _id: user?._id };
   },
 });

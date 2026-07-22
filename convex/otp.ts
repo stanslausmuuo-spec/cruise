@@ -1,5 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { sha256 } from "./lib/crypto";
+
+function hashOTP(otp: string): string {
+  return sha256(otp);
+}
 
 export const createOTP = mutation({
   args: {
@@ -14,7 +19,7 @@ export const createOTP = mutation({
     await ctx.db.insert("otp_verifications", {
       userId: args.userId,
       email: args.email,
-      otp: args.otp,
+      otp: hashOTP(args.otp),
       type: args.type,
       expiresAt,
       verified: false,
@@ -32,18 +37,28 @@ export const verifyOTP = mutation({
     type: v.union(v.literal("email_verification"), v.literal("password_reset")),
   },
   handler: async (ctx, args) => {
-    const record = await ctx.db
+    const hashedInput = hashOTP(args.otp);
+    const records = await ctx.db
       .query("otp_verifications")
       .withIndex("by_email_type", (q) => q.eq("email", args.email).eq("type", args.type))
-      .filter((q) => q.eq(q.field("otp"), args.otp))
-      .first();
+      .filter((q) => q.eq(q.field("verified"), false))
+      .order("desc")
+      .collect();
+
+    const record = records.find((r) => r.otp === hashedInput);
 
     if (!record) {
+      // Use constant-time comparison to prevent timing attacks
+      const dummy = hashOTP("000000");
+      const equal = dummy.length === hashedInput.length;
+      if (equal) {
+        const a = new TextEncoder().encode(dummy);
+        const b = new TextEncoder().encode(hashedInput);
+        for (let i = 0; i < a.length; i++) {
+          a[i] = b[i];
+        }
+      }
       throw new Error("Invalid OTP");
-    }
-
-    if (record.verified) {
-      throw new Error("OTP already used");
     }
 
     if (record.expiresAt < Date.now()) {
@@ -62,10 +77,14 @@ export const getPendingOTP = query({
     type: v.union(v.literal("email_verification"), v.literal("password_reset")),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const record = await ctx.db
       .query("otp_verifications")
       .withIndex("by_email_type", (q) => q.eq("email", args.email).eq("type", args.type))
       .filter((q) => q.eq(q.field("verified"), false))
+      .order("desc")
       .first();
+    if (!record) return null;
+    const { otp: _, ...safe } = record;
+    return safe;
   },
 });

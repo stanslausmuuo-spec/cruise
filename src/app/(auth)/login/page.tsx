@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { ROUTES } from "@/lib/constants";
 import { loginSchema } from "@/lib/validators";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,6 +18,8 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [retryAfter, setRetryAfter] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
@@ -33,9 +35,29 @@ export default function LoginPage() {
     }
   };
 
+  const checkRateLimit = async (email: string): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/auth/rate-limit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, action: "login" }),
+      });
+      const data = await res.json();
+      if (!data.allowed) {
+        setRateLimited(true);
+        setRetryAfter(data.resetTime);
+        return false;
+      }
+      return true;
+    } catch {
+      return true; // Fail open
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    setRateLimited(false);
 
     const result = loginSchema.safeParse(form);
     if (!result.success) {
@@ -46,6 +68,10 @@ export default function LoginPage() {
       setErrors(fieldErrors);
       return;
     }
+
+    // Check rate limit
+    const allowed = await checkRateLimit(form.email);
+    if (!allowed) return;
 
     setLoading(true);
     try {
@@ -69,6 +95,11 @@ export default function LoginPage() {
     }
   };
 
+  const formatTime = (ms: number) => {
+    const mins = Math.ceil((ms - Date.now()) / 60000);
+    return `${mins} minute${mins !== 1 ? "s" : ""}`;
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-20">
       <motion.div
@@ -87,6 +118,22 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {rateLimited && (
+            <div className="mb-6 p-4 glass rounded-xl border border-amber-500/30 bg-amber-50/20 dark:bg-amber-900/10">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+                <div>
+                  <p className="font-medium text-charcoal dark:text-cream">
+                    Too many attempts
+                  </p>
+                  <p className="text-sm text-charcoal/60 dark:text-cream/60">
+                    Please wait {formatTime(retryAfter)} before trying again.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <Input
               id="email"
@@ -97,6 +144,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={handleChange}
               error={errors.email}
+              disabled={rateLimited}
             />
             <Input
               id="password"
@@ -107,6 +155,7 @@ export default function LoginPage() {
               value={form.password}
               onChange={handleChange}
               error={errors.password}
+              disabled={rateLimited}
             />
 
             <div className="flex items-center justify-between text-xs">
@@ -127,6 +176,7 @@ export default function LoginPage() {
               className="w-full"
               size="lg"
               icon={<ArrowRight className="h-4 w-4" />}
+              disabled={rateLimited}
             >
               Sign In
             </Button>

@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
+import { authRateLimit } from "@/lib/rate-limit";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
     const { email, otp, type } = await request.json();
 
     if (!email || !otp || !type) {
@@ -19,6 +23,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Invalid OTP type" },
         { status: 400 }
+      );
+    }
+
+    const rateLimit = authRateLimit(`otp:verify:${email}:${ip}`);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again later." },
+        { status: 429 }
       );
     }
 

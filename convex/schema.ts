@@ -25,7 +25,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_email", ["email"])
-    .index("by_phone", ["phone"]),
+    .index("by_phone", ["phone"])
+    .index("by_email_unique", ["email"]),
 
   vehicles: defineTable({
     ownerId: v.id("users"),
@@ -158,14 +159,7 @@ export default defineSchema({
     currency: v.string(),
     reference: v.string(),
     status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
-    metadata: v.optional(v.object({
-      bookingId: v.optional(v.id("bookings")),
-      vehicleId: v.optional(v.id("vehicles")),
-      durationDays: v.optional(v.number()),
-      category: v.optional(v.string()),
-      mobileMoneyRef: v.optional(v.string()),
-      payoutCompleted: v.optional(v.boolean()),
-    })),
+    metadata: v.optional(v.any()),
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
@@ -296,4 +290,12 @@ export default defineSchema({
     .index("by_user_id", ["userId"])
     .index("by_email_type", ["email", "type"])
     .index("by_otp", ["otp"]),
+
+  rate_limits: defineTable({
+    key: v.string(),
+    count: v.number(),
+    resetTime: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_key", ["key"]),
 });

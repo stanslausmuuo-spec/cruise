@@ -15,13 +15,12 @@ export async function POST(request: Request) {
 
     const { contentType } = await request.json();
 
-    if (!contentType || !contentType.startsWith("image/")) {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!contentType || !allowedTypes.includes(contentType)) {
       return NextResponse.json({ error: "Invalid content type" }, { status: 400 });
     }
 
-    const uploadUrl = await convex.mutation(api.storage.generateUploadUrl, {
-      contentType,
-    });
+    const uploadUrl = await convex.mutation(api.storage.generateUploadUrl, { contentType });
 
     // Extract storage ID from upload URL (format: https://.../storageId)
     const storageId = uploadUrl.split("/").pop()!;

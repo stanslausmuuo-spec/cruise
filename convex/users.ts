@@ -107,6 +107,15 @@ export const getHosts = query({
   args: {},
   handler: async (ctx) => {
     const allUsers = await ctx.db.query("users").collect();
-    return allUsers.filter((u) => u.roles.includes("host"));
+    const hosts = allUsers.filter((u) => u.roles.includes("host"));
+    return hosts.map((u) => ({
+      _id: u._id,
+      name: u.name,
+      avatarUrl: u.avatarUrl,
+      rating: u.rating,
+      reviewCount: u.reviewCount,
+      verified: u.verified,
+      createdAt: u.createdAt,
+    }));
   },
 });

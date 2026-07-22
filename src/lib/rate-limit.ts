@@ -4,8 +4,10 @@
  * LIMITATIONS:
  * - Resets on cold start (each new isolate gets a fresh Map).
  * - No cross-instance coordination; each isolate counts independently.
- * - For durable rate limiting, use a Convex mutation/query-based approach
- *   or an external service (Upstash, Redis, etc.).
+ * - For durable rate limiting, a Convex-based approach exists at convex/rateLimit.ts
+ *   but requires a round-trip. Use this in-memory limiter for fast first-pass
+ *   checks in middleware/edge, and consider adding Convex-based checks for
+ *   higher security requirements.
  *
  * For auth endpoints these limits are intentionally conservative to mitigate
  * brute-force attacks even with cold-start resets.
