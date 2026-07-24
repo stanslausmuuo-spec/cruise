@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
     const csrfHeader = request.headers.get(CSRF_HEADER_NAME);
 
     if (csrfCookie && csrfHeader) {
-      if (!validateCSRFToken(csrfHeader, csrfCookie)) {
+      if (!(await validateCSRFToken(csrfHeader, csrfCookie))) {
         return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
       }
     } else if (request.cookies.get("__convexAuthToken")) {
