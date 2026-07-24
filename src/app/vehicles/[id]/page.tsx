@@ -6,13 +6,18 @@ import { VehicleDetailSkeleton } from "@/components/vehicles/vehicle-detail-skel
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
+  return new ConvexHttpClient(url);
+}
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   try {
+    const convex = getConvexClient();
     const vehicle = await convex.query(api.vehicles.getVehicle, { vehicleId: id as any });
     if (!vehicle) return { title: "Vehicle Not Found" };
     return {
@@ -35,6 +40,7 @@ export default async function VehicleDetailPage({ params }: Props) {
 }
 
 async function VehicleDetailLoader({ vehicleId }: { vehicleId: string }) {
+  const convex = getConvexClient();
   const vehicle = await convex.query(api.vehicles.getVehicle, {
     vehicleId: vehicleId as any,
   });

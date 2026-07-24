@@ -4,10 +4,25 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
 import { authRateLimit } from "@/lib/rate-limit";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
+  return new ConvexHttpClient(url);
+}
+
+function logEvent(event: { action: string; ip: string; userAgent: string; metadata: Record<string, unknown> }) {
+  try {
+    const convex = getConvexClient();
+    void convex.mutation(api.audit.logEventPublic, event);
+  } catch {
+    // Silently fail - event logging is non-critical
+  }
+}
 
 export async function POST(request: Request) {
   try {
+    const convex = getConvexClient();
+
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                request.headers.get("x-real-ip") ||
                "unknown";
@@ -30,8 +45,7 @@ export async function POST(request: Request) {
       const diff = rateLimit.resetTime - Date.now();
       const retryAfter = Number.isFinite(diff) ? Math.max(1, Math.ceil(diff / 60000)) : 1;
 
-      // Log rate-limited attempt
-      void convex.mutation(api.audit.logEventPublic, {
+      logEvent({
         action: "auth_rate_limited",
         ip,
         userAgent,
@@ -53,8 +67,7 @@ export async function POST(request: Request) {
     try {
       result = await fetchAction("auth:signIn" as unknown as Parameters<typeof fetchAction>[0], args);
 
-      // Log successful auth
-      void convex.mutation(api.audit.logEventPublic, {
+      logEvent({
         action: flow === "signUp" ? "user_registered" : "user_signed_in",
         ip,
         userAgent,
@@ -63,8 +76,7 @@ export async function POST(request: Request) {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Authentication failed";
 
-      // Log failed auth
-      void convex.mutation(api.audit.logEventPublic, {
+      logEvent({
         action: "auth_failed",
         ip,
         userAgent,

@@ -4,10 +4,15 @@ import { api } from "convex/_generated/api";
 import { cookies } from "next/headers";
 import { authRateLimit } from "@/lib/rate-limit";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
+  return new ConvexHttpClient(url);
+}
 
 export async function POST(request: Request) {
   try {
+    const convex = getConvexClient();
     const cookieStore = await cookies();
     const token = cookieStore.get("__convexAuthToken");
     if (!token) {

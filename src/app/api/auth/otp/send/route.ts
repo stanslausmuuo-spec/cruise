@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
-import { Id } from "convex/_generated/dataModel";
 import { env } from "@/lib/env";
 import { generateOTP } from "@/lib/email";
 import { authRateLimit } from "@/lib/rate-limit";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
+  }
+  return new ConvexHttpClient(url);
+}
 
 export async function POST(request: Request) {
   try {
+    const convex = getConvexClient();
+
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                request.headers.get("x-real-ip") ||
                "unknown";
@@ -27,13 +34,6 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
         { status: 429 }
-      );
-    }
-
-    if (!email || !type) {
-      return NextResponse.json(
-        { error: "Email and type are required" },
-        { status: 400 }
       );
     }
 

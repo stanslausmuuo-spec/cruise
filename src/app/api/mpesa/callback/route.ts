@@ -4,7 +4,11 @@ import { api } from "convex/_generated/api";
 import { env } from "@/lib/env";
 import crypto from "crypto";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
+  return new ConvexHttpClient(url);
+}
 
 interface MpesaCallbackBody {
   Body: {
@@ -32,6 +36,7 @@ function verifyMpesaSignature(data: string, signature: string, secret: string): 
 
 export async function POST(request: Request) {
   try {
+    const convex = getConvexClient();
     const requestBody = await request.text();
     const body = JSON.parse(requestBody) as MpesaCallbackBody;
 
