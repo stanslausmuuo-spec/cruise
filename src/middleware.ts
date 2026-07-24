@@ -9,8 +9,6 @@ import {
 
 const ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_URL,
-  "http://localhost:3000",
-  "http://localhost:5173",
 ].filter(Boolean);
 
 function isValidOrigin(origin: string | null, referer: string | null): boolean {

@@ -14,7 +14,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "date-fns", "framer-motion"],
   },
-  turbopack: {},
   
   // Security headers
   async headers() {
@@ -45,7 +44,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Access-Control-Allow-Origin",
-            value: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
+            value: process.env.NEXT_PUBLIC_URL || "",
           },
           {
             key: "Access-Control-Allow-Methods",
