@@ -42,7 +42,7 @@ export const sendPushToUser = internalAction({
     });
 
     const results = await Promise.allSettled(
-      subscriptions.map(async (sub: { endpoint: string; keys: Record<string, string> }) => {
+      subscriptions.map(async (sub: { endpoint: string; keys: { p256dh: string; auth: string } }) => {
         try {
           await webPush.sendNotification(
             {
