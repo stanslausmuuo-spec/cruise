@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
 import { env } from "@/lib/env";
-import { generateOTP } from "@/lib/email";
 import { authRateLimit } from "@/lib/rate-limit";
 
 function getConvexClient() {

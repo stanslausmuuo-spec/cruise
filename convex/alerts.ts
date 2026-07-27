@@ -1,7 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation, internalAction } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
-import { internal } from "./_generated/api";
 
 export const createSecurityAlert = internalMutation({
   args: {

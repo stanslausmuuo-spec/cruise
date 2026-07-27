@@ -10,8 +10,7 @@ import { Button } from "@/components/ui/button";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { staggerContainer, fadeUp } from "@/lib/animations";
-import { Camera, CheckCircle, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { CheckCircle, ArrowLeft } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import type { Id } from "convex/_generated/dataModel";
 

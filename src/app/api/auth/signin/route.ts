@@ -21,8 +21,6 @@ function logEvent(event: { action: string; ip: string; userAgent: string; metada
 
 export async function POST(request: Request) {
   try {
-    const convex = getConvexClient();
-
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                request.headers.get("x-real-ip") ||
                "unknown";

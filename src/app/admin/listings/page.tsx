@@ -135,6 +135,7 @@ export default function AdminListingsPage() {
                   <div className="flex items-center gap-4">
                     <div className="h-16 w-16 rounded-xl overflow-hidden bg-charcoal/5 dark:bg-white/5 flex-shrink-0">
                       {vehicle.images[0] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={vehicle.images[0]} alt={`${vehicle.make} ${vehicle.model}`} className="w-full h-full object-cover" />
                       ) : (
                         <Car className="h-8 w-8 mx-auto my-3 text-charcoal/30 dark:text-cream/30" />

@@ -1,6 +1,5 @@
 import { internalMutation, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { api } from "./_generated/api";
 
 export const expireFeaturedListings = internalMutation({
   handler: async (ctx) => {

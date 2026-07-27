@@ -202,6 +202,7 @@ export function FileUpload({
               )}
             >
               {fileState.preview ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={fileState.preview}
                   alt={fileState.file.name}

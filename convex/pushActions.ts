@@ -42,8 +42,7 @@ export const sendPushToUser = internalAction({
     });
 
     const results = await Promise.allSettled(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      subscriptions.map(async (sub: any) => {
+      subscriptions.map(async (sub: { endpoint: string; keys: Record<string, string> }) => {
         try {
           await webPush.sendNotification(
             {
@@ -53,25 +52,24 @@ export const sendPushToUser = internalAction({
             payload
           );
           return { success: true };
-        } catch (error: any) {
-          if (error.statusCode === 410) {
+        } catch (error: unknown) {
+          if (error instanceof Error && "statusCode" in error && (error as { statusCode: number }).statusCode === 410) {
             await ctx.runMutation(api.push.removeSubscription, {
               endpoint: sub.endpoint,
             });
           }
-          return { success: false, error: error.message };
+          return { success: false, error: error instanceof Error ? error.message : String(error) };
         }
       })
     );
 
     return {
       sent: results.filter(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (r: any) => r.status === "fulfilled" && r.value.success
+        (r): r is PromiseFulfilledResult<{ success: boolean }> =>
+          r.status === "fulfilled" && r.value.success
       ).length,
       failed: results.filter(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (r: any) =>
+        (r) =>
           r.status === "rejected" ||
           (r.status === "fulfilled" && !r.value.success)
       ).length,

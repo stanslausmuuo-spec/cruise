@@ -127,7 +127,7 @@ function DashboardContent() {
     );
   }
 
-  const activeBookings = bookings?.bookings?.filter((b: any) => b.status === "active" || b.status === "confirmed").length || 0;
+  const activeBookings = bookings?.bookings?.filter((b) => b.status === "active" || b.status === "confirmed").length || 0;
 
   return (
     <div className="min-h-screen pt-20 pb-16 px-4">

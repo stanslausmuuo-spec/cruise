@@ -25,10 +25,11 @@ const badgeSizes = {
 };
 
 const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
-  ({ className, src, name, size = "md", verified, online, ...props }, ref) => {
+  ({ src, name, size = "md", verified, online, ...props }, ref) => {
     return (
       <div className="relative inline-flex shrink-0" ref={ref} {...props}>
         {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={src}
             alt={name}

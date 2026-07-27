@@ -37,7 +37,7 @@ function validatePassword(password: string) {
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Password({
-      profile: (params, ctx) => {
+      profile: (params) => {
         const email = params.email as string;
         if (!email || !email.includes("@")) {
           throw new Error("Invalid email");

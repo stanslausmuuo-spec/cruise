@@ -32,10 +32,13 @@ export function Navbar() {
   const currentUser = useQuery(api.auth.getMe);
 
   useEffect(() => {
-    setMounted(true);
+    const id = requestAnimationFrame(() => setMounted(true));
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   const isLoggedIn = currentUser !== null && currentUser !== undefined;

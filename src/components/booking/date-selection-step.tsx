@@ -1,7 +1,6 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { formatDate } from "@/lib/utils";
 
 interface DateSelectionStepProps {
   startDate: string;

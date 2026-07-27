@@ -58,7 +58,7 @@ export default function LoginPage() {
       if (res.status === 429) {
         const data = await res.json();
         setRateLimited(true);
-        setRetryAfter(Date.now() + 60000);
+        setRetryAfter(60000);
         toast("error", "Too many attempts", data.error || "Please try again later.");
         return;
       }
@@ -85,7 +85,7 @@ export default function LoginPage() {
   };
 
   const formatTime = (ms: number) => {
-    const mins = Math.ceil((ms - Date.now()) / 60000);
+    const mins = Math.ceil(ms / 60000);
     return `${mins} minute${mins !== 1 ? "s" : ""}`;
   };
 

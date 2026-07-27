@@ -1,5 +1,6 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 import { Suspense } from "react";
 import { VehicleDetailContent } from "@/components/vehicles/vehicle-detail-content";
 import { VehicleDetailSkeleton } from "@/components/vehicles/vehicle-detail-skeleton";
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   try {
     const convex = getConvexClient();
-    const vehicle = await convex.query(api.vehicles.getVehicle, { vehicleId: id as any });
+    const vehicle = await convex.query(api.vehicles.getVehicle, { vehicleId: id as Id<"vehicles"> });
     if (!vehicle) return { title: "Vehicle Not Found" };
     return {
       title: `${vehicle.year} ${vehicle.make} ${vehicle.model} | Cruise`,
@@ -42,7 +43,7 @@ export default async function VehicleDetailPage({ params }: Props) {
 async function VehicleDetailLoader({ vehicleId }: { vehicleId: string }) {
   const convex = getConvexClient();
   const vehicle = await convex.query(api.vehicles.getVehicle, {
-    vehicleId: vehicleId as any,
+    vehicleId: vehicleId as Id<"vehicles">,
   });
   if (!vehicle) notFound();
 

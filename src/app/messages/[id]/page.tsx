@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -29,11 +29,9 @@ export default function ConversationPage() {
 
   const messages = conversation?.messages ?? [];
 
-  const [inputValue, setInputValue] = useState("");
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [conversation?.messages]);
 
   const handleSend = async (content: string) => {
     if (!currentUser) return;

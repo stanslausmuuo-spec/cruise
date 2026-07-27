@@ -40,11 +40,6 @@ interface GeoJSONFeature {
   properties: Record<string, unknown>;
 }
 
-interface ClusterProperties {
-  point_count: number;
-  cluster_id: number;
-}
-
 interface VehicleProperties {
   id: string;
   make: string;
@@ -54,24 +49,6 @@ interface VehicleProperties {
   pricePerDay: number;
   address: string;
   image: string | null;
-}
-
-interface ClusterFeature {
-  type: "Feature";
-  geometry: {
-    type: "Point";
-    coordinates: [number, number];
-  };
-  properties: ClusterProperties;
-}
-
-interface VehicleFeature {
-  type: "Feature";
-  geometry: {
-    type: "Point";
-    coordinates: [number, number];
-  };
-  properties: VehicleProperties;
 }
 
 export function VehicleMap({ onVehicleClick, vehicles = [] }: VehicleMapProps) {

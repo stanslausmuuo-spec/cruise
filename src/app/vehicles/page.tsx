@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -8,7 +8,6 @@ import type { Doc } from "convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
 import { VehicleCard } from "@/components/vehicles/vehicle-card";
 import { VehicleSearchBar } from "@/components/vehicles/vehicle-search-bar";
 import { FilterPanel } from "@/components/vehicles/filter-panel";
@@ -16,9 +15,7 @@ import { ActiveFilterTags } from "@/components/vehicles/active-filter-tags";
 import { staggerContainer, fadeUp } from "@/lib/animations";
 import { SlidersHorizontal, Loader2 } from "lucide-react";
 import { PRICE_RANGES } from "@/lib/constants";
-import type { VehicleFilters, VehicleType } from "@/lib/types";
-
-const initialFilters: VehicleFilters = {};
+import type { VehicleType } from "@/lib/types";
 
 export default function VehiclesPage() {
   const [search, setSearch] = useState("");
@@ -33,7 +30,7 @@ export default function VehiclesPage() {
   });
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const vehiclePagesRef = useRef<Doc<"vehicles">[]>([]);
+  const [vehicles, setVehicles] = useState<Doc<"vehicles">[]>([]);
 
   const queryArgs = {
     type: filters.types.length === 1 ? filters.types[0] as VehicleType : undefined,
@@ -46,6 +43,18 @@ export default function VehiclesPage() {
 
   const result = useQuery(api.vehicles.listVehicles, queryArgs);
 
+  useEffect(() => {
+    if (result === undefined) return;
+    const id = requestAnimationFrame(() => {
+      if (cursor === undefined) {
+        setVehicles(result.vehicles);
+      } else {
+        setVehicles(prev => [...prev, ...result.vehicles]);
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [result, cursor]);
+
   const clearFilters = useCallback(() => {
     setFilters({
       types: [],
@@ -57,7 +66,7 @@ export default function VehiclesPage() {
     });
     setSearch("");
     setCursor(undefined);
-    vehiclePagesRef.current = [];
+    setVehicles([]);
   }, []);
 
   const loadMore = useCallback(() => {
@@ -65,7 +74,7 @@ export default function VehiclesPage() {
     setIsLoadingMore(true);
     setCursor(result.nextCursor);
     setTimeout(() => setIsLoadingMore(false), 100);
-  }, [result?.nextCursor, isLoadingMore]);
+  }, [result, isLoadingMore]);
 
   const activeFilterCount =
     filters.types.length +
@@ -74,16 +83,6 @@ export default function VehiclesPage() {
     (filters.priceRange !== null ? 1 : 0) +
     (filters.minPrice ? 1 : 0) +
     (filters.maxPrice ? 1 : 0);
-
-  const vehicles = useMemo(() => {
-    if (result === undefined) return [];
-    if (cursor === undefined) {
-      vehiclePagesRef.current = result.vehicles;
-    } else {
-      vehiclePagesRef.current = [...vehiclePagesRef.current, ...result.vehicles];
-    }
-    return vehiclePagesRef.current;
-  }, [result, cursor]);
 
   const filtered = useMemo(() => {
     return vehicles.filter((v: typeof vehicles[0]) => {

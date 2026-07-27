@@ -8,11 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ArrowLeft, CheckCircle, Loader2, Star } from "lucide-react";
+import { Loader2, Star } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { useToast } from "@/components/ui/toast";
 import { FEATURED_LISTING_FEE, FEATURED_DURATION_DAYS } from "@/lib/constants";
-import { formatCurrency } from "@/lib/utils";
 import type { Id } from "convex/_generated/dataModel";
 import { useState, useEffect } from "react";
 

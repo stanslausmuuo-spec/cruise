@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { sha256 } from "./lib/crypto";
 
 async function hashOTP(otp: string): Promise<string> {

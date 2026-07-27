@@ -82,6 +82,7 @@ function HostVehiclesContent() {
                 <div className="glass rounded-premium p-4 flex items-center gap-4">
                   <div className="h-20 w-24 rounded-lg overflow-hidden shrink-0 bg-charcoal/10 dark:bg-white/10">
                     {vehicle.images[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={vehicle.images[0]}
                         alt={`${vehicle.make} ${vehicle.model}`}

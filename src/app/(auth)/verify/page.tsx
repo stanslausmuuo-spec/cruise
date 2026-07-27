@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, ShieldCheck, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { Upload, ShieldCheck, ArrowLeft, CheckCircle } from "lucide-react";
 
 const documents = [
   { id: "national_id", label: "National ID", description: "Front and back" },

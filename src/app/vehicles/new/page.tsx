@@ -11,7 +11,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { VehicleTypeSelector } from "@/components/vehicles/vehicle-type-selector";
 import { formatCurrency, calculatePercentage, calculateHostEarnings } from "@/lib/utils";
 import { TRANSMISSION_TYPES, FUEL_TYPES, TRANSMISSION_LABELS, FUEL_TYPE_LABELS } from "@/lib/constants";
-import { ChevronLeft, ChevronRight, Upload, X, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { FileUpload } from "@/components/ui/file-upload";
 import type { VehicleType, Transmission, FuelType } from "@/lib/types";

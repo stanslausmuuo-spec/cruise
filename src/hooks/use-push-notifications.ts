@@ -18,7 +18,9 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function usePushNotifications() {
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported] = useState(
+    () => typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window
+  );
   const [permission, setPermission] =
     useState<NotificationPermission>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -28,20 +30,24 @@ export function usePushNotifications() {
   const unsubscribeMutation = useMutation(api.push.unsubscribe);
 
   useEffect(() => {
-    if ("serviceWorker" in navigator && "PushManager" in window) {
-      setIsSupported(true);
-      setPermission(Notification.permission);
-
+    if (!isSupported) {
+      const id = requestAnimationFrame(() => setLoading(false));
+      return () => cancelAnimationFrame(id);
+    }
+    const id1 = requestAnimationFrame(() => setPermission(Notification.permission));
+    const id2 = requestAnimationFrame(() => {
       navigator.serviceWorker.ready.then((registration) => {
         registration.pushManager.getSubscription().then((subscription) => {
           setIsSubscribed(!!subscription);
           setLoading(false);
         });
       });
-    } else {
-      setLoading(false);
-    }
-  }, []);
+    });
+    return () => {
+      cancelAnimationFrame(id1);
+      cancelAnimationFrame(id2);
+    };
+  }, [isSupported]);
 
   const subscribe = useCallback(async () => {
     if (!isSupported) return false;

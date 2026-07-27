@@ -1,12 +1,12 @@
 import { v } from "convex/values";
-import { mutation, query, type QueryCtx } from "./_generated/server";
+import { mutation, query, type QueryCtx, type MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
 import { validateFile } from "./lib/validateFile";
 import { internal } from "./_generated/api";
 import { sanitizeDescription, sanitizeFeatures, sanitizeAddress } from "./lib/sanitize";
 
-async function logAudit(ctx: any, action: string, metadata: any) {
+async function logAudit(ctx: MutationCtx, action: string, metadata: Record<string, unknown>) {
   try {
     await ctx.scheduler.runAfter(0, internal.audit.logEvent, {
       action,

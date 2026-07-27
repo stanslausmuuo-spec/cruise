@@ -1,35 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { generateCSRFToken, CSRF_COOKIE_NAME } from "@/lib/csrf";
 
 export function useCSRF() {
-  const [csrfToken, setCSRFToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Check if we already have a CSRF token in cookies
+  const [csrfToken, setCSRFToken] = useState<string | null>(() => {
     const cookies = document.cookie.split(";");
-    let existingToken: string | null = null;
-
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split("=");
       if (name === CSRF_COOKIE_NAME) {
-        existingToken = decodeURIComponent(value);
-        break;
+        return decodeURIComponent(value);
       }
     }
+    return null;
+  });
+  const generatedRef = useRef(false);
 
-    if (existingToken) {
-      setCSRFToken(existingToken);
-    } else {
-      // Generate a new CSRF token
+  useEffect(() => {
+    if (csrfToken || generatedRef.current) return;
+    generatedRef.current = true;
+    const id = requestAnimationFrame(() => {
       const newToken = generateCSRFToken();
       setCSRFToken(newToken);
-
-      // Store in cookie with security flags
       const isProduction = process.env.NODE_ENV === "production";
       const cookieValue = `${CSRF_COOKIE_NAME}=${encodeURIComponent(newToken)}; path=/; SameSite=Lax${isProduction ? "; Secure" : ""}`;
       document.cookie = cookieValue;
-    }
-  }, []);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [csrfToken]);
 
   return csrfToken;
 }

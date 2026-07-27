@@ -14,9 +14,7 @@ import { staggerContainer, fadeUp } from "@/lib/animations";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import {
   Calendar,
-  MapPin,
   CreditCard,
-  User,
   MessageSquare,
   Camera,
 } from "lucide-react";
@@ -82,6 +80,7 @@ export default function BookingDetailPage() {
 
         {vehicle && (
           <div className="relative h-48 md:h-64 rounded-2xl overflow-hidden mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={vehicle.images[0] || "/placeholder-car.jpg"}
               alt={`${vehicle.make} ${vehicle.model}`}

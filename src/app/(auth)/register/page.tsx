@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -44,8 +43,6 @@ const initialForm: FormData = {
 };
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const updateProfile = useMutation(api.users.updateProfile);
   const registerUser = useMutation(api.auth.registerUser);
   const { toast } = useToast();
 
@@ -155,7 +152,7 @@ export default function RegisterPage() {
       if (res.status === 429) {
         const errorData = await res.json();
         setRateLimited(true);
-        setRetryAfter(Date.now() + 60000);
+        setRetryAfter(60000);
         toast("error", "Too many attempts", errorData.error || "Please try again later.");
         return;
       }
@@ -193,7 +190,7 @@ export default function RegisterPage() {
   };
 
   const formatTime = (ms: number) => {
-    const mins = Math.ceil((ms - Date.now()) / 60000);
+    const mins = Math.ceil(ms / 60000);
     return `${mins} minute${mins !== 1 ? "s" : ""}`;
   };
 
