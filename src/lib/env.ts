@@ -3,10 +3,10 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DARAJA_CONSUMER_KEY: z.string().min(1, "M-Pesa consumer key is required"),
-    DARAJA_CONSUMER_SECRET: z.string().min(1, "M-Pesa consumer secret is required"),
-    DARAJA_PASSKEY: z.string().min(1, "M-Pesa passkey is required"),
-    DARAJA_SHORTCODE: z.string().min(1, "M-Pesa shortcode is required"),
+    DARAJA_CONSUMER_KEY: z.string().optional().default(""),
+    DARAJA_CONSUMER_SECRET: z.string().optional().default(""),
+    DARAJA_PASSKEY: z.string().optional().default(""),
+    DARAJA_SHORTCODE: z.string().optional().default("174379"),
     DARAJA_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
     MAPBOX_TOKEN: z.string().optional(),
     MPESA_CALLBACK_SECRET: z.string().min(1, "M-Pesa callback secret is required"),

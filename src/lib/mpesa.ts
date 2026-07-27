@@ -1,9 +1,13 @@
+import { env } from "@/lib/env";
 import { DarajaProvider } from "./daraja";
 import type { PaymentRequest, PaymentResponse } from "./payment-provider";
 
 const provider = new DarajaProvider();
 
 export async function initiateSTKPush(request: PaymentRequest): Promise<PaymentResponse> {
+  if (!env.DARAJA_CONSUMER_KEY) {
+    return { success: false, message: "M-Pesa payment service is currently unavailable. Please try again later." };
+  }
   return provider.sendSTKPush(request);
 }
 

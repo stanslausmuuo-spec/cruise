@@ -62,3 +62,8 @@ jobs:
           DARAJA_PASSKEY: ${{ secrets.DARAJA_PASSKEY }}
           DARAJA_SHORTCODE: ${{ secrets.DARAJA_SHORTCODE }}
           DARAJA_ENV: sandbox
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          MPESA_CALLBACK_SECRET: ${{ secrets.MPESA_CALLBACK_SECRET }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
