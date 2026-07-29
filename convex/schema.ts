@@ -17,24 +17,26 @@ export default defineSchema({
     .index("by_timestamp", ["timestamp"]),
 
   users: defineTable({
-    name: v.string(),
+    name: v.optional(v.string()),
     email: v.string(),
-    phone: v.string(),
+    phone: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
-    roles: v.array(v.union(v.literal("renter"), v.literal("host"), v.literal("admin"))),
-    verified: v.boolean(),
-    kycStatus: v.union(
-      v.literal("none"),
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("rejected")
+    roles: v.optional(v.array(v.union(v.literal("renter"), v.literal("host"), v.literal("admin")))),
+    verified: v.optional(v.boolean()),
+    kycStatus: v.optional(
+      v.union(
+        v.literal("none"),
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected")
+      )
     ),
-    rating: v.number(),
-    reviewCount: v.number(),
-    theme: v.union(v.literal("light"), v.literal("dark"), v.literal("system")),
+    rating: v.optional(v.number()),
+    reviewCount: v.optional(v.number()),
+    theme: v.optional(v.union(v.literal("light"), v.literal("dark"), v.literal("system"))),
     bio: v.optional(v.string()),
     location: v.optional(v.string()),
-    createdAt: v.number(),
+    createdAt: v.optional(v.number()),
   })
     .index("by_email", ["email"])
     .index("by_phone", ["phone"]),
