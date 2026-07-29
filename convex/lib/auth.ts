@@ -10,7 +10,7 @@ export async function getCurrentUser(ctx: MutationCtx | QueryCtx) {
     .first();
   
   if (!user) throw new Error("User not found");
-  return user;
+  return { ...user, roles: user.roles ?? [] };
 }
 
 export function requireAuth(ctx: MutationCtx | QueryCtx) {
