@@ -114,7 +114,7 @@ export const isAdmin = query({
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .first();
-    return user?.roles.includes("admin") ?? false;
+    return user?.roles?.includes("admin") ?? false;
   },
 });
 
