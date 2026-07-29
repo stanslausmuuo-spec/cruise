@@ -138,7 +138,7 @@ export const getUser = query({
         .query("users")
         .withIndex("by_email", (q) => q.eq("email", callerEmail))
         .first();
-      if (!caller?.roles.includes("admin")) return null;
+      if (!caller?.roles?.includes("admin")) return null;
     }
     const user = await ctx.db.get(args.userId);
     if (!user) return null;

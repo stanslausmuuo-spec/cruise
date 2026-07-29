@@ -67,7 +67,7 @@ export const getSubscriptionsByUserId = query({
         .query("users")
         .withIndex("by_email", (q) => q.eq("email", callerEmail))
         .first();
-      if (!user || (user._id !== args.userId && !user.roles.includes("admin"))) {
+      if (!user || (user._id !== args.userId && !user.roles?.includes("admin"))) {
         return [];
       }
     }
@@ -95,7 +95,7 @@ export const removeSubscription = mutation({
         .query("users")
         .withIndex("by_email", (q) => q.eq("email", callerEmail))
         .first();
-      if (!user || (sub.userId !== user._id && !user.roles.includes("admin"))) {
+      if (!user || (sub.userId !== user._id && !user.roles?.includes("admin"))) {
         throw new Error("Not authorized");
       }
     }

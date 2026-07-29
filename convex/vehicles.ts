@@ -224,7 +224,7 @@ export const getVehicle = query({
           .query("users")
           .withIndex("by_email", (q) => q.eq("email", callerEmail))
           .first();
-        if (user && (vehicle.ownerId === user._id || user.roles.includes("admin"))) {
+        if (user && (vehicle.ownerId === user._id || user.roles?.includes("admin"))) {
           return vehicle;
         }
       }
@@ -245,7 +245,7 @@ export const getOwnerVehicles = query({
         .query("users")
         .withIndex("by_email", (q) => q.eq("email", callerEmail))
         .first();
-      if (user && (user._id === args.ownerId || user.roles.includes("admin"))) {
+      if (user && (user._id === args.ownerId || user.roles?.includes("admin"))) {
         vehicles = await ctx.db
           .query("vehicles")
           .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
