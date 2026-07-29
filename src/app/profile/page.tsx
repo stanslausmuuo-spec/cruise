@@ -43,20 +43,20 @@ export default function ProfilePage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="text-center mb-8">
             <Avatar
-              name={currentUser.name}
+              name={currentUser.name ?? "User"}
               size="lg"
               verified={currentUser.verified}
               className="mx-auto mb-4"
             />
             <h1 className="font-heading text-2xl font-bold text-charcoal dark:text-cream">
-              {currentUser.name}
+              {currentUser.name ?? "User"}
             </h1>
             <p className="text-sm text-charcoal/60 dark:text-cream/60">
               {currentUser.email} &middot; {currentUser.phone}
             </p>
             <div className="flex items-center justify-center gap-2 mt-2">
               {currentUser.verified && <Badge variant="verified">Verified</Badge>}
-              <RatingDisplay rating={currentUser.rating} count={currentUser.reviewCount} />
+              <RatingDisplay rating={currentUser.rating ?? 0} count={currentUser.reviewCount ?? 0} />
             </div>
           </div>
 
@@ -80,7 +80,7 @@ export default function ProfilePage() {
                 <Card glass className="p-4 text-center">
                   <Star className="h-5 w-5 mx-auto mb-1 text-brand-gold-400" />
                   <p className="text-lg font-heading font-bold text-charcoal dark:text-cream">
-                    {currentUser.rating.toFixed(1)}
+                    {(currentUser.rating ?? 0).toFixed(1)}
                   </p>
                   <p className="text-xs text-charcoal/50 dark:text-cream/50">Rating</p>
                 </Card>
@@ -150,7 +150,7 @@ export default function ProfilePage() {
                   Roles
                 </h2>
                 <div className="flex flex-wrap gap-2">
-                  {currentUser.roles.map((role) => (
+                  {(currentUser.roles ?? []).map((role) => (
                     <Badge key={role} variant="verified">{role}</Badge>
                   ))}
                 </div>

@@ -69,7 +69,7 @@ export default function ConversationPage() {
     <div className="min-h-screen pt-20 pb-4 px-4">
       <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-100px)]">
         <ChatHeader
-          name={otherUser.name}
+          name={otherUser.name ?? "Unknown"}
           avatarUrl={otherUser.avatarUrl}
           online={true}
         />

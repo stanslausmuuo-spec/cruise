@@ -155,12 +155,12 @@ export default function BookingDetailPage() {
             {host && (
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-gold-400 to-brand-gold-600 flex items-center justify-center text-white font-bold">
-                  {host.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  {(host.name ?? "U").split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
                 <div>
-                  <p className="font-medium text-charcoal dark:text-cream">{host.name}</p>
+                  <p className="font-medium text-charcoal dark:text-cream">{host.name ?? "Unknown User"}</p>
                   <p className="text-xs text-charcoal/50 dark:text-cream/50">
-                    {host.rating} ({host.reviewCount} reviews)
+                    {host.rating ?? "N/A"} ({host.reviewCount ?? 0} reviews)
                   </p>
                 </div>
               </div>

@@ -138,10 +138,10 @@ function DashboardContent() {
           className="mb-8"
         >
           <h1 className="font-heading text-3xl font-bold text-charcoal dark:text-cream">
-            Welcome, <span className="text-gradient-gold">{currentUser.name.split(" ")[0]}</span>
+            Welcome, <span className="text-gradient-gold">{(currentUser.name ?? "User").split(" ")[0]}</span>
           </h1>
           <p className="text-charcoal/60 dark:text-cream/60 mt-1">
-            {currentUser.roles.join(" . ")}
+            {(currentUser.roles ?? []).join(" . ")}
           </p>
         </motion.div>
 
@@ -168,7 +168,7 @@ function DashboardContent() {
               <StatCard
                 icon={<Star className="h-5 w-5 text-brand-gold-400" />}
                 label="Rating"
-                value={currentUser.rating.toFixed(1)}
+                value={(currentUser.rating ?? 0).toFixed(1)}
                 href="/profile"
               />
             </div>

@@ -5,11 +5,11 @@ import { Star, ShieldCheck } from "lucide-react";
 
 interface HostCardProps {
   host: {
-    name: string;
+    name?: string;
     avatarUrl?: string;
-    rating: number;
-    reviewCount: number;
-    verified: boolean;
+    rating?: number;
+    reviewCount?: number;
+    verified?: boolean;
   };
 }
 
@@ -18,18 +18,18 @@ function HostCard({ host }: HostCardProps) {
     <div className="glass rounded-premium p-5">
       <div className="flex items-center gap-3 mb-3">
         <Avatar
-          name={host.name}
+          name={host.name ?? "Host"}
           src={host.avatarUrl}
           size="md"
           verified={host.verified}
         />
         <div>
           <p className="font-medium text-sm text-charcoal dark:text-cream">
-            {host.name}
+            {host.name ?? "Unknown Host"}
           </p>
           <div className="flex items-center gap-1 text-xs text-charcoal/50 dark:text-cream/50">
             <Star className="h-3 w-3 text-brand-gold-400 fill-brand-gold-400" />
-            {host.rating} &middot; {host.reviewCount} reviews
+            {host.rating ?? 0} &middot; {host.reviewCount ?? 0} reviews
           </div>
         </div>
       </div>

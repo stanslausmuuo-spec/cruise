@@ -13,11 +13,11 @@ import type { Vehicle } from "@/lib/types";
 
 interface PublicUser {
   _id: string;
-  name: string;
+  name?: string;
   avatarUrl?: string;
-  rating: number;
-  reviewCount: number;
-  verified: boolean;
+  rating?: number;
+  reviewCount?: number;
+  verified?: boolean;
 }
 
 interface VehicleDetailContentProps {

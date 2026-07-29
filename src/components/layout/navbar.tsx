@@ -106,7 +106,7 @@ export function Navbar() {
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                   </Link>
-                  <Avatar name={currentUser!.name} src={currentUser!.avatarUrl} size="sm" />
+                  <Avatar name={currentUser!.name ?? "U"} src={currentUser!.avatarUrl} size="sm" />
                   <button
                     onClick={() => signOut()}
                     className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-charcoal/60 dark:text-cream/60 hover:text-red-500"
@@ -162,7 +162,7 @@ export function Navbar() {
               <div className="flex flex-col gap-4">
                 {isLoggedIn && (
                   <div className="flex items-center gap-3 pb-4 border-b border-charcoal/5 dark:border-white/5">
-                    <Avatar name={currentUser!.name} src={currentUser!.avatarUrl} size="md" />
+                    <Avatar name={currentUser!.name ?? "U"} src={currentUser!.avatarUrl} size="md" />
                     <div>
                       <p className="font-medium text-sm text-charcoal dark:text-cream">{currentUser!.name}</p>
                       <p className="text-xs text-charcoal/50 dark:text-cream/50">{currentUser!.email}</p>
