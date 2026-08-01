@@ -95,22 +95,26 @@ export async function middleware(request: NextRequest) {
   response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
 
   // Content-Security-Policy
+  // NOTE: connect-src must include wss: so the Convex live-query websocket
+  // (wss://<deployment>.convex.cloud) can establish — otherwise all data
+  // fetching breaks at runtime in production.
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   response.headers.set(
     "Content-Security-Policy",
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-    "style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' data: https:; " +
-    "font-src 'self' data:; " +
-    "connect-src 'self' https:; " +
-    "frame-ancestors 'none'; " +
-    "base-uri 'self'; " +
-    "form-action 'self'"
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "img-src 'self' data: https:; " +
+      "font-src 'self' data:; " +
+      `connect-src 'self' https: wss: ${convexUrl ? new URL(convexUrl).origin + " " : ""}https://*.convex.cloud; ` +
+      "frame-ancestors 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self'"
   );
 
   return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/register", "/api/:path*", "/dashboard/:path*", "/vehicles/:path*", "/messages"],
+  matcher: "/:path*",
 };

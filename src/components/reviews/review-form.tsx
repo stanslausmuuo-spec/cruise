@@ -44,6 +44,8 @@ function ReviewForm({ bookingId, onSuccess }: ReviewFormProps) {
           <button
             key={star}
             type="button"
+            aria-label={`Rate ${star} ${star === 1 ? "star" : "stars"}`}
+            aria-pressed={star === rating}
             className="focus:outline-none"
             onMouseEnter={() => setHoverRating(star)}
             onMouseLeave={() => setHoverRating(0)}

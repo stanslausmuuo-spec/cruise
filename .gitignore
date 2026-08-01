@@ -12,6 +12,7 @@ node_modules/
 
 # testing
 coverage/
+test-results/
 
 # next.js
 .next/
@@ -23,6 +24,7 @@ coverage/
 # misc
 .DS_Store
 *.pem
+QA_REPORT.md
 
 # debug
 npm-debug.log*

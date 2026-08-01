@@ -39,6 +39,7 @@ function MessageInput({ onSend, disabled, placeholder = "Type a message..." }: M
         size="sm"
         disabled={!message.trim() || disabled}
         icon={<Send className="h-4 w-4" />}
+        aria-label="Send message"
       />
     </form>
   );
