@@ -7,7 +7,7 @@ const values = [
   {
     icon: Car,
     title: "Premium Selection",
-    desc: "Every vehicle on Cruise is verified for quality, ensuring you drive nothing but the best.",
+    desc: "Every vehicle on CruiseLinx is verified for quality, ensuring you drive nothing but the best.",
   },
   {
     icon: Shield,
@@ -37,7 +37,7 @@ export default function AboutPage() {
         >
           <div className="text-center mb-12">
             <h1 className="font-heading text-4xl font-bold text-charcoal dark:text-cream mb-4">
-              About Cruise
+              About CruiseLinx
             </h1>
             <p className="text-lg text-charcoal/60 dark:text-cream/60 max-w-2xl mx-auto">
               We are on a mission to transform car rental — making it seamless, trusted, and accessible to everyone.
@@ -46,9 +46,9 @@ export default function AboutPage() {
 
           <div className="prose prose-sm max-w-none text-charcoal/70 dark:text-cream/70 mb-12">
             <p>
-              Cruise is a peer-to-peer car rental marketplace that connects car owners with travelers
+              CruiseLinx is a peer-to-peer car rental marketplace that connects car owners with travelers
               looking for a premium driving experience. Whether you need a luxury sedan for a business
-              trip, an SUV for a weekend getaway, or something unique for a special occasion, Cruise
+              trip, an SUV for a weekend getaway, or something unique for a special occasion, CruiseLinx
               has you covered.
             </p>
             <p>

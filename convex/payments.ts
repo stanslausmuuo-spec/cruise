@@ -125,23 +125,6 @@ export const getPlanByCheckoutRequestId = query({
   },
 });
 
-export const getBookingByMpesaRef = query({
-  args: { mobileMoneyRef: v.string() },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-
-    const booking = await ctx.db
-      .query("bookings")
-      .filter((q) => q.eq(q.field("mobileMoneyRef"), args.mobileMoneyRef))
-      .first();
-
-    if (!booking) return null;
-    if (booking.guestId !== user._id && booking.hostId !== user._id && !user.roles.includes("admin")) return null;
-
-    return booking;
-  },
-});
-
 export const getTransactionByReference = query({
   args: { reference: v.string() },
   handler: async (ctx, args) => {
@@ -206,12 +189,11 @@ export const getUserTransactions = query({
   },
 });
 
-export const getHostEarnings = query({
+export const getHostBookingStats = query({
   args: {},
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
-    
-    // Get completed bookings where this user is the host
+
     const bookings = await ctx.db
       .query("bookings")
       .withIndex("by_host", (q) => q.eq("hostId", user._id))
@@ -219,46 +201,41 @@ export const getHostEarnings = query({
       .collect();
 
     const completedBookings = bookings.filter((b) => b.status === "confirmed" || b.status === "active" || b.status === "completed");
-    const pendingBookings = bookings.filter((b) => b.status === "pending");
+    const pendingRequests = bookings.filter((b) => b.status === "pending");
+    const disputedBookings = bookings.filter((b) => b.status === "disputed");
 
-    // Host earnings = totalAmount - platformFee from each completed booking
-    const totalEarnings = completedBookings.reduce((sum, b) => sum + (b.totalAmount - b.platformFee), 0);
-    
-    // Calculate this month's earnings
+    const totalBookedValue = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0);
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const thisMonthEarnings = completedBookings
+    const thisMonthValue = completedBookings
       .filter((b) => b.createdAt >= startOfMonth)
-      .reduce((sum, b) => sum + (b.totalAmount - b.platformFee), 0);
-    
-    // Pending payouts = pending bookings' host earnings (waiting for payment confirmation)
-    const pendingPayouts = pendingBookings.reduce((sum, b) => sum + (b.totalAmount - b.platformFee), 0);
+      .reduce((sum, b) => sum + b.totalAmount, 0);
 
-    // Get earnings by month for the last 12 months
-    const monthlyEarnings = [];
+    const monthlyValue = [];
     for (let i = 11; i >= 0; i--) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1).getTime();
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1).getTime();
-      
-      const monthEarnings = completedBookings
+
+      const monthValue = completedBookings
         .filter((b) => b.createdAt >= monthStart && b.createdAt < monthEnd)
-        .reduce((sum, b) => sum + (b.totalAmount - b.platformFee), 0);
-      
-      monthlyEarnings.push({
+        .reduce((sum, b) => sum + b.totalAmount, 0);
+
+      monthlyValue.push({
         month: new Date(now.getFullYear(), now.getMonth() - i, 1).toLocaleString("default", { month: "short", year: "2-digit" }),
-        earnings: monthEarnings,
+        value: monthValue,
       });
     }
 
-    // Recent completed bookings for the table
     const recentBookings = completedBookings.slice(0, 20);
 
     return {
-      totalEarnings,
-      thisMonthEarnings,
-      pendingPayouts,
-      pendingPayoutCount: pendingBookings.length,
-      monthlyEarnings,
+      totalBookings: completedBookings.length,
+      totalBookedValue,
+      thisMonthValue,
+      pendingRequests: pendingRequests.length,
+      disputedBookings: disputedBookings.length,
+      monthlyValue,
       recentBookings,
     };
   },
@@ -290,7 +267,7 @@ export const processMpesaCallback = mutation({
       if (transaction) {
         await ctx.db.patch(transaction._id, {
           status: "failed",
-          metadata: { resultCode, resultDesc },
+          metadata: { resultCode, resultDesc, phone },
         });
       }
       return { success: true };
@@ -303,44 +280,6 @@ export const processMpesaCallback = mutation({
       .first();
 
     if (existingTx && existingTx.status === "completed") {
-      return { success: true };
-    }
-
-    // Try booking payment
-    const booking = await ctx.db
-      .query("bookings")
-      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", checkoutRequestId))
-      .first();
-
-    if (booking) {
-      if (booking.status !== "pending") {
-        return { success: true };
-      }
-
-      if (Math.abs(amount - booking.totalAmount) > 1) {
-        return { success: false, reason: "amount_mismatch" };
-      }
-
-      await ctx.db.patch(booking._id, {
-        status: "confirmed",
-        paymentStatus: "paid",
-        mobileMoneyRef: mpesaReceipt,
-      });
-
-      if (existingTx) {
-        await ctx.db.patch(existingTx._id, {
-          status: "completed",
-          metadata: { mpesaReceipt, phone, amount },
-        });
-      }
-
-      await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
-        userId: booking.hostId,
-        title: "New Booking!",
-        body: `A vehicle has been booked for KES ${amount}.`,
-        url: "/dashboard/host/vehicles",
-      });
-
       return { success: true };
     }
 
@@ -390,24 +329,5 @@ export const processMpesaCallback = mutation({
     }
 
     return { success: false };
-  },
-});
-
-export const markPayoutCompleted = mutation({
-  args: {
-    transactionIds: v.array(v.id("transactions")),
-  },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    if (!user.roles.includes("admin")) throw new Error("Not authorized");
-
-    for (const transactionId of args.transactionIds) {
-      const transaction = await ctx.db.get(transactionId);
-      await ctx.db.patch(transactionId, {
-        metadata: { ...(transaction?.metadata || {}), payoutCompleted: true },
-      });
-    }
-
-    return { success: true };
   },
 });

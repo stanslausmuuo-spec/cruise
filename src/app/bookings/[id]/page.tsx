@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ReviewForm } from "@/components/reviews/review-form";
 import { staggerContainer, fadeUp } from "@/lib/animations";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import {
@@ -17,6 +19,7 @@ import {
   CreditCard,
   MessageSquare,
   Camera,
+  CheckCircle2,
 } from "lucide-react";
 import type { Id } from "convex/_generated/dataModel";
 
@@ -50,6 +53,16 @@ export default function BookingDetailPage() {
     api.auth.getUser,
     booking ? { userId: booking.hostId } : "skip"
   );
+  const me = useQuery(api.auth.getMe);
+  const bookingReviews = useQuery(
+    api.reviews.getBookingReviews,
+    booking ? { bookingId: booking._id } : "skip"
+  );
+  const [reviewed, setReviewed] = useState(false);
+
+  const alreadyReviewed =
+    bookingReviews !== undefined &&
+    bookingReviews.some((r) => r.reviewerId === me?._id);
 
   if (booking === undefined) {
     return (
@@ -128,23 +141,15 @@ export default function BookingDetailPage() {
               <div className="flex items-center gap-3">
                 <CreditCard className="h-4 w-4 text-charcoal/50 dark:text-cream/50" />
                 <div>
-                  <p className="text-xs text-charcoal/50 dark:text-cream/50">Total Paid</p>
+                  <p className="text-xs text-charcoal/50 dark:text-cream/50">Total Price</p>
                   <p className="text-sm font-heading font-bold text-brand-gold-400">
                     {formatCurrency(booking.totalAmount)}
                   </p>
+                  <p className="text-xs text-charcoal/50 dark:text-cream/50">
+                    Paid directly to the host at pickup — CruiseLinx never handles rental money.
+                  </p>
                 </div>
               </div>
-              {booking.mobileMoneyRef && (
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-4 w-4 text-charcoal/50 dark:text-cream/50" />
-                  <div>
-                    <p className="text-xs text-charcoal/50 dark:text-cream/50">Reference</p>
-                    <p className="text-sm font-mono text-charcoal dark:text-cream">
-                      {booking.mobileMoneyRef}
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </motion.div>
 
@@ -176,6 +181,25 @@ export default function BookingDetailPage() {
           </motion.div>
         </motion.div>
 
+        {booking.status === "pending" && (
+          <motion.div
+            variants={fadeUp}
+            initial="initial"
+            animate="animate"
+            className="mt-6"
+          >
+            <div className="glass rounded-premium p-4 border border-brand-gold-400/30">
+              <p className="font-medium text-charcoal dark:text-cream mb-1">
+                Awaiting host approval
+              </p>
+              <p className="text-sm text-charcoal/60 dark:text-cream/60">
+                The host needs to confirm your request. No payment has been made —
+                you settle with the host directly once approved.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         <motion.div variants={fadeUp} initial="initial" animate="animate" className="mt-6 flex gap-4">
           {booking.status === "confirmed" && (
             <Link href={`/bookings/${booking._id}/check-in`} className="flex-1">
@@ -194,6 +218,29 @@ export default function BookingDetailPage() {
             </Link>
           )}
         </motion.div>
+
+        {booking.status === "completed" && (
+          <motion.div
+            variants={fadeUp}
+            initial="initial"
+            animate="animate"
+            className="mt-6"
+          >
+            {reviewed || alreadyReviewed ? (
+              <div className="glass rounded-premium p-4 flex items-center gap-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                <p className="font-medium text-charcoal dark:text-cream">
+                  Thanks! Your review has been submitted.
+                </p>
+              </div>
+            ) : (
+              <ReviewForm
+                bookingId={booking._id}
+                onSuccess={() => setReviewed(true)}
+              />
+            )}
+          </motion.div>
+        )}
       </div>
     </div>
   );

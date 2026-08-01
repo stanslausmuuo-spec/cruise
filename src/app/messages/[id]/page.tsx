@@ -71,7 +71,6 @@ export default function ConversationPage() {
         <ChatHeader
           name={otherUser.name ?? "Unknown"}
           avatarUrl={otherUser.avatarUrl}
-          online={true}
         />
 
         <div className="flex-1 overflow-y-auto py-4 space-y-4">

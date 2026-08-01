@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact Us — Cruise Car Rental",
+  title: "Contact Us — CruiseLinx Car Rental",
   description:
-    "Get in touch with the Cruise team. We're here to help with bookings, account issues, and any questions about our car rental marketplace.",
+    "Get in touch with the CruiseLinx team. We're here to help with bookings, account issues, and any questions about our car rental marketplace.",
 };
 
 export default function ContactLayout({

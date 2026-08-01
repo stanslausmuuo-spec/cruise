@@ -24,14 +24,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Cruise — Premium P2P Car Rental Marketplace",
+  title: "CruiseLinx — Premium P2P Car Rental Marketplace",
   description:
     "The premium peer-to-peer car rental marketplace. Browse, book, and drive verified vehicles with ease. Offline-capable, mobile-first.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Cruise",
+    title: "CruiseLinx",
   },
   icons: {
     icon: "/favicon.svg",

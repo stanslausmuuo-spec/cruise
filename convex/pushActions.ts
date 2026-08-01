@@ -21,7 +21,7 @@ export const sendPushToUser = internalAction({
     }
 
     webPush.setVapidDetails(
-      "mailto:admin@cruise.app",
+      "mailto:admin@cruiselinx.app",
       vapidPublicKey,
       vapidPrivateKey
     );

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Mail, MessageSquare, MapPin, Phone, Send } from "lucide-react";
 
 const contactMethods = [
-  { icon: Mail, label: "Email", value: "hello@cruise.com" },
+  { icon: Mail, label: "Email", value: "hello@cruiselinx.com" },
   { icon: Phone, label: "Phone", value: "+254 712 345 678" },
   { icon: MapPin, label: "Location", value: "Nairobi, Kenya" },
 ];

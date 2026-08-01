@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   APP_NAME,
-  PLATFORM_FEE_PERCENT,
   CURRENCY,
   VEHICLE_TYPES,
   FUEL_TYPES,
@@ -14,16 +13,12 @@ import {
 } from "../constants";
 
 describe("APP_NAME", () => {
-  it("is Cruise", () => {
-    expect(APP_NAME).toBe("Cruise");
+  it("is CruiseLinx", () => {
+    expect(APP_NAME).toBe("CruiseLinx");
   });
 });
 
-describe("platform fees", () => {
-  it("platform fee is 15%", () => {
-    expect(PLATFORM_FEE_PERCENT).toBe(0.15);
-  });
-
+describe("currency", () => {
   it("currency is KES", () => {
     expect(CURRENCY).toBe("KES");
   });

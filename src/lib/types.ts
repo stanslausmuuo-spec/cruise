@@ -54,7 +54,6 @@ export interface VehicleWithOwner extends Vehicle {
 }
 
 export type BookingStatus = "pending" | "confirmed" | "active" | "completed" | "cancelled" | "disputed";
-export type PaymentStatus = "unpaid" | "paid" | "refunded" | "partial_refund";
 
 export interface Booking {
   _id: string;
@@ -64,11 +63,7 @@ export interface Booking {
   startDate: number;
   endDate: number;
   totalAmount: number;
-  platformFee: number;
-  depositAmount: number;
   status: BookingStatus;
-  paymentStatus: PaymentStatus;
-  mobileMoneyRef?: string;
   checkInTime?: number;
   checkOutTime?: number;
   checkInPhotos?: string[];
@@ -113,16 +108,7 @@ export interface MessageWithUsers extends Message {
   receiver?: User;
 }
 
-export type TransactionType =
-  | "booking_payment"
-  | "pay_to_reveal"
-  | "featured_listing"
-  | "plan_purchase"
-  | "deposit_hold"
-  | "deposit_release"
-  | "payout"
-  | "refund"
-  | "commission";
+export type TransactionType = "plan_purchase";
 
 export type TransactionStatus = "pending" | "completed" | "failed";
 
@@ -212,6 +198,5 @@ export interface PriceCalculation {
   pricePerDay: number;
   numberOfDays: number;
   subtotal: number;
-  platformFee: number;
   total: number;
 }

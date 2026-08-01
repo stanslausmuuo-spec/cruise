@@ -7,27 +7,27 @@ const features = [
   {
     icon: BadgeCheck,
     title: "Verified Hosts & Vehicles",
-    desc: "Every host and vehicle on Cruise goes through a thorough verification process to ensure quality and authenticity.",
+    desc: "Every host and vehicle on CruiseLinx goes through a thorough verification process to ensure quality and authenticity.",
   },
   {
     icon: CreditCard,
-    title: "Secure Payments",
-    desc: "All transactions are processed through our secure payment system. Your payment info is encrypted and protected.",
+    title: "Direct Payments, No Middleman",
+    desc: "You pay hosts directly — cash or M-Pesa person-to-person. CruiseLinx never handles rental money, so there are no hidden fees or middleman markups.",
   },
   {
     icon: ShieldCheck,
-    title: "Protection Coverage",
-    desc: "Every booking includes protection coverage for both guests and hosts, giving you peace of mind on every trip.",
+    title: "Documented Check-In & Check-Out",
+    desc: "Every rental is documented with check-in and check-out photos. If damage is reported, the evidence is recorded for fair dispute resolution.",
   },
   {
     icon: FileCheck,
     title: "Identity Verification",
-    desc: "We verify the identity of all users through government-issued ID checks to maintain a trusted community.",
+    desc: "We verify the identity of all users through government-issued ID checks before they can host or rent.",
   },
   {
     icon: HeadphonesIcon,
-    title: "24/7 Support",
-    desc: "Our dedicated support team is available around the clock to help with any issues before, during, or after your trip.",
+    title: "Support & Disputes",
+    desc: "Our team helps resolve disputes using booking records, chat history, and check-in/check-out photos as evidence.",
   },
   {
     icon: Users,
@@ -51,7 +51,8 @@ export default function TrustSafetyPage() {
               Trust & Safety
             </h1>
             <p className="text-lg text-charcoal/60 dark:text-cream/60 max-w-2xl mx-auto">
-              Your safety is our priority. We built Cruise to be the most trusted car rental marketplace.
+              Your safety is our priority. Every user is verified, every rental is documented,
+              and every dispute is resolved with evidence.
             </p>
           </div>
 

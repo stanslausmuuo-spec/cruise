@@ -37,7 +37,7 @@ export default function VerifyPage() {
             </div>
             <h1 className="font-heading text-2xl font-bold text-charcoal dark:text-cream">Verify Your Identity</h1>
             <p className="text-sm text-charcoal/60 dark:text-cream/60 mt-1">
-              Upload your documents to get verified. All documents are encrypted.
+              Upload your documents to get verified. Documents are encrypted at rest and only reviewed by our verification team.
             </p>
           </div>
 

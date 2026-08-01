@@ -7,11 +7,10 @@ import { Avatar } from "@/components/ui/avatar";
 interface ChatHeaderProps {
   name: string;
   avatarUrl?: string;
-  online?: boolean;
   backHref?: string;
 }
 
-function ChatHeader({ name, avatarUrl, online, backHref = "/messages" }: ChatHeaderProps) {
+function ChatHeader({ name, avatarUrl, backHref = "/messages" }: ChatHeaderProps) {
   return (
     <div className="flex items-center gap-3 py-4 border-b border-charcoal/5 dark:border-white/5">
       <Link
@@ -20,13 +19,8 @@ function ChatHeader({ name, avatarUrl, online, backHref = "/messages" }: ChatHea
       >
         <ArrowLeft className="h-5 w-5 text-charcoal dark:text-cream" />
       </Link>
-      <Avatar name={name} src={avatarUrl} size="sm" online={online} />
-      <div>
-        <p className="font-medium text-sm text-charcoal dark:text-cream">{name}</p>
-        <p className="text-xs text-charcoal/50 dark:text-cream/50">
-          {online ? "Online" : "Offline"}
-        </p>
-      </div>
+      <Avatar name={name} src={avatarUrl} size="sm" />
+      <p className="font-medium text-sm text-charcoal dark:text-cream">{name}</p>
     </div>
   );
 }

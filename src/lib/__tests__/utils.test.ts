@@ -6,8 +6,6 @@ import {
   formatTime,
   maskPhone,
   maskEmail,
-  calculatePercentage,
-  calculateHostEarnings,
   getInitials,
 } from "../utils";
 
@@ -120,34 +118,6 @@ describe("maskEmail", () => {
 
   it("returns invalid email as-is", () => {
     expect(maskEmail("invalid")).toBe("invalid");
-  });
-});
-
-describe("calculatePercentage", () => {
-  it("calculates 15% fee by default", () => {
-    expect(calculatePercentage(1000)).toBe(150);
-  });
-
-  it("calculates custom percentage", () => {
-    expect(calculatePercentage(1000, 0.1)).toBe(100);
-  });
-
-  it("rounds up with ceil", () => {
-    expect(calculatePercentage(100, 0.15)).toBe(15);
-  });
-});
-
-describe("calculateHostEarnings", () => {
-  it("returns 85% of price", () => {
-    expect(calculateHostEarnings(1000)).toBe(850);
-  });
-
-  it("rounds up", () => {
-    expect(calculateHostEarnings(100)).toBe(85);
-  });
-
-  it("handles large amounts", () => {
-    expect(calculateHostEarnings(10000)).toBe(8500);
   });
 });
 

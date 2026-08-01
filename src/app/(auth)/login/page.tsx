@@ -70,7 +70,7 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (data.tokens?.token) {
-        localStorage.setItem("cruise-remember-me", rememberMe ? "true" : "false");
+        localStorage.setItem("cruiselinx-remember-me", rememberMe ? "true" : "false");
         setAuthTokens(data.tokens.token, data.tokens.refreshToken || "dummy");
         toast("success", "Welcome back!", "You have been signed in successfully.");
         window.location.href = "/";
@@ -103,7 +103,7 @@ export default function LoginPage() {
               Welcome Back
             </h1>
             <p className="text-sm text-charcoal/60 dark:text-cream/60">
-              Sign in to continue to Cruise
+              Sign in to continue to CruiseLinx
             </p>
           </div>
 

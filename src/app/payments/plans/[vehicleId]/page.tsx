@@ -123,7 +123,7 @@ export default function PlansPage() {
           phoneNumber: currentUser.phone,
           amount,
           accountReference: `FEAT-${vehicleId.slice(0, 8)}`,
-          transactionDesc: "Cruise plan",
+          transactionDesc: "CruiseLinx plan",
           type: "featured",
           metadata: {
             vehicleId,
@@ -210,7 +210,7 @@ export default function PlansPage() {
             Get your car <span className="text-brand-gold-400">seen, booked, and driven.</span>
           </h1>
           <p className="text-sm text-charcoal/60 dark:text-cream/60 mt-3 max-w-xl mx-auto">
-            {vehicle.make} {vehicle.model} &middot; Three simple ways to rent on Cruise.
+            {vehicle.make} {vehicle.model} &middot; Three simple ways to rent on CruiseLinx.
             No hidden charges — let your plan expire anytime.
           </p>
 
@@ -406,7 +406,7 @@ export default function PlansPage() {
             <div className="flex items-start gap-2">
               <ShieldCheck className="h-4 w-4 text-brand-gold-400 shrink-0 mt-0.5" />
               <p>
-                Every host on Cruise is KYC-verified before listing. Trust is built in —
+                Every host on CruiseLinx is KYC-verified before listing. Trust is built in —
                 pay instantly via M-Pesa STK push, activated in seconds.
               </p>
             </div>

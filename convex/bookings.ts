@@ -20,7 +20,6 @@ export const createBooking = mutation({
     vehicleId: v.id("vehicles"),
     startDate: v.number(),
     endDate: v.number(),
-    checkoutRequestId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -37,20 +36,18 @@ export const createBooking = mutation({
     if (!vehicle.isActive) throw new Error("Vehicle is not available for booking");
     if (vehicle.ownerId === user._id) throw new Error("Cannot book your own vehicle");
 
-    // Limit pending unpaid bookings to prevent availability abuse
+    // Limit pending requests to prevent availability abuse
     const pendingCount = await ctx.db
       .query("bookings")
       .withIndex("by_guest", (q) => q.eq("guestId", user._id))
       .filter((q) => q.eq(q.field("status"), "pending"))
       .collect();
-    if (pendingCount.length >= 10) throw new Error("Too many pending bookings. Complete or cancel existing ones.");
+    if (pendingCount.length >= 10) throw new Error("Too many pending requests. Complete or cancel existing ones.");
 
-    // Calculate amounts server-side from trusted pricePerDay
+    // Calculate total amount server-side from trusted pricePerDay
     const msPerDay = 86400000;
     const numberOfDays = Math.ceil((args.endDate - args.startDate) / msPerDay);
     const totalAmount = vehicle.pricePerDay * numberOfDays;
-    const platformFee = Math.ceil(totalAmount * 0.15);
-    const depositAmount = Math.ceil(totalAmount * 0.10);
 
     // Check availability atomically
     const conflicting = await ctx.db
@@ -74,11 +71,7 @@ export const createBooking = mutation({
       startDate: args.startDate,
       endDate: args.endDate,
       totalAmount,
-      platformFee,
-      depositAmount,
       status: "pending",
-      paymentStatus: "unpaid",
-      checkoutRequestId: args.checkoutRequestId,
       checkInPhotos: [],
       checkOutPhotos: [],
       createdAt: Date.now(),
@@ -97,18 +90,6 @@ export const createBooking = mutation({
       currentDate += 86400000;
     }
 
-    // Create pending transaction
-    await ctx.db.insert("transactions", {
-      userId: user._id,
-      type: "booking_payment",
-      amount: totalAmount,
-      currency: "KES",
-      reference: args.checkoutRequestId,
-      status: "pending",
-      metadata: { bookingId },
-      createdAt: Date.now(),
-    });
-
     await logAudit(ctx, "booking_created", {
       bookingId,
       vehicleId: args.vehicleId,
@@ -119,68 +100,61 @@ export const createBooking = mutation({
       endDate: args.endDate,
     });
 
-    return { bookingId, totalAmount, platformFee, depositAmount };
+    return { bookingId, totalAmount };
   },
 });
 
-export const confirmBookingPayment = mutation({
+export const respondToBooking = mutation({
   args: {
-    checkoutRequestId: v.string(),
-    mobileMoneyRef: v.string(),
+    bookingId: v.id("bookings"),
+    approve: v.boolean(),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
-    if (!user.roles.includes("admin")) throw new Error("Admin only");
-
-    // Find booking by checkoutRequestId
-    const booking = await ctx.db
-      .query("bookings")
-      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
-      .first();
+    const booking = await ctx.db.get(args.bookingId);
 
     if (!booking) throw new Error("Booking not found");
-    if (booking.paymentStatus === "paid") return { success: true, alreadyPaid: true };
+    if (booking.hostId !== user._id) throw new Error("Not authorized");
+    if (booking.status !== "pending") throw new Error("Only pending requests can be responded to");
 
-    // Update booking status
-    await ctx.db.patch(booking._id, {
-      paymentStatus: "paid",
-      mobileMoneyRef: args.mobileMoneyRef,
-      status: "confirmed",
-    });
+    if (args.approve) {
+      await ctx.db.patch(args.bookingId, { status: "confirmed" });
 
-    // Update transaction
-    const transaction = await ctx.db
-      .query("transactions")
-      .filter((q) => q.eq(q.field("reference"), args.checkoutRequestId))
-      .first();
-    if (transaction) {
-      await ctx.db.patch(transaction._id, {
-        status: "completed",
-        mobileMoneyRef: args.mobileMoneyRef,
+      await logAudit(ctx, "booking_approved", {
+        bookingId: args.bookingId,
+        hostId: user._id,
+      });
+
+      await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
+        userId: booking.guestId,
+        title: "Booking Approved",
+        body: "The host approved your booking request.",
+        url: `/bookings/${booking._id}`,
+      });
+    } else {
+      await ctx.db.patch(args.bookingId, { status: "cancelled" });
+
+      const availabilityRecords = await ctx.db
+        .query("availability")
+        .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
+        .collect();
+
+      for (const record of availabilityRecords) {
+        await ctx.db.delete(record._id);
+      }
+
+      await logAudit(ctx, "booking_rejected", {
+        bookingId: args.bookingId,
+        hostId: user._id,
+      });
+
+      await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
+        userId: booking.guestId,
+        title: "Booking Request Declined",
+        body: "The host declined your booking request.",
+        url: `/dashboard/renter/trips`,
       });
     }
-
-    await logAudit(ctx, "booking_payment_confirmed", {
-      bookingId: booking._id,
-      mobileMoneyRef: args.mobileMoneyRef,
-      confirmedBy: user._id,
-    });
-
-    // Send push notification to guest
-    await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
-      userId: booking.guestId,
-      title: "Booking Confirmed",
-      body: "Your payment has been confirmed. The booking is now active.",
-      url: `/dashboard/renter/trips`,
-    });
-
-    // Send push notification to host
-    await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
-      userId: booking.hostId,
-      title: "New Booking",
-      body: "A guest has booked your vehicle. Payment confirmed.",
-      url: `/dashboard/host/vehicles`,
-    });
 
     return { success: true };
   },
@@ -213,22 +187,6 @@ export const cancelBooking = mutation({
 
     // Update booking status
     await ctx.db.patch(args.bookingId, { status: "cancelled" });
-
-    // Handle payment refund if paid
-    if (booking.paymentStatus === "paid" || booking.paymentStatus === "partial_refund") {
-      // Create refund transaction
-      await ctx.db.insert("transactions", {
-        userId: user._id,
-        type: "refund",
-        amount: booking.totalAmount,
-        currency: "KES",
-        reference: `refund_${booking._id}_${Date.now()}`,
-        status: "pending",
-        metadata: { bookingId: booking._id },
-        createdAt: Date.now(),
-      });
-      await ctx.db.patch(args.bookingId, { paymentStatus: "refunded" });
-    }
 
     await logAudit(ctx, "booking_cancelled", {
       bookingId: booking._id,

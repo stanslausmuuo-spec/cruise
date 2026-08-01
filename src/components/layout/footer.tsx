@@ -26,7 +26,7 @@ export function Footer() {
             <h5 className="font-medium text-sm mb-3 text-charcoal dark:text-cream">For Hosts</h5>
             <ul className="space-y-2 text-sm text-charcoal/60 dark:text-cream/60">
               <li><Link href={ROUTES.VEHICLE_NEW} className="hover:text-brand-gold-400 transition-colors">List Your Car</Link></li>
-              <li><Link href={ROUTES.HOST_EARNINGS} className="hover:text-brand-gold-400 transition-colors">Earnings</Link></li>
+              <li><Link href={ROUTES.HOST_BOOKINGS} className="hover:text-brand-gold-400 transition-colors">Booking Requests</Link></li>
               <li><Link href={ROUTES.TRUST_SAFETY} className="hover:text-brand-gold-400 transition-colors">Trust & Safety</Link></li>
             </ul>
           </div>
@@ -36,6 +36,8 @@ export function Footer() {
               <li><Link href={ROUTES.ABOUT} className="hover:text-brand-gold-400 transition-colors">About</Link></li>
               <li><Link href={ROUTES.CONTACT} className="hover:text-brand-gold-400 transition-colors">Contact</Link></li>
               <li><Link href={ROUTES.PRIVACY} className="hover:text-brand-gold-400 transition-colors">Privacy</Link></li>
+              <li><Link href={ROUTES.TERMS} className="hover:text-brand-gold-400 transition-colors">Terms of Service</Link></li>
+              <li><Link href={ROUTES.REFUNDS} className="hover:text-brand-gold-400 transition-colors">Refunds</Link></li>
             </ul>
           </div>
         </div>

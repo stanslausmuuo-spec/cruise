@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BackLink } from "@/components/ui/back-link";
 import { VehicleTypeSelector } from "@/components/vehicles/vehicle-type-selector";
-import { formatCurrency, calculatePercentage, calculateHostEarnings } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { TRANSMISSION_TYPES, FUEL_TYPES, TRANSMISSION_LABELS, FUEL_TYPE_LABELS } from "@/lib/constants";
 import { ChevronLeft, ChevronRight, X, AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
@@ -375,16 +375,13 @@ export default function EditVehiclePage() {
                 </div>
                 <div className="glass rounded-premium p-3 space-y-2">
                   <p className="text-xs text-charcoal/60 dark:text-cream/60 flex justify-between">
-                    <span>Platform fee (15%)</span>
-                    <span className="font-medium text-charcoal dark:text-cream">
-                      {formatCurrency(calculatePercentage(form.pricePerDay))}
-                    </span>
-                  </p>
-                  <p className="text-xs text-charcoal/60 dark:text-cream/60 flex justify-between">
-                    <span>You earn</span>
+                    <span>You keep</span>
                     <strong className="font-heading font-bold text-brand-gold-400">
-                      {formatCurrency(calculateHostEarnings(form.pricePerDay))} /day
+                      {formatCurrency(form.pricePerDay)} /day
                     </strong>
+                  </p>
+                  <p className="text-xs text-charcoal/50 dark:text-cream/50">
+                    Renters pay you directly — no platform fees. CruiseLinx never touches your money.
                   </p>
                 </div>
               </motion.div>

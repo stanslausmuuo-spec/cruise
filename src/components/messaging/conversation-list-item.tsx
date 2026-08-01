@@ -12,7 +12,6 @@ interface ConversationListItemProps {
   lastMessage: string;
   timestamp: number;
   unreadCount: number;
-  online?: boolean;
 }
 
 function ConversationListItem({
@@ -22,12 +21,11 @@ function ConversationListItem({
   lastMessage,
   timestamp,
   unreadCount,
-  online,
 }: ConversationListItemProps) {
   return (
     <Link href={`/messages/${id}`}>
       <Card className="p-4 flex items-center gap-3">
-        <Avatar name={name} src={avatarUrl} size="md" online={online} />
+        <Avatar name={name} src={avatarUrl} size="md" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <p className="font-medium text-sm text-charcoal dark:text-cream truncate">

@@ -8,17 +8,18 @@ import { motion } from "framer-motion";
 import { BackLink } from "@/components/ui/back-link";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 import { BookingWizard } from "@/components/booking/booking-wizard";
 import { DateSelectionStep } from "@/components/booking/date-selection-step";
 import { PriceSummary } from "@/components/booking/price-summary";
-import { MPesaPaymentForm } from "@/components/booking/mpesa-payment-form";
 import { BookingNavigation } from "@/components/booking/booking-navigation";
-import { calculatePercentage, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+import { Info, Loader2 } from "lucide-react";
 import type { Id } from "convex/_generated/dataModel";
 
 const steps = [
   { label: "Dates" },
-  { label: "Pay" },
+  { label: "Review" },
 ];
 
 export default function BookVehiclePage() {
@@ -44,50 +45,22 @@ export default function BookVehiclePage() {
 
   const totalPrice = useMemo(() => {
     if (!vehicle || numberOfDays === 0) return 0;
-    const subtotal = vehicle.pricePerDay * numberOfDays;
-    const platformFee = calculatePercentage(subtotal);
-    return subtotal + platformFee;
+    return vehicle.pricePerDay * numberOfDays;
   }, [vehicle, numberOfDays]);
 
-  const handlePayment = async (phone: string) => {
-    if (!vehicle) return;
+  const handleRequest = async () => {
+    if (!vehicle || numberOfDays === 0) return;
     setLoading(true);
     try {
-      const ref = `CRU-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-
-      // Step 1: Create booking first (with "pending" status)
-      // Server calculates totalAmount/platformFee; if STK push fails,
-      // the pending booking stays and a cron job can clean it up.
-      await createBooking({
+      const { bookingId } = await createBooking({
         vehicleId: vehicle._id,
         startDate: new Date(startDate).getTime(),
         endDate: new Date(endDate).getTime(),
-        checkoutRequestId: ref,
       });
-
-      // Step 2: Initiate STK push payment
-      const response = await fetch("/api/mpesa/stkpush", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phoneNumber: phone,
-          amount: totalPrice,
-          accountReference: ref,
-          transactionDesc: "Cruise Booking",
-          type: "booking",
-          metadata: { vehicleId: vehicleId },
-        }),
-      });
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || "Payment initiation failed");
-      }
-
-      router.push("/dashboard/renter/trips");
+      router.push(`/bookings/${bookingId}`);
     } catch (error) {
-      console.error("Payment failed:", error);
-      alert(error instanceof Error ? error.message : "Payment failed");
+      console.error("Booking request failed:", error);
+      alert(error instanceof Error ? error.message : "Booking request failed");
     } finally {
       setLoading(false);
     }
@@ -159,11 +132,45 @@ export default function BookVehiclePage() {
 
             {step === 1 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                <MPesaPaymentForm
-                  amount={totalPrice}
-                  onPaymentInitiated={handlePayment}
-                  loading={loading}
-                />
+                <div className="space-y-4">
+                  <PriceSummary
+                    pricePerDay={vehicle.pricePerDay}
+                    numberOfDays={numberOfDays}
+                  />
+
+                  <div className="rounded-2xl border border-brand-gold-400/30 bg-brand-gold-400/5 p-4">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-brand-gold-400 shrink-0 mt-0.5" />
+                      <div className="text-sm text-charcoal/80 dark:text-cream/80 leading-relaxed">
+                        <p className="font-medium text-charcoal dark:text-cream mb-1">
+                          You pay the host directly
+                        </p>
+                        <p>
+                          CruiseLinx never handles rental money. After the host approves
+                          your request, you settle the total of{" "}
+                          <span className="font-semibold">{formatCurrency(totalPrice)}</span>{" "}
+                          with them directly — cash or M-Pesa person-to-person, at pickup.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleRequest}
+                    disabled={loading}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Request Booking"
+                    )}
+                  </Button>
+                  <p className="text-xs text-center text-charcoal/50 dark:text-cream/50">
+                    No payment now. The host confirms your request first.
+                  </p>
+                </div>
               </motion.div>
             )}
           </div>

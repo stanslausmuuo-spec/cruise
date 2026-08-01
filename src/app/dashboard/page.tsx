@@ -111,7 +111,7 @@ function DashboardContent() {
       <div className="min-h-screen pt-20 pb-16 px-4">
         <div className="max-w-4xl mx-auto text-center py-20">
           <h1 className="font-heading text-3xl font-bold text-charcoal dark:text-cream mb-4">
-            Welcome to Cruise
+            Welcome to CruiseLinx
           </h1>
           <p className="text-charcoal/60 dark:text-cream/60 mb-8">
             Sign in to access your dashboard
@@ -195,6 +195,12 @@ function DashboardContent() {
                 <div className="glass rounded-premium p-4 text-center hover:shadow-premium-hover transition-shadow cursor-pointer">
                   <MessageSquare className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
                   <p className="text-sm font-medium text-charcoal dark:text-cream">Messages</p>
+                </div>
+              </Link>
+              <Link href="/dashboard/host/bookings">
+                <div className="glass rounded-premium p-4 text-center hover:shadow-premium-hover transition-shadow cursor-pointer">
+                  <Calendar className="h-6 w-6 mx-auto mb-2 text-brand-gold-400" />
+                  <p className="text-sm font-medium text-charcoal dark:text-cream">Booking Requests</p>
                 </div>
               </Link>
               <Link href="/profile">

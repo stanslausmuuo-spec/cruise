@@ -22,11 +22,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const vehicle = await convex.query(api.vehicles.getVehicle, { vehicleId: id as Id<"vehicles"> });
     if (!vehicle) return { title: "Vehicle Not Found" };
     return {
-      title: `${vehicle.year} ${vehicle.make} ${vehicle.model} | Cruise`,
+      title: `${vehicle.year} ${vehicle.make} ${vehicle.model} | CruiseLinx`,
       description: vehicle.description?.slice(0, 160),
     };
   } catch {
-    return { title: "Vehicle | Cruise" };
+    return { title: "Vehicle | CruiseLinx" };
   }
 }
 

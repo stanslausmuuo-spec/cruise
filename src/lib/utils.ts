@@ -66,14 +66,6 @@ export function maskEmail(email: string): string {
   return `${name[0]}****${name[name.length - 1]}@${domain}`;
 }
 
-export function calculatePercentage(amount: number, percent = 0.15): number {
-  return Math.ceil(amount * percent);
-}
-
-export function calculateHostEarnings(pricePerDay: number): number {
-  return Math.ceil(pricePerDay * 0.85);
-}
-
 export function getInitials(name: string): string {
   return name
     .split(" ")

@@ -68,43 +68,27 @@ export const autoCompleteBookings = internalMutation({
   },
 });
 
-export const releaseDeposits = internalMutation({
+export const autoExpirePendingBookings = internalMutation({
   handler: async (ctx) => {
-    const now = Date.now();
-    const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
-    
-    const completedBookings = await ctx.db
+    const fortyEightHoursAgo = Date.now() - 48 * 60 * 60 * 1000;
+
+    const staleRequests = await ctx.db
       .query("bookings")
-      .withIndex("by_status", (q) => q.eq("status", "completed"))
-      .filter((q) => q.lt(q.field("checkOutTime"), fortyEightHoursAgo))
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .filter((q) => q.lt(q.field("createdAt"), fortyEightHoursAgo))
       .collect();
 
-    for (const booking of completedBookings) {
-      // Release deposit back to guest
-      // The guest paid totalAmount which includes the deposit.
-      // The deposit is refunded separately; the host payout is NOT reduced by the deposit.
-      await ctx.db.insert("transactions", {
-        userId: booking.guestId,
-        type: "deposit_release",
-        amount: booking.depositAmount,
-        currency: "KES",
-        reference: `DEP-REL-${Date.now()}`,
-        status: "completed",
-        createdAt: Date.now(),
-      });
-      
-      // Host payout: totalAmount minus the platform fee.
-      // The deposit was already part of totalAmount collected from the guest,
-      // and is refunded to the guest separately — it is NOT deducted from the host payout.
-      await ctx.db.insert("transactions", {
-        userId: booking.hostId,
-        type: "payout",
-        amount: booking.totalAmount - booking.platformFee,
-        currency: "KES",
-        reference: `PAYOUT-${Date.now()}`,
-        status: "completed",
-        createdAt: Date.now(),
-      });
+    for (const booking of staleRequests) {
+      await ctx.db.patch(booking._id, { status: "cancelled" });
+
+      const availabilityRecords = await ctx.db
+        .query("availability")
+        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+        .collect();
+
+      for (const record of availabilityRecords) {
+        await ctx.db.delete(record._id);
+      }
     }
   },
 });
@@ -153,7 +137,7 @@ export const dailyCleanup = internalAction({
   handler: async (ctx) => {
     await ctx.runMutation(internal.cron.downgradeExpiredTiers);
     await ctx.runMutation(internal.cron.autoCompleteBookings);
-    await ctx.runMutation(internal.cron.releaseDeposits);
+    await ctx.runMutation(internal.cron.autoExpirePendingBookings);
     await ctx.runMutation(internal.cron.cleanupOrphanedImages);
     await ctx.runMutation(internal.cron.cleanupFailedTransactions);
   },

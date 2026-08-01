@@ -1,8 +1,7 @@
-export const APP_NAME = "Cruise";
-export const APP_TAGLINE = "Rent cars from owners near you. Book with M-Pesa.";
+export const APP_NAME = "CruiseLinx";
+export const APP_TAGLINE = "Rent cars from owners near you. Pay hosts directly.";
 export const APP_DESCRIPTION = "The premium peer-to-peer car rental marketplace. Browse, book, and drive verified vehicles with ease.";
 
-export const PLATFORM_FEE_PERCENT = 0.15;
 export const CURRENCY = "KES";
 
 // Plan tiers — keep PLAN_AMOUNTS in convex/payments.ts in sync with these fees.
@@ -26,13 +25,13 @@ export const PLANS: PlanDefinition[] = [
   {
     tier: "free",
     name: "Free",
-    tagline: "Your listing, live on Cruise.",
+    tagline: "Your listing, live on CruiseLinx.",
     headline: "Start for free, forever.",
     monthlyFee: 0,
     annualFee: 0,
     days: 0,
     features: [
-      "Listing on Cruise",
+      "Listing on CruiseLinx",
       "Map location",
       "Verified badge (free after document check)",
     ],
@@ -133,6 +132,9 @@ export const ROUTES = {
   RENTER_TRIPS: "/dashboard/renter/trips",
   HOST_VEHICLES: "/dashboard/host/vehicles",
   HOST_EARNINGS: "/dashboard/host/earnings",
+  HOST_BOOKINGS: "/dashboard/host/bookings",
+  TERMS: "/terms",
+  REFUNDS: "/refunds",
   BOOKING_DETAIL: (id: string) => `/bookings/${id}`,
   BOOKING_CHECK_IN: (id: string) => `/bookings/${id}/check-in`,
   BOOKING_CHECK_OUT: (id: string) => `/bookings/${id}/check-out`,

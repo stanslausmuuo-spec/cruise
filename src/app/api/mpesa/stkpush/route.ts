@@ -8,7 +8,7 @@ const stkPushSchema = z.object({
   amount: z.number().positive("Amount must be positive"),
   accountReference: z.string().max(12).optional(),
   transactionDesc: z.string().max(13).optional(),
-  type: z.enum(["booking", "featured"]),
+  type: z.enum(["featured"]),
   metadata: z.record(z.unknown()).optional(),
 });
 
@@ -41,14 +41,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid plan amount" }, { status: 400 });
     }
 
-    if (type === "booking" && (!clientAmount || clientAmount < 100)) {
-      return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
-    }
-
     const amount = clientAmount;
 
     const accountReference = validation.data.accountReference || generateReference(type.toUpperCase());
-    const transactionDesc = validation.data.transactionDesc || "Cruise Payment";
+    const transactionDesc = validation.data.transactionDesc || "CruiseLinx Payment";
 
     const response = await initiateSTKPush({
       phoneNumber,

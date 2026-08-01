@@ -95,8 +95,6 @@ export default defineSchema({
     startDate: v.number(),
     endDate: v.number(),
     totalAmount: v.number(),
-    platformFee: v.number(),
-    depositAmount: v.number(),
     status: v.union(
       v.literal("pending"),
       v.literal("confirmed"),
@@ -105,14 +103,6 @@ export default defineSchema({
       v.literal("cancelled"),
       v.literal("disputed")
     ),
-    paymentStatus: v.union(
-      v.literal("unpaid"),
-      v.literal("paid"),
-      v.literal("refunded"),
-      v.literal("partial_refund")
-    ),
-    mobileMoneyRef: v.optional(v.string()),
-    checkoutRequestId: v.optional(v.string()),
     checkInTime: v.optional(v.number()),
     checkOutTime: v.optional(v.number()),
     checkInPhotos: v.optional(v.array(v.string())),
@@ -122,8 +112,7 @@ export default defineSchema({
     .index("by_guest", ["guestId"])
     .index("by_host", ["hostId"])
     .index("by_vehicle", ["vehicleId"])
-    .index("by_status", ["status"])
-    .index("by_checkout_request_id", ["checkoutRequestId"]),
+    .index("by_status", ["status"]),
 
   availability: defineTable({
     vehicleId: v.id("vehicles"),
@@ -163,17 +152,7 @@ export default defineSchema({
 
   transactions: defineTable({
     userId: v.id("users"),
-    type: v.union(
-      v.literal("booking_payment"),
-      v.literal("pay_to_reveal"),
-      v.literal("featured_listing"),
-      v.literal("plan_purchase"),
-      v.literal("deposit_hold"),
-      v.literal("deposit_release"),
-      v.literal("payout"),
-      v.literal("refund"),
-      v.literal("commission")
-    ),
+    type: v.literal("plan_purchase"),
     amount: v.number(),
     currency: v.string(),
     reference: v.string(),

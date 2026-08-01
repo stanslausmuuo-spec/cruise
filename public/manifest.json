@@ -1,6 +1,6 @@
 {
-  "name": "Cruise - Premium P2P Car Rental Marketplace",
-  "short_name": "Cruise",
+  "name": "CruiseLinx - Premium P2P Car Rental Marketplace",
+  "short_name": "CruiseLinx",
   "description": "The premium peer-to-peer car rental marketplace. Browse, book, and drive verified vehicles with offline access.",
   "start_url": "/",
   "display": "standalone",

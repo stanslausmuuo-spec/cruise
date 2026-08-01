@@ -52,6 +52,7 @@ export default function RegisterPage() {
   const [retryAfter, setRetryAfter] = useState(0);
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [agreed, setAgreed] = useState(false);
 
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -104,6 +105,7 @@ export default function RegisterPage() {
     if (step === 2) {
       if (form.roles.length === 0)
         newErrors.roles = "Select at least one role";
+      if (!agreed) newErrors.agreed = "You must accept the Terms of Service and Privacy Policy";
     }
 
     setErrors(newErrors);
@@ -176,7 +178,7 @@ export default function RegisterPage() {
         toast(
           "success",
           "Account created!",
-          "Welcome to Cruise. You are now signed in."
+          "Welcome to CruiseLinx. You are now signed in."
         );
         window.location.href = "/";
       }
@@ -239,10 +241,10 @@ export default function RegisterPage() {
             </h1>
             <p className="text-sm text-charcoal/60 dark:text-cream/60">
               {step === 0
-                ? "Start your journey with Cruise"
+                ? "Start your journey with CruiseLinx"
                 : step === 1
                   ? "Tell us a bit about yourself"
-                  : "How will you use Cruise?"}
+                  : "How will you use CruiseLinx?"}
             </p>
           </div>
 
@@ -405,6 +407,37 @@ export default function RegisterPage() {
                       </p>
                     </div>
                   </button>
+
+                  <label className="flex items-start gap-3 p-3 rounded-xl border border-charcoal/10 dark:border-white/10 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={agreed}
+                      onChange={(e) => setAgreed(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-brand-gold-400"
+                    />
+                    <span className="text-xs text-charcoal/60 dark:text-cream/60 leading-relaxed">
+                      I have read and agree to the{" "}
+                      <Link
+                        href={ROUTES.TERMS}
+                        target="_blank"
+                        className="text-brand-gold-400 font-medium hover:underline"
+                      >
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        href={ROUTES.PRIVACY}
+                        target="_blank"
+                        className="text-brand-gold-400 font-medium hover:underline"
+                      >
+                        Privacy Policy
+                      </Link>
+                      , and I confirm I am at least 18 years old.
+                    </span>
+                  </label>
+                  {errors.agreed && (
+                    <p className="text-xs text-red-500">{errors.agreed}</p>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -414,7 +447,7 @@ export default function RegisterPage() {
               loading={loading}
               className="w-full mt-4"
               size="lg"
-              disabled={rateLimited || (step === 2 && form.roles.length === 0)}
+              disabled={rateLimited || (step === 2 && (form.roles.length === 0 || !agreed))}
             >
               {step === 2 ? "Create Account" : "Continue"}
             </Button>

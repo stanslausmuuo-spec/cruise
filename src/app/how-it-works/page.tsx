@@ -44,7 +44,7 @@ export default function HowItWorksPage() {
               How It Works
             </h1>
             <p className="text-lg text-charcoal/60 dark:text-cream/60 max-w-2xl mx-auto">
-              Renting a car on Cruise is simple. Follow these four easy steps to get behind the wheel.
+              Renting a car on CruiseLinx is simple. Follow these four easy steps to get behind the wheel.
             </p>
           </div>
 

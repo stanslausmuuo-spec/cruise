@@ -16,9 +16,9 @@ crons.daily(
 );
 
 crons.daily(
-  "Release deposits",
+  "Auto-expire pending booking requests",
   { hourUTC: 4, minuteUTC: 0 },
-  internal.cron.releaseDeposits
+  internal.cron.autoExpirePendingBookings
 );
 
 crons.daily(

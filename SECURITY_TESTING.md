@@ -1,4 +1,4 @@
-# Security Testing Configuration for Cruise
+# Security Testing Configuration for CruiseLinx
 
 ## CI/CD Pipeline Security Stages
 

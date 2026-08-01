@@ -98,12 +98,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t cruise:latest .
+        run: docker build -t cruiselinx:latest .
 
       - name: Scan Docker image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'cruise:latest'
+          image-ref: 'cruiselinx:latest'
           format: 'sarif'
           output: 'trivy-results.sarif'
 

@@ -27,7 +27,7 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
       `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1`,
       {
         headers: {
-          "User-Agent": "Cruise/1.0 (stanslaus.muuo@example.com)",
+          "User-Agent": "CruiseLinx/1.0 (stanslaus.muuo@example.com)",
         },
       }
     );

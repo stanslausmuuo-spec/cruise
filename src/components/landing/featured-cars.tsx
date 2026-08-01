@@ -51,7 +51,7 @@ export function FeaturedCars() {
           <EmptyState
             icon={<Car className="h-8 w-8 text-charcoal/30 dark:text-cream/30" />}
             title="No cars listed yet"
-            description="Be the first host on Cruise and start earning from your car today."
+            description="Be the first host on CruiseLinx and start earning from your car today."
             action={
               <Link
                 href="/vehicles/new"

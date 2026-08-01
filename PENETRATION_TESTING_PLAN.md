@@ -1,13 +1,13 @@
-# Penetration Testing Plan for Cruise
+# Penetration Testing Plan for CruiseLinx
 
 ## Executive Summary
 
-This document outlines the penetration testing strategy for the Cruise car rental marketplace application. Testing should be conducted by qualified security professionals with explicit written authorization.
+This document outlines the penetration testing strategy for the CruiseLinx car rental marketplace application. Testing should be conducted by qualified security professionals with explicit written authorization.
 
 ## Scope
 
 ### In-Scope
-- **Web Application**: `https://cruise.example.com` (production) and staging environment
+- **Web Application**: `https://cruiselinx.example.com` (production) and staging environment
 - **API Endpoints**: All `/api/*` routes
 - **Convex Backend**: All mutations, queries, and actions
 - **Authentication System**: Login, registration, password reset, session management
@@ -148,10 +148,10 @@ This document outlines the penetration testing strategy for the Cruise car renta
 
 | Role | Email | Purpose |
 |-------|-------|---------|
-| Admin | pentest-admin@cruise.test | Admin panel access |
-| Host (verified) | pentest-host@cruise.test | Vehicle listing, KYC approved |
-| Renter | pentest-renter@cruise.test | Booking, payments |
-| Unverified Host | pentest-unverified@cruise.test | KYC bypass testing |
+| Admin | pentest-admin@cruiselinx.test | Admin panel access |
+| Host (verified) | pentest-host@cruiselinx.test | Vehicle listing, KYC approved |
+| Renter | pentest-renter@cruiselinx.test | Booking, payments |
+| Unverified Host | pentest-unverified@cruiselinx.test | KYC bypass testing |
 
 ## Tools Recommended
 
