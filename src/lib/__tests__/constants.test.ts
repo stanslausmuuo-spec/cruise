@@ -2,9 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   APP_NAME,
   PLATFORM_FEE_PERCENT,
-  PAY_TO_REVEAL_FEE,
-  FEATURED_LISTING_FEE,
-  FEATURED_DURATION_DAYS,
   CURRENCY,
   VEHICLE_TYPES,
   FUEL_TYPES,
@@ -12,6 +9,8 @@ import {
   COUNTIES,
   PRICE_RANGES,
   ROUTES,
+  PLANS,
+  getPlan,
 } from "../constants";
 
 describe("APP_NAME", () => {
@@ -25,20 +24,45 @@ describe("platform fees", () => {
     expect(PLATFORM_FEE_PERCENT).toBe(0.15);
   });
 
-  it("pay to reveal fee is 100", () => {
-    expect(PAY_TO_REVEAL_FEE).toBe(100);
-  });
-
-  it("featured listing fee is 1500", () => {
-    expect(FEATURED_LISTING_FEE).toBe(1500);
-  });
-
-  it("featured duration is 7 days", () => {
-    expect(FEATURED_DURATION_DAYS).toBe(7);
-  });
-
   it("currency is KES", () => {
     expect(CURRENCY).toBe("KES");
+  });
+});
+
+describe("PLANS", () => {
+  it("has three tiers: free, basic, premium", () => {
+    expect(PLANS.map((p) => p.tier)).toEqual(["free", "basic", "premium"]);
+  });
+
+  it("free tier costs nothing", () => {
+    expect(PLANS[0].monthlyFee).toBe(0);
+    expect(PLANS[0].annualFee).toBe(0);
+  });
+
+  it("basic tier is 1000/mo and 10000/yr (2 months free)", () => {
+    expect(PLANS[1].monthlyFee).toBe(1000);
+    expect(PLANS[1].annualFee).toBe(10000);
+  });
+
+  it("premium tier is 2500/mo and 25000/yr (2 months free)", () => {
+    expect(PLANS[2].monthlyFee).toBe(2500);
+    expect(PLANS[2].annualFee).toBe(25000);
+  });
+
+  it("basic is marked most popular", () => {
+    expect(PLANS[1].mostPopular).toBe(true);
+  });
+
+  it("premium is marked best value", () => {
+    expect(PLANS[2].bestValue).toBe(true);
+  });
+
+  it("getPlan returns the free plan for free tier", () => {
+    expect(getPlan("free").name).toBe("Free");
+  });
+
+  it("getPlan falls back to free for unknown tiers", () => {
+    expect(getPlan("free").tier).toBe("free");
   });
 });
 
@@ -137,10 +161,14 @@ describe("ROUTES", () => {
     const expectedKeys = [
       "HOME", "LOGIN", "REGISTER", "VEHICLES", "VEHICLE_MAP",
       "VEHICLE_NEW", "DASHBOARD", "MESSAGES", "ADMIN", "ABOUT",
-      "CONTACT", "PRIVACY",
+      "CONTACT", "PRIVACY", "PAYMENT_PLANS",
     ];
     for (const key of expectedKeys) {
       expect(ROUTES).toHaveProperty(key);
     }
+  });
+
+  it("PAYMENT_PLANS generates correct path", () => {
+    expect(ROUTES.PAYMENT_PLANS("123")).toBe("/payments/plans/123");
   });
 });

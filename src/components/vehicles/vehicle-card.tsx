@@ -36,15 +36,15 @@ function VehicleCard({ vehicle, href }: VehicleCardProps) {
               {VEHICLE_TYPE_LABELS[vehicle.type] || vehicle.type}
             </Badge>
           </div>
-          {vehicle.isFeatured && (
+          {vehicle.tier === "premium" && (
             <div className="absolute top-3 right-3">
               <Badge variant="featured">Featured</Badge>
             </div>
           )}
           {vehicle.isVerified && (
-            <div className="absolute bottom-3 left-3 glass rounded-pill px-2 py-0.5 flex items-center gap-1">
+            <div className="absolute bottom-3 left-3 bg-black/70 border border-white/15 rounded-pill px-2 py-0.5 flex items-center gap-1">
               <Star className="h-3 w-3 text-brand-gold-400 fill-brand-gold-400" />
-              <span className="text-xs font-medium text-charcoal dark:text-cream">
+              <span className="text-xs font-medium text-white">
                 Verified
               </span>
             </div>

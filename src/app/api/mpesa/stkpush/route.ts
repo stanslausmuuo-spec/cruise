@@ -8,9 +8,13 @@ const stkPushSchema = z.object({
   amount: z.number().positive("Amount must be positive"),
   accountReference: z.string().max(12).optional(),
   transactionDesc: z.string().max(13).optional(),
-  type: z.enum(["booking", "reveal", "featured"]),
+  type: z.enum(["booking", "featured"]),
   metadata: z.record(z.unknown()).optional(),
 });
+
+// Server-side plan pricing whitelist — clients cannot set arbitrary featured amounts.
+// Keep in sync with PLAN_AMOUNTS in convex/payments.ts.
+const FEATURED_PLAN_AMOUNTS = new Set([1000, 10000, 2500, 25000]);
 
 export async function POST(request: Request) {
   try {
@@ -33,12 +37,15 @@ export async function POST(request: Request) {
     const { phoneNumber, type, metadata } = validation.data;
     const clientAmount = validation.data.amount;
 
-    const fixedAmounts: Record<string, number> = { reveal: 500, featured: 2000 };
-    const amount = fixedAmounts[type] ?? clientAmount;
+    if (type === "featured" && !FEATURED_PLAN_AMOUNTS.has(clientAmount)) {
+      return NextResponse.json({ error: "Invalid plan amount" }, { status: 400 });
+    }
 
-    if (!fixedAmounts[type] && (!clientAmount || clientAmount < 100)) {
+    if (type === "booking" && (!clientAmount || clientAmount < 100)) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
+
+    const amount = clientAmount;
 
     const accountReference = validation.data.accountReference || generateReference(type.toUpperCase());
     const transactionDesc = validation.data.transactionDesc || "Cruise Payment";

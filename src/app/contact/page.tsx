@@ -41,7 +41,7 @@ export default function ContactPage() {
             {contactMethods.map((m) => (
               <div
                 key={m.label}
-                className="glass rounded-2xl p-5 text-center border border-glass-border-light dark:border-glass-border-dark"
+                className="glass rounded-2xl p-5 text-center"
               >
                 <m.icon className="h-6 w-6 text-brand-gold-400 mx-auto mb-2" />
                 <p className="text-xs text-charcoal/50 dark:text-cream/50 mb-1">
@@ -54,7 +54,7 @@ export default function ContactPage() {
             ))}
           </div>
 
-          <div className="glass rounded-2xl p-8 border border-glass-border-light dark:border-glass-border-dark max-w-lg mx-auto">
+          <div className="glass rounded-2xl p-8 max-w-lg mx-auto">
             {sent ? (
               <div className="text-center py-8">
                 <Send className="h-10 w-10 text-brand-gold-400 mx-auto mb-3" />

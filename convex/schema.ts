@@ -68,15 +68,20 @@ export default defineSchema({
     description: v.string(),
     features: v.optional(v.array(v.string())),
     isVerified: v.boolean(),
-    isFeatured: v.boolean(),
-    featuredExpiresAt: v.optional(v.number()),
-    featuredCategory: v.optional(v.string()),
+    tier: v.optional(
+      v.union(
+        v.literal("free"),
+        v.literal("basic"),
+        v.literal("premium")
+      )
+    ),
+    tierExpiresAt: v.optional(v.number()),
     isActive: v.boolean(),
     createdAt: v.number(),
   })
     .index("by_owner", ["ownerId"])
     .index("by_type", ["type"])
-    .index("by_featured", ["isFeatured"])
+    .index("by_tier", ["tier"])
     .index("by_active", ["isActive"])
     .index("by_active_type", ["isActive", "type"])
     .index("by_active_price", ["isActive", "pricePerDay"])
@@ -162,6 +167,7 @@ export default defineSchema({
       v.literal("booking_payment"),
       v.literal("pay_to_reveal"),
       v.literal("featured_listing"),
+      v.literal("plan_purchase"),
       v.literal("deposit_hold"),
       v.literal("deposit_release"),
       v.literal("payout"),
@@ -182,15 +188,19 @@ export default defineSchema({
     .index("by_user_status", ["userId", "status"])
     .index("by_status", ["status"]),
 
-  reveals: defineTable({
-    userId: v.id("users"),
+  subscriptions: defineTable({
     vehicleId: v.id("vehicles"),
+    ownerId: v.id("users"),
+    plan: v.union(v.literal("basic"), v.literal("premium")),
+    period: v.union(v.literal("monthly"), v.literal("annual")),
     amount: v.number(),
+    startDate: v.number(),
+    endDate: v.number(),
+    active: v.boolean(),
     checkoutRequestId: v.optional(v.string()),
     mobileMoneyRef: v.optional(v.string()),
-    createdAt: v.number(),
   })
-    .index("by_user", ["userId"])
+    .index("by_active", ["active"])
     .index("by_vehicle", ["vehicleId"])
     .index("by_checkout_request_id", ["checkoutRequestId"]),
 
@@ -265,21 +275,6 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_status", ["status"])
     .index("by_user_type", ["userId", "documentType"]),
-
-  featured_listings: defineTable({
-    vehicleId: v.id("vehicles"),
-    ownerId: v.id("users"),
-    amount: v.number(),
-    startDate: v.number(),
-    endDate: v.number(),
-    category: v.optional(v.string()),
-    active: v.boolean(),
-    checkoutRequestId: v.optional(v.string()),
-    mobileMoneyRef: v.optional(v.string()),
-  })
-    .index("by_active", ["active"])
-    .index("by_vehicle", ["vehicleId"])
-    .index("by_checkout_request_id", ["checkoutRequestId"]),
 
   push_subscriptions: defineTable({
     userId: v.id("users"),

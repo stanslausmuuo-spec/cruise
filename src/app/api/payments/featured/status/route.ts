@@ -18,25 +18,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing checkoutRequestId" }, { status: 400 });
     }
 
-    const featured = await convex.query(api.payments.getFeaturedByCheckoutRequestId, {
+    const subscription = await convex.query(api.payments.getPlanByCheckoutRequestId, {
       checkoutRequestId,
     });
 
-    if (!featured) {
+    if (!subscription) {
       return NextResponse.json({ activated: false });
     }
 
-    if (featured.active && featured.mobileMoneyRef) {
+    if (subscription.active && subscription.mobileMoneyRef) {
       return NextResponse.json({
         activated: true,
-        mobileMoneyRef: featured.mobileMoneyRef,
-        vehicleId: featured.vehicleId,
+        mobileMoneyRef: subscription.mobileMoneyRef,
+        vehicleId: subscription.vehicleId,
       });
     }
 
     return NextResponse.json({ activated: false });
   } catch (error) {
-    console.error("Featured status check error:", error);
+    console.error("Plan status check error:", error);
     return NextResponse.json({ error: "Failed to check status" }, { status: 500 });
   }
 }

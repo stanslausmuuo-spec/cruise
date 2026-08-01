@@ -52,7 +52,7 @@ export default function HowItWorksPage() {
             {steps.map((s, i) => (
               <div
                 key={s.title}
-                className="glass rounded-2xl p-6 border border-glass-border-light dark:border-glass-border-dark flex gap-5"
+                className="glass rounded-2xl p-6 flex gap-5"
               >
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 rounded-full bg-brand-gold-400/10 flex items-center justify-center shrink-0">

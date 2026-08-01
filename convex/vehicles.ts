@@ -107,8 +107,8 @@ export const createVehicle = mutation({
       location,
       images: args.images ?? [],
       blurDataUrls: args.blurDataUrls,
-      isVerified: false,
-      isFeatured: false,
+      isVerified: true,
+      tier: "free",
       isActive: true,
       createdAt: Date.now(),
     });
@@ -139,6 +139,13 @@ export const listVehicles = query({
     transmission: v.optional(v.union(v.literal("automatic"), v.literal("manual"))),
     minPrice: v.optional(v.number()),
     maxPrice: v.optional(v.number()),
+    tier: v.optional(
+      v.union(
+        v.literal("free"),
+        v.literal("basic"),
+        v.literal("premium")
+      )
+    ),
     cursor: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
@@ -149,7 +156,21 @@ handler: async (ctx: QueryCtx, args) => {
     const isActive = true as const;
     const cursor = args.cursor ?? null;
     
-    if (args.type) {
+    if (args.tier) {
+      const page = await ctx.db
+        .query("vehicles")
+        .withIndex("by_tier", (q) => q.eq("tier", args.tier!))
+        .order("desc")
+        .paginate({ cursor, numItems: limit + 1 });
+      
+      const vehicles = (page?.page ?? []).filter((v: Vehicle) => v.isActive);
+      const hasMore = vehicles.length > limit;
+      return {
+        vehicles: hasMore ? vehicles.slice(0, limit) : vehicles,
+        nextCursor: hasMore ? page.continueCursor : undefined,
+        hasMore,
+      };
+    } else if (args.type) {
       const page = await ctx.db
         .query("vehicles")
         .withIndex("by_active_type", (q) => q.eq("isActive", isActive).eq("type", args.type!))
@@ -177,6 +198,12 @@ handler: async (ctx: QueryCtx, args) => {
   },
 });
 
+function tierWeight(tier?: Vehicle["tier"]): number {
+  if (tier === "premium") return 2;
+  if (tier === "basic") return 1;
+  return 0;
+}
+
 function processPage(page: { page: Vehicle[]; continueCursor?: string }, limit: number, args: { transmission?: string; minPrice?: number; maxPrice?: number }) {
   // Filter in-memory for price range and transmission (since we can't do range on secondary index)
   let vehicles: Vehicle[] = page?.page ?? [];
@@ -191,11 +218,10 @@ function processPage(page: { page: Vehicle[]; continueCursor?: string }, limit: 
     vehicles = vehicles.filter((v: Vehicle) => v.pricePerDay <= args.maxPrice!);
   }
   
-  // Sort: featured first, then by createdAt desc
+  // Sort: premium (featured) first, then basic, then free — by createdAt desc
   vehicles.sort((a: Vehicle, b: Vehicle) => {
-    if (b.isFeatured !== a.isFeatured) {
-      return b.isFeatured ? 1 : -1;
-    }
+    const tierDiff = tierWeight(b.tier) - tierWeight(a.tier);
+    if (tierDiff !== 0) return tierDiff;
     return b.createdAt - a.createdAt;
   });
   
@@ -234,6 +260,23 @@ export const getVehicle = query({
   },
 });
 
+export const getVehicleOwnerContact = query({
+  args: { vehicleId: v.id("vehicles") },
+  handler: async (ctx, args) => {
+    const vehicle = await ctx.db.get(args.vehicleId);
+    if (!vehicle || !vehicle.isActive) return null;
+
+    // Phone number is a Basic and Premium perk
+    const tier = vehicle.tier ?? "free";
+    if (tier === "free") return null;
+
+    const owner = await ctx.db.get(vehicle.ownerId);
+    if (!owner?.phone) return null;
+
+    return { phone: owner.phone };
+  },
+});
+
 export const getOwnerVehicles = query({
   args: { ownerId: v.id("users") },
   handler: async (ctx, args) => {
@@ -259,26 +302,6 @@ export const getOwnerVehicles = query({
       .filter((q) => q.eq(q.field("isActive"), true))
       .collect();
     return vehicles;
-  },
-});
-
-export const toggleFeatured = mutation({
-  args: {
-    vehicleId: v.id("vehicles"),
-    isFeatured: v.boolean(),
-    featuredExpiresAt: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    if (!user.roles.includes("admin")) throw new Error("Admin only");
-
-    const vehicle = await ctx.db.get(args.vehicleId);
-    if (!vehicle) throw new Error("Vehicle not found");
-    
-    await ctx.db.patch(args.vehicleId, {
-      isFeatured: args.isFeatured,
-      featuredExpiresAt: args.featuredExpiresAt,
-    });
   },
 });
 

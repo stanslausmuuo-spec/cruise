@@ -97,7 +97,7 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <div className="glass rounded-2xl p-8 border border-glass-border-light dark:border-glass-border-dark">
+        <div className="glass rounded-2xl p-8">
           <div className="text-center mb-8">
             <h1 className="font-heading text-3xl font-bold text-charcoal dark:text-cream mb-2">
               Welcome Back

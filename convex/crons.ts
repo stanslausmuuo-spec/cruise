@@ -4,9 +4,9 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 
 crons.daily(
-  "Expire featured listings",
+  "Downgrade expired tiers",
   { hourUTC: 2, minuteUTC: 0 },
-  internal.cron.expireFeaturedListings
+  internal.cron.downgradeExpiredTiers
 );
 
 crons.daily(
@@ -25,12 +25,6 @@ crons.daily(
   "Cleanup orphaned images",
   { hourUTC: 5, minuteUTC: 0 },
   internal.cron.cleanupOrphanedImages
-);
-
-crons.daily(
-  "Cleanup expired reveals",
-  { hourUTC: 6, minuteUTC: 0 },
-  internal.cron.cleanupExpiredReveals
 );
 
 crons.hourly(

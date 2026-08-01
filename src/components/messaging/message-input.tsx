@@ -32,7 +32,7 @@ function MessageInput({ onSend, disabled, placeholder = "Type a message..." }: M
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         disabled={disabled}
-        className="flex-1 rounded-pill glass border border-glass-border-light dark:border-glass-border-dark px-4 py-2.5 text-sm text-charcoal dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-gold-400/50"
+        className="flex-1 rounded-pill glass px-4 py-2.5 text-sm text-charcoal dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-gold-400/50"
       />
       <Button
         type="submit"

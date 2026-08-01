@@ -16,7 +16,7 @@ function MessageBubble({ content, timestamp, isOwn }: MessageBubbleProps) {
         className={cn(
           "max-w-[75%] rounded-2xl px-4 py-2.5",
           isOwn
-            ? "bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 text-white"
+            ? "bg-brand-gold-500 text-white"
             : "glass text-charcoal dark:text-cream"
         )}
       >

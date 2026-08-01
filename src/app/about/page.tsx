@@ -62,7 +62,7 @@ export default function AboutPage() {
             {values.map((v) => (
               <div
                 key={v.title}
-                className="glass rounded-2xl p-6 border border-glass-border-light dark:border-glass-border-dark"
+                className="glass rounded-2xl p-6"
               >
                 <v.icon className="h-8 w-8 text-brand-gold-400 mb-3" />
                 <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-2">

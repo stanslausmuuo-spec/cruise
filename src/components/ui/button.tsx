@@ -14,7 +14,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles = {
   primary:
-    "bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 text-white hover:brightness-110 shadow-premium hover:shadow-gold-glow",
+    "bg-brand-gold-500 text-white hover:brightness-110 shadow-premium",
   secondary:
     "bg-charcoal dark:bg-white text-white dark:text-charcoal hover:opacity-90",
   outline:

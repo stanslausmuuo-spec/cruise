@@ -21,7 +21,7 @@ interface Vehicle {
   address: string;
   location: { lat: number; lng: number };
   images: string[];
-  isFeatured: boolean;
+  tier?: string;
   isActive: boolean;
   createdAt: number;
 }
@@ -311,7 +311,7 @@ map.addSource("vehicles", {
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   return (
-    <div className="relative h-[calc(100vh-200px)] rounded-2xl overflow-hidden glass">
+    <div className="relative h-[calc(100vh-200px)] rounded-2xl overflow-hidden bg-white dark:bg-surface-dark-muted border border-charcoal/5 dark:border-white/5">
       <div ref={mapContainerRef} className="absolute inset-0" />
 
       {/* Top Controls */}
@@ -319,7 +319,7 @@ map.addSource("vehicles", {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex-1 glass rounded-xl p-4 flex flex-col sm:flex-row gap-3"
+          className="flex-1 bg-white dark:bg-surface-dark-muted border border-charcoal/5 dark:border-white/5 rounded-xl p-4 flex flex-col sm:flex-row gap-3 shadow-premium"
         >
           <div className="relative flex-1">
             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-charcoal/40" />
@@ -381,7 +381,7 @@ map.addSource("vehicles", {
           animate={{ opacity: 1, y: 0 }}
           className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-80 z-10"
         >
-          <div className="glass rounded-2xl p-4">
+          <div className="bg-white dark:bg-surface-dark-muted border border-charcoal/5 dark:border-white/5 rounded-2xl p-4 shadow-premium">
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream">
@@ -408,7 +408,7 @@ map.addSource("vehicles", {
               </span>
               <button
                 onClick={() => onVehicleClick?.(selectedVehicle.id)}
-                className="px-4 py-2 bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 text-white rounded-xl text-sm font-medium hover:brightness-110 transition-all"
+                className="px-4 py-2 bg-brand-gold-500 text-white rounded-xl text-sm font-medium hover:brightness-110 transition-all"
               >
                 View Details
               </button>
@@ -418,7 +418,7 @@ map.addSource("vehicles", {
       )}
 
       {/* Vehicle Count */}
-      <div className="absolute bottom-4 left-4 z-10 glass rounded-xl px-4 py-2">
+      <div className="absolute bottom-4 left-4 z-10 bg-white dark:bg-surface-dark-muted border border-charcoal/5 dark:border-white/5 rounded-xl px-4 py-2 shadow-premium">
         <p className="text-sm text-charcoal/70 dark:text-cream/70">
           {filteredVehicles.length} vehicle{filteredVehicles.length !== 1 ? "s" : ""} found
         </p>

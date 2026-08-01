@@ -17,7 +17,7 @@ function VehicleSearchBar({ value, onChange, placeholder = "Search make or model
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-pill glass border border-glass-border-light dark:border-glass-border-dark pl-10 pr-4 py-2.5 text-sm text-charcoal dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-gold-400/50"
+        className="w-full rounded-pill glass pl-10 pr-4 py-2.5 text-sm text-charcoal dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-gold-400/50"
       />
     </div>
   );

@@ -1,34 +1,26 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { staggerContainer, fadeUp } from "@/lib/animations";
-import { Search, CreditCard, Car } from "lucide-react";
 
 const steps = [
   {
-    icon: Search,
-    title: "Find Your Drive",
-    description:
-      "Browse verified vehicles near you. Filter by type, price, and availability to find the perfect ride.",
+    title: "Search",
+    description: "Browse verified cars near you. Filter by type, price, and location.",
   },
   {
-    icon: CreditCard,
-    title: "Secure Booking",
-    description:
-      "Book instantly and pay securely with M-Pesa. Your payment is protected until the trip begins.",
+    title: "Book with M-Pesa",
+    description: "Reserve instantly and pay securely. Funds are held until the trip begins.",
   },
   {
-    icon: Car,
-    title: "Hit the Road",
-    description:
-      "Pick up your vehicle, inspect it with photo capture, and enjoy the drive. Return with ease.",
+    title: "Drive away",
+    description: "Pick up the car, inspect it with photo capture, and hit the road.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="min-h-screen snap-start flex items-center py-20 px-4">
-      <div className="max-w-6xl mx-auto w-full">
+    <section className="py-24 px-4">
+      <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -36,42 +28,36 @@ export function HowItWorks() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <p className="text-brand-gold-400 font-medium text-sm tracking-widest uppercase mb-3">
-            Simple Process
-          </p>
           <h2 className="text-charcoal dark:text-cream">
-            How It <span className="text-gradient-gold">Works</span>
+            Three steps to the road
           </h2>
+          <p className="text-charcoal/60 dark:text-cream/60 mt-3 max-w-xl mx-auto">
+            Search, book with M-Pesa, and drive away — no queues, no paperwork.
+          </p>
         </motion.div>
 
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           {steps.map((step, index) => (
             <motion.div
               key={step.title}
-              variants={fadeUp}
-              className="text-center relative"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.5 }}
+              className="border border-charcoal/10 dark:border-white/10 rounded-2xl p-8 text-center bg-surface-light dark:bg-surface-dark-muted"
             >
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-px bg-gradient-to-r from-brand-gold-400/50 to-transparent" />
-              )}
-              <div className="inline-flex items-center justify-center h-24 w-24 rounded-full glass mb-6 border border-brand-gold-400/20">
-                <step.icon className="h-10 w-10 text-brand-gold-400" />
-              </div>
-              <h3 className="font-heading text-xl mb-3 text-charcoal dark:text-cream">
+              <p className="font-heading text-4xl font-bold text-brand-gold-400 mb-4">
+                {String(index + 1).padStart(2, "0")}
+              </p>
+              <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-3">
                 {step.title}
               </h3>
-              <p className="text-sm text-charcoal/60 dark:text-cream/60 max-w-xs mx-auto leading-relaxed">
+              <p className="text-sm text-charcoal/60 dark:text-cream/60 leading-relaxed">
                 {step.description}
               </p>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

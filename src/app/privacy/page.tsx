@@ -52,7 +52,7 @@ export default function PrivacyPage() {
             {sections.map((s) => (
               <div
                 key={s.title}
-                className="glass rounded-2xl p-6 border border-glass-border-light dark:border-glass-border-dark"
+                className="glass rounded-2xl p-6"
               >
                 <div className="flex items-center gap-3 mb-3">
                   <s.icon className="h-5 w-5 text-brand-gold-400 shrink-0" />

@@ -3,185 +3,58 @@ import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
 import { internal } from "./_generated/api";
 
-export const createPayToReveal = mutation({
+// Server-side plan pricing — the client can never set the price.
+// Keep in sync with src/lib/constants.ts (PLANS).
+const PLAN_AMOUNTS: Record<"basic" | "premium", Record<"monthly" | "annual", number>> = {
+  basic: { monthly: 1000, annual: 10000 },
+  premium: { monthly: 2500, annual: 25000 },
+};
+
+const PLAN_DAYS: Record<"monthly" | "annual", number> = {
+  monthly: 30,
+  annual: 365,
+};
+
+export const createPlanPurchase = mutation({
   args: {
     vehicleId: v.id("vehicles"),
-    phoneNumber: v.string(),
+    plan: v.union(v.literal("basic"), v.literal("premium")),
+    period: v.union(v.literal("monthly"), v.literal("annual")),
     checkoutRequestId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
 
-    // Server-calculated amount — client cannot set price
-    const amount = 500; // PAY_TO_REVEAL_FEE in KES
-    
-    await ctx.db.insert("reveals", {
-      userId: user._id,
-      vehicleId: args.vehicleId,
-      amount,
-      checkoutRequestId: args.checkoutRequestId,
-      createdAt: Date.now(),
-    });
-
-    await ctx.db.insert("transactions", {
-      userId: user._id,
-      type: "pay_to_reveal",
-      amount,
-      currency: "KES",
-      reference: args.checkoutRequestId,
-      status: "pending",
-      metadata: { vehicleId: args.vehicleId },
-      createdAt: Date.now(),
-    });
-
-    return { success: true };
-  },
-});
-
-export const confirmPayToReveal = mutation({
-  args: {
-    checkoutRequestId: v.string(),
-    mobileMoneyRef: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    if (!user.roles.includes("admin")) throw new Error("Admin only");
-
-    const reveal = await ctx.db
-      .query("reveals")
-      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
-      .first();
-
-    if (!reveal) throw new Error("Reveal record not found");
-
-    if (reveal.mobileMoneyRef) {
-      return { success: true };
-    }
-
-    await ctx.db.patch(reveal._id, { mobileMoneyRef: args.mobileMoneyRef });
-
-    const transaction = await ctx.db
-      .query("transactions")
-      .withIndex("by_reference", (q) => q.eq("reference", args.checkoutRequestId))
-      .first();
-
-    if (transaction) {
-      await ctx.db.patch(transaction._id, {
-        status: "completed",
-        metadata: { ...transaction.metadata, mobileMoneyRef: args.mobileMoneyRef },
-      });
-    }
-
-    return { success: true };
-  },
-});
-
-export const getRevealByCheckoutRequestId = query({
-  args: { checkoutRequestId: v.string() },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-
-    const reveal = await ctx.db
-      .query("reveals")
-      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
-      .first();
-
-    if (!reveal) return null;
-    if (reveal.userId !== user._id && !user.roles.includes("admin")) return null;
-
-    return reveal;
-  },
-});
-
-export const getRevealWithOwnerPhone = query({
-  args: { checkoutRequestId: v.string() },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-
-    const reveal = await ctx.db
-      .query("reveals")
-      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
-      .first();
-
-    if (!reveal || !reveal.mobileMoneyRef) return null;
-
-    // Only the reveal requester or an admin may view the phone
-    if (reveal.userId !== user._id && !user.roles.includes("admin")) {
-      throw new Error("Not authorized");
-    }
-
-    const vehicle = await ctx.db.get(reveal.vehicleId);
-    if (!vehicle) return null;
-
-    // Only return the phone if the requester has an active (paid) booking for this vehicle
-    if (!user.roles.includes("admin")) {
-      const booking = await ctx.db
-        .query("bookings")
-        .withIndex("by_vehicle", (q) => q.eq("vehicleId", vehicle._id))
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("guestId"), user._id),
-            q.eq(q.field("paymentStatus"), "paid")
-          )
-        )
-        .first();
-
-      if (!booking) {
-        throw new Error("Not authorized: no active booking for this vehicle");
-      }
-    }
-
-    const owner = await ctx.db.get(vehicle.ownerId);
-    if (!owner) return null;
-
-    return {
-      revealed: true,
-      phone: owner.phone,
-      mobileMoneyRef: reveal.mobileMoneyRef,
-    };
-  },
-});
-
-export const createFeaturedPayment = mutation({
-  args: {
-    vehicleId: v.id("vehicles"),
-    durationDays: v.number(),
-    category: v.optional(v.string()),
-    checkoutRequestId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    
     // Verify user owns the vehicle
     const vehicle = await ctx.db.get(args.vehicleId);
     if (!vehicle) throw new Error("Vehicle not found");
     if (vehicle.ownerId !== user._id) throw new Error("Not authorized");
 
     // Server-calculated amount — client cannot set price
-    const amount = 2000; // FEATURED_LISTING_FEE in KES
-
+    const amount = PLAN_AMOUNTS[args.plan][args.period];
     const startDate = Date.now();
-    const endDate = startDate + args.durationDays * 86400000;
+    const endDate = startDate + PLAN_DAYS[args.period] * 86400000;
 
-    await ctx.db.insert("featured_listings", {
+    await ctx.db.insert("subscriptions", {
       vehicleId: args.vehicleId,
       ownerId: user._id,
+      plan: args.plan,
+      period: args.period,
       amount,
       startDate,
       endDate,
-      category: args.category,
-      active: false, // Will be activated on payment confirmation
+      active: false, // Activated on payment confirmation
       checkoutRequestId: args.checkoutRequestId,
     });
 
     await ctx.db.insert("transactions", {
       userId: user._id,
-      type: "featured_listing",
+      type: "plan_purchase",
       amount,
       currency: "KES",
       reference: args.checkoutRequestId,
       status: "pending",
-      metadata: { vehicleId: args.vehicleId, durationDays: args.durationDays, category: args.category },
+      metadata: { vehicleId: args.vehicleId, plan: args.plan, period: args.period },
       createdAt: Date.now(),
     });
 
@@ -189,7 +62,7 @@ export const createFeaturedPayment = mutation({
   },
 });
 
-export const confirmFeaturedPayment = mutation({
+export const confirmPlanPurchase = mutation({
   args: {
     checkoutRequestId: v.string(),
     mobileMoneyRef: v.string(),
@@ -198,18 +71,18 @@ export const confirmFeaturedPayment = mutation({
     const user = await getCurrentUser(ctx);
     if (!user.roles.includes("admin")) throw new Error("Admin only");
 
-    const featured = await ctx.db
-      .query("featured_listings")
+    const subscription = await ctx.db
+      .query("subscriptions")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
       .first();
 
-    if (!featured) throw new Error("Featured listing not found");
+    if (!subscription) throw new Error("Subscription not found");
 
-    if (featured.active) {
+    if (subscription.active) {
       return { success: true };
     }
 
-    await ctx.db.patch(featured._id, {
+    await ctx.db.patch(subscription._id, {
       active: true,
       mobileMoneyRef: args.mobileMoneyRef,
     });
@@ -226,30 +99,29 @@ export const confirmFeaturedPayment = mutation({
       });
     }
 
-    await ctx.db.patch(featured.vehicleId, {
-      isFeatured: true,
-      featuredExpiresAt: featured.endDate,
-      featuredCategory: featured.category,
+    await ctx.db.patch(subscription.vehicleId, {
+      tier: subscription.plan,
+      tierExpiresAt: subscription.endDate,
     });
 
     return { success: true };
   },
 });
 
-export const getFeaturedByCheckoutRequestId = query({
+export const getPlanByCheckoutRequestId = query({
   args: { checkoutRequestId: v.string() },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
 
-    const featured = await ctx.db
-      .query("featured_listings")
+    const subscription = await ctx.db
+      .query("subscriptions")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", args.checkoutRequestId))
       .first();
 
-    if (!featured) return null;
-    if (featured.ownerId !== user._id && !user.roles.includes("admin")) return null;
+    if (!subscription) return null;
+    if (subscription.ownerId !== user._id && !user.roles.includes("admin")) return null;
 
-    return featured;
+    return subscription;
   },
 });
 
@@ -472,66 +344,29 @@ export const processMpesaCallback = mutation({
       return { success: true };
     }
 
-    // Try reveal payment
-    const reveal = await ctx.db
-      .query("reveals")
+    // Try plan purchase (Basic / Premium tier)
+    const subscription = await ctx.db
+      .query("subscriptions")
       .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", checkoutRequestId))
       .first();
 
-    if (reveal) {
-      if (reveal.mobileMoneyRef) {
+    if (subscription) {
+      if (subscription.active) {
         return { success: true };
       }
 
-      const expectedRevealAmount = 500;
-      if (Math.abs(amount - expectedRevealAmount) > 1) {
+      if (Math.abs(amount - subscription.amount) > 1) {
         return { success: false, reason: "amount_mismatch" };
       }
 
-      await ctx.db.patch(reveal._id, { mobileMoneyRef: mpesaReceipt });
-
-      if (existingTx) {
-        await ctx.db.patch(existingTx._id, {
-          status: "completed",
-          metadata: { ...existingTx.metadata, mobileMoneyRef: mpesaReceipt },
-        });
-      }
-
-      await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
-        userId: reveal.userId,
-        title: "Contact Revealed",
-        body: `Payment of KES ${amount} successful.`,
-        url: "/messages",
-      });
-
-      return { success: true };
-    }
-
-    // Try featured listing payment
-    const featured = await ctx.db
-      .query("featured_listings")
-      .withIndex("by_checkout_request_id", (q) => q.eq("checkoutRequestId", checkoutRequestId))
-      .first();
-
-    if (featured) {
-      if (featured.active) {
-        return { success: true };
-      }
-
-      const expectedFeaturedAmount = 2000;
-      if (Math.abs(amount - expectedFeaturedAmount) > 1) {
-        return { success: false, reason: "amount_mismatch" };
-      }
-
-      await ctx.db.patch(featured._id, {
+      await ctx.db.patch(subscription._id, {
         active: true,
         mobileMoneyRef: mpesaReceipt,
       });
 
-      await ctx.db.patch(featured.vehicleId, {
-        isFeatured: true,
-        featuredExpiresAt: featured.endDate,
-        featuredCategory: featured.category,
+      await ctx.db.patch(subscription.vehicleId, {
+        tier: subscription.plan,
+        tierExpiresAt: subscription.endDate,
       });
 
       if (existingTx) {
@@ -542,9 +377,12 @@ export const processMpesaCallback = mutation({
       }
 
       await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToUser, {
-        userId: featured.ownerId,
-        title: "Featured Listing Activated",
-        body: `Payment of KES ${amount} successful.`,
+        userId: subscription.ownerId,
+        title: "Your car is in the spotlight",
+        body:
+          subscription.plan === "premium"
+            ? `Payment of KES ${amount} successful. Your car is now featured on the homepage.`
+            : `Payment of KES ${amount} successful. Buyers can now call you directly.`,
         url: "/dashboard/host/vehicles",
       });
 

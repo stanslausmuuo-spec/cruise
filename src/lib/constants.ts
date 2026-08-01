@@ -1,12 +1,82 @@
 export const APP_NAME = "Cruise";
-export const APP_TAGLINE = "Drive Luxury. Own Freedom.";
+export const APP_TAGLINE = "Rent cars from owners near you. Book with M-Pesa.";
 export const APP_DESCRIPTION = "The premium peer-to-peer car rental marketplace. Browse, book, and drive verified vehicles with ease.";
 
 export const PLATFORM_FEE_PERCENT = 0.15;
-export const PAY_TO_REVEAL_FEE = 100;
-export const FEATURED_LISTING_FEE = 1500;
-export const FEATURED_DURATION_DAYS = 7;
 export const CURRENCY = "KES";
+
+// Plan tiers — keep PLAN_AMOUNTS in convex/payments.ts in sync with these fees.
+export type PlanTier = "free" | "basic" | "premium";
+export type PlanPeriod = "monthly" | "annual";
+
+export interface PlanDefinition {
+  tier: PlanTier;
+  name: string;
+  tagline: string;
+  headline: string;
+  monthlyFee: number;
+  annualFee: number;
+  days: number;
+  features: string[];
+  mostPopular?: boolean;
+  bestValue?: boolean;
+}
+
+export const PLANS: PlanDefinition[] = [
+  {
+    tier: "free",
+    name: "Free",
+    tagline: "Your listing, live on Cruise.",
+    headline: "Start for free, forever.",
+    monthlyFee: 0,
+    annualFee: 0,
+    days: 0,
+    features: [
+      "Listing on Cruise",
+      "Map location",
+      "Verified badge (free after document check)",
+    ],
+  },
+  {
+    tier: "basic",
+    name: "Basic",
+    tagline: "Let buyers call you directly.",
+    headline: "Your phone number shown to every buyer.",
+    monthlyFee: 1000,
+    annualFee: 10000,
+    days: 30,
+    features: [
+      "Everything in Free",
+      "Phone number shown to every buyer",
+    ],
+    mostPopular: true,
+  },
+  {
+    tier: "premium",
+    name: "Premium",
+    tagline: "Be the first car they see.",
+    headline: "Featured on the homepage and pinned to the top of Browse.",
+    monthlyFee: 2500,
+    annualFee: 25000,
+    days: 30,
+    features: [
+      "Everything in Basic",
+      "Featured on the homepage",
+      "Pinned to the top of Browse",
+    ],
+    bestValue: true,
+  },
+];
+
+export function getPlan(tier: PlanTier): PlanDefinition {
+  return PLANS.find((p) => p.tier === tier) ?? PLANS[0];
+}
+
+export const PLAN_TIER_LABELS: Record<PlanTier, string> = {
+  free: "Free",
+  basic: "Basic",
+  premium: "Premium",
+};
 
 export const VEHICLE_TYPES = ["sedan", "suv", "luxury", "wedding", "truck"] as const;
 export const FUEL_TYPES = ["petrol", "diesel", "electric"] as const;
@@ -68,8 +138,7 @@ export const ROUTES = {
   BOOKING_CHECK_OUT: (id: string) => `/bookings/${id}/check-out`,
   MESSAGES: "/messages",
   MESSAGE_DETAIL: (id: string) => `/messages/${id}`,
-  PAYMENT_REVEAL: (vehicleId: string) => `/payments/reveal/${vehicleId}`,
-  PAYMENT_FEATURED: (vehicleId: string) => `/payments/featured/${vehicleId}`,
+  PAYMENT_PLANS: (vehicleId: string) => `/payments/plans/${vehicleId}`,
   ADMIN: "/admin",
   ADMIN_VERIFICATIONS: "/admin/verifications",
   ADMIN_DISPUTES: "/admin/disputes",

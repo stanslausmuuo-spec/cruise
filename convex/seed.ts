@@ -2,7 +2,27 @@ import { mutation } from "./_generated/server";
 import { getCurrentUser } from "./lib/auth";
 import { v } from "convex/values";
 
-const sampleVehicles = [
+type SampleVehicle = {
+  make: string;
+  model: string;
+  year: number;
+  type: "sedan" | "suv" | "luxury" | "wedding" | "truck";
+  transmission: "automatic" | "manual";
+  fuelType: "petrol" | "diesel" | "electric";
+  seats: number;
+  pricePerDay: number;
+  description: string;
+  address: string;
+  location: { lat: number; lng: number };
+  images: string[];
+  features: string[];
+  tier: "free" | "basic" | "premium";
+  tierExpiresAt?: number;
+  isActive: boolean;
+  isVerified: boolean;
+};
+
+const sampleVehicles: SampleVehicle[] = [
   {
     make: "Toyota",
     model: "RAV4",
@@ -20,7 +40,8 @@ const sampleVehicles = [
       "https://images.unsplash.com/photo-1581540222194-0def2dda95b7?w=800",
     ],
     features: ["Air Conditioning", "Bluetooth", "Backup Camera", "USB Charging"],
-    isFeatured: true,
+    tier: "premium",
+    tierExpiresAt: Date.now() + 12 * 24 * 60 * 60 * 1000,
     isActive: true,
     isVerified: true,
   },
@@ -41,7 +62,8 @@ const sampleVehicles = [
       "https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800",
     ],
     features: ["Leather Seats", "Air Conditioning", "Premium Sound", "Sunroof"],
-    isFeatured: true,
+    tier: "premium",
+    tierExpiresAt: Date.now() + 12 * 24 * 60 * 60 * 1000,
     isActive: true,
     isVerified: true,
   },
@@ -62,7 +84,7 @@ const sampleVehicles = [
       "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800",
     ],
     features: ["All-Wheel Drive", "Air Conditioning", "Bluetooth", "Roof Rails"],
-    isFeatured: false,
+    tier: "free",
     isActive: true,
     isVerified: true,
   },
@@ -83,7 +105,8 @@ const sampleVehicles = [
       "https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=800",
     ],
     features: ["7 Seats", "Diesel Engine", "Air Conditioning", "Bluetooth", "Cruise Control"],
-    isFeatured: false,
+    tier: "basic",
+    tierExpiresAt: Date.now() + 20 * 24 * 60 * 60 * 1000,
     isActive: true,
     isVerified: true,
   },
@@ -104,7 +127,8 @@ const sampleVehicles = [
       "https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800",
     ],
     features: ["Honda Sensing", "Air Conditioning", "Bluetooth", "Apple CarPlay"],
-    isFeatured: true,
+    tier: "premium",
+    tierExpiresAt: Date.now() + 12 * 24 * 60 * 60 * 1000,
     isActive: true,
     isVerified: true,
   },
@@ -125,7 +149,8 @@ const sampleVehicles = [
       "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800",
     ],
     features: ["Leather Seats", "Panoramic Sunroof", "Harman Kardon Sound", "Heated Seats", "Adaptive Cruise"],
-    isFeatured: true,
+    tier: "premium",
+    tierExpiresAt: Date.now() + 12 * 24 * 60 * 60 * 1000,
     isActive: true,
     isVerified: true,
   },
@@ -146,7 +171,8 @@ const sampleVehicles = [
       "https://images.unsplash.com/photo-1594611606858-a6dbe0a49d8c?w=800",
     ],
     features: ["4WD", "7 Seats", "Air Conditioning", "Diff Lock", "Roof Rack", "Snorkel"],
-    isFeatured: true,
+    tier: "premium",
+    tierExpiresAt: Date.now() + 12 * 24 * 60 * 60 * 1000,
     isActive: true,
     isVerified: true,
   },
@@ -167,7 +193,7 @@ const sampleVehicles = [
       "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800",
     ],
     features: ["Air Conditioning", "Bluetooth", "Fuel Efficient"],
-    isFeatured: false,
+    tier: "free",
     isActive: true,
     isVerified: true,
   },

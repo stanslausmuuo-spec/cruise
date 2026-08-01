@@ -202,7 +202,7 @@ export default function RegisterPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <div className="glass rounded-2xl p-8 border border-glass-border-light dark:border-glass-border-dark">
+        <div className="glass rounded-2xl p-8">
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               {step > 0 ? (

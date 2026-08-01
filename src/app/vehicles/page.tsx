@@ -122,7 +122,7 @@ export default function VehiclesPage() {
         >
           <div>
             <h1 className="font-heading text-3xl md:text-4xl font-bold text-charcoal dark:text-cream">
-              Browse <span className="text-gradient-gold">Vehicles</span>
+              Browse <span className="text-brand-gold-400">Vehicles</span>
             </h1>
             <p className="text-charcoal/60 dark:text-cream/60 mt-1">
               {filtered.length} vehicle{filtered.length !== 1 && "s"} available

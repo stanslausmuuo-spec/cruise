@@ -23,9 +23,10 @@ interface PublicUser {
 interface VehicleDetailContentProps {
   vehicle: Vehicle;
   owner?: PublicUser;
+  ownerPhone?: string | null;
 }
 
-function VehicleDetailContent({ vehicle, owner }: VehicleDetailContentProps) {
+function VehicleDetailContent({ vehicle, owner, ownerPhone }: VehicleDetailContentProps) {
   return (
     <div className="min-h-screen pt-20 pb-16">
       <div className="max-w-7xl mx-auto px-4">
@@ -86,7 +87,7 @@ function VehicleDetailContent({ vehicle, owner }: VehicleDetailContentProps) {
 
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24 space-y-4">
-              <VehiclePriceCard vehicle={vehicle} />
+              <VehiclePriceCard vehicle={vehicle} ownerPhone={ownerPhone} />
               {owner && <HostCard host={owner} />}
             </div>
           </div>

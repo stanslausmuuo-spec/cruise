@@ -3,17 +3,18 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Phone } from "lucide-react";
+import { Calendar, Phone, MessageSquare } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { PAY_TO_REVEAL_FEE } from "@/lib/constants";
 import type { Vehicle } from "@/lib/types";
 
 interface VehiclePriceCardProps {
   vehicle: Vehicle;
-  showRevealButton?: boolean;
+  ownerPhone?: string | null;
 }
 
-function VehiclePriceCard({ vehicle, showRevealButton = true }: VehiclePriceCardProps) {
+function VehiclePriceCard({ vehicle, ownerPhone }: VehiclePriceCardProps) {
+  const hasPhone = Boolean(ownerPhone);
+
   return (
     <Card glass className="p-6">
       <div className="text-center mb-6">
@@ -32,11 +33,21 @@ function VehiclePriceCard({ vehicle, showRevealButton = true }: VehiclePriceCard
         </Button>
       </Link>
 
-      {showRevealButton && (
-        <Link href={`/payments/reveal/${vehicle._id}`}>
+      {hasPhone ? (
+        <a
+          href={`tel:${ownerPhone}`}
+          className="block w-full"
+        >
           <Button variant="outline" className="w-full" size="lg">
             <Phone className="h-4 w-4" />
-            Reveal Phone — {formatCurrency(PAY_TO_REVEAL_FEE)}
+            Call the owner — {ownerPhone}
+          </Button>
+        </a>
+      ) : (
+        <Link href={`/messages/${vehicle.ownerId}`} className="block w-full">
+          <Button variant="outline" className="w-full" size="lg">
+            <MessageSquare className="h-4 w-4" />
+            Message the owner
           </Button>
         </Link>
       )}

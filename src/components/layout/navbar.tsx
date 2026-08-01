@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -24,8 +23,6 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
-  const isLanding = pathname === "/";
   const { theme, setTheme } = useTheme();
   const { signOut } = useAuthActions();
 
@@ -50,12 +47,8 @@ export function Navbar() {
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className={cn(
-          "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
-          scrolled
-            ? "glass border-b border-glass-border-light dark:border-glass-border-dark shadow-sm"
-            : isLanding
-              ? "bg-glass-light/60 dark:bg-glass-dark/60 backdrop-blur-sm"
-              : "bg-transparent"
+          "fixed top-0 left-0 right-0 z-40 transition-all duration-300 bg-white dark:bg-surface-dark-muted border-b border-charcoal/5 dark:border-white/5",
+          scrolled && "shadow-sm"
         )}
       >
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -64,7 +57,7 @@ export function Navbar() {
               href={ROUTES.HOME}
               className="flex items-center gap-2 font-heading text-xl md:text-2xl font-bold"
             >
-              <span className="text-gradient-gold">{APP_NAME}</span>
+              <span className="text-brand-gold-400">{APP_NAME}</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
@@ -125,7 +118,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href={ROUTES.REGISTER}
-                    className="inline-flex items-center gap-1.5 rounded-pill bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 transition-all shadow-premium hover:shadow-gold-glow"
+                    className="inline-flex items-center gap-1.5 rounded-pill bg-brand-gold-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 transition-all shadow-premium"
                   >
                     Get Started
                   </Link>
@@ -158,7 +151,7 @@ export function Navbar() {
             className="fixed inset-0 z-30 md:hidden"
           >
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-            <div className="absolute right-0 top-0 bottom-0 w-72 glass p-6 pt-24">
+            <div className="absolute right-0 top-0 bottom-0 w-72 bg-white dark:bg-surface-dark-muted p-6 pt-24 border-l border-charcoal/5 dark:border-white/5">
               <div className="flex flex-col gap-4">
                 {isLoggedIn && (
                   <div className="flex items-center gap-3 pb-4 border-b border-charcoal/5 dark:border-white/5">
@@ -212,7 +205,7 @@ export function Navbar() {
                       <Link
                         href={ROUTES.REGISTER}
                         onClick={() => setMobileOpen(false)}
-                        className="block w-full text-center rounded-pill bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 px-4 py-2.5 text-sm font-medium text-white"
+                        className="block w-full text-center rounded-pill bg-brand-gold-500 px-4 py-2.5 text-sm font-medium text-white"
                       >
                         Get Started
                       </Link>

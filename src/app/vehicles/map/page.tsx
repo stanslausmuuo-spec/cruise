@@ -14,7 +14,7 @@ export default function VehicleMapPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-charcoal dark:text-cream">
-            Vehicle <span className="text-gradient-gold">Map</span>
+            Vehicle <span className="text-brand-gold-400">Map</span>
           </h1>
           <p className="text-charcoal/60 dark:text-cream/60 mt-1">
             Explore vehicles by location

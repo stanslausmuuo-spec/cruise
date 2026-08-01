@@ -22,6 +22,7 @@ export interface User {
 export type VehicleType = "sedan" | "suv" | "luxury" | "wedding" | "truck";
 export type Transmission = "automatic" | "manual";
 export type FuelType = "petrol" | "diesel" | "electric";
+export type VehicleTier = "free" | "basic" | "premium";
 
 export interface Vehicle {
   _id: string;
@@ -42,9 +43,8 @@ export interface Vehicle {
   description: string;
   features?: string[];
   isVerified: boolean;
-  isFeatured: boolean;
-  featuredExpiresAt?: number;
-  featuredCategory?: string;
+  tier?: VehicleTier;
+  tierExpiresAt?: number;
   isActive: boolean;
   createdAt: number;
 }
@@ -117,6 +117,7 @@ export type TransactionType =
   | "booking_payment"
   | "pay_to_reveal"
   | "featured_listing"
+  | "plan_purchase"
   | "deposit_hold"
   | "deposit_release"
   | "payout"

@@ -68,9 +68,9 @@ function VehicleImageGallery({ vehicle }: VehicleImageGalleryProps) {
         <div className="absolute top-4 right-4 flex gap-2">
           <button
             onClick={handleShare}
-            className="glass rounded-full p-2 hover:bg-white/80 dark:hover:bg-black/80 transition-colors"
+            className="bg-black/70 border border-white/15 rounded-full p-2 hover:bg-black/80 transition-colors"
           >
-            <Share2 className="h-4 w-4 text-charcoal dark:text-cream" />
+            <Share2 className="h-4 w-4 text-white" />
           </button>
         </div>
 
@@ -78,20 +78,20 @@ function VehicleImageGallery({ vehicle }: VehicleImageGalleryProps) {
           <>
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 glass rounded-full p-2 hover:bg-white/80 dark:hover:bg-black/80 transition-colors"
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/70 border border-white/15 rounded-full p-2 hover:bg-black/80 transition-colors"
             >
-              <ChevronLeft className="h-4 w-4 text-charcoal dark:text-cream" />
+              <ChevronLeft className="h-4 w-4 text-white" />
             </button>
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 glass rounded-full p-2 hover:bg-white/80 dark:hover:bg-black/80 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/70 border border-white/15 rounded-full p-2 hover:bg-black/80 transition-colors"
             >
-              <ChevronRight className="h-4 w-4 text-charcoal dark:text-cream" />
+              <ChevronRight className="h-4 w-4 text-white" />
             </button>
           </>
         )}
 
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 glass rounded-pill px-3 py-1 text-xs text-charcoal dark:text-cream">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 border border-white/15 rounded-pill px-3 py-1 text-xs text-white">
           {selectedIndex + 1} / {images.length}
         </div>
       </motion.div>

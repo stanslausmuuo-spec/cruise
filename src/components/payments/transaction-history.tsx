@@ -14,6 +14,7 @@ function TransactionHistory({ transactions }: TransactionHistoryProps) {
       case "booking_payment": return "Booking Payment";
       case "pay_to_reveal": return "Pay to Reveal";
       case "featured_listing": return "Featured Listing";
+      case "plan_purchase": return "Plan Purchase";
       case "payout": return "Payout";
       default: return type;
     }
@@ -24,6 +25,7 @@ function TransactionHistory({ transactions }: TransactionHistoryProps) {
       case "booking_payment": return "verified";
       case "pay_to_reveal": return "featured";
       case "featured_listing": return "status";
+      case "plan_purchase": return "featured";
       case "payout": return "status";
       default: return "status";
     }

@@ -13,7 +13,7 @@ const variants = {
   verified:
     "bg-brand-gold-400/10 text-brand-gold-400 border-brand-gold-400/30",
   featured:
-    "bg-gradient-to-r from-brand-gold-400/20 to-brand-burgundy-400/20 text-brand-gold-400 border-brand-gold-400/30 animate-pulse-gold",
+    "bg-gradient-to-r from-brand-gold-400/20 to-brand-burgundy-400/20 text-brand-gold-400 border-brand-gold-400/30",
   premium:
     "bg-brand-burgundy-500/10 text-brand-burgundy-400 border-brand-burgundy-400/30",
   status:

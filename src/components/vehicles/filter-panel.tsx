@@ -48,7 +48,7 @@ function CountyFilter({
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => { setOpen(false); setQuery(""); }} />
-          <div className="absolute z-20 mt-1 w-full rounded-xl border border-glass-border-light dark:border-glass-border-dark bg-white dark:bg-surface-dark-muted shadow-premium p-2 max-h-64 flex flex-col">
+          <div className="absolute z-20 mt-1 w-full rounded-xl border border-charcoal/10 dark:border-white/10 bg-white dark:bg-surface-dark-muted shadow-premium p-2 max-h-64 flex flex-col">
             <div className="relative mb-2">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-charcoal/40 dark:text-cream/40" />
               <input
@@ -106,7 +106,7 @@ function FilterPanel({ filters, onChange, onClear, activeCount }: FilterPanelPro
   };
 
   return (
-    <div className="glass rounded-2xl p-6 border border-glass-border-light dark:border-glass-border-dark">
+    <div className="glass rounded-2xl p-6">
       <div className="flex items-center justify-between mb-5">
         <h2 className="font-heading text-lg font-bold text-charcoal dark:text-cream">
           Filters

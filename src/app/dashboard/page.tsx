@@ -73,7 +73,7 @@ function PushNotificationToggle() {
           <button
             onClick={handleToggle}
             disabled={actionLoading}
-            className="text-xs font-medium px-3 py-1.5 rounded-pill transition-colors duration-200 bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 text-white hover:brightness-110 disabled:opacity-50"
+            className="text-xs font-medium px-3 py-1.5 rounded-pill transition-colors duration-200 bg-brand-gold-500 text-white hover:brightness-110 disabled:opacity-50"
           >
             {actionLoading
               ? "..."
@@ -118,7 +118,7 @@ function DashboardContent() {
           </p>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center rounded-pill font-medium transition-colors duration-200 bg-gradient-to-r from-brand-gold-400 to-brand-gold-500 text-white hover:brightness-110 shadow-premium px-5 py-2.5 text-sm"
+            className="inline-flex items-center justify-center rounded-pill font-medium transition-colors duration-200 bg-brand-gold-500 text-white hover:brightness-110 shadow-premium px-5 py-2.5 text-sm"
           >
             Sign In
           </Link>
@@ -138,7 +138,7 @@ function DashboardContent() {
           className="mb-8"
         >
           <h1 className="font-heading text-3xl font-bold text-charcoal dark:text-cream">
-            Welcome, <span className="text-gradient-gold">{(currentUser.name ?? "User").split(" ")[0]}</span>
+            Welcome, <span className="text-brand-gold-400">{(currentUser.name ?? "User").split(" ")[0]}</span>
           </h1>
           <p className="text-charcoal/60 dark:text-cream/60 mt-1">
             {(currentUser.roles ?? []).join(" . ")}

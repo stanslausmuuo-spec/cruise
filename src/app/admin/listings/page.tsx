@@ -13,13 +13,14 @@ import { staggerContainer, fadeUp } from "@/lib/animations";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { Search, Filter, Car, Eye, Trash2, Edit, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import type { Vehicle } from "@/lib/types";
+import type { Vehicle, VehicleTier } from "@/lib/types";
+import { PLAN_TIER_LABELS } from "@/lib/constants";
 
 export default function AdminListingsPage() {
   const vehiclesData = useQuery(api.vehicles.listVehicles, { limit: 100 });
   const currentUser = useQuery(api.auth.getMe);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "featured">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | VehicleTier>("all");
 
   const deleteVehicle = useMutation(api.vehicles.deleteVehicle);
 
@@ -40,7 +41,9 @@ export default function AdminListingsPage() {
     const matchesStatus = statusFilter === "all" ||
       (statusFilter === "active" && vehicle.isActive) ||
       (statusFilter === "inactive" && !vehicle.isActive) ||
-      (statusFilter === "featured" && vehicle.isFeatured);
+      (statusFilter === "free" && (vehicle.tier ?? "free") === "free") ||
+      (statusFilter === "basic" && vehicle.tier === "basic") ||
+      (statusFilter === "premium" && vehicle.tier === "premium");
 
     return matchesSearch && matchesStatus;
   });
@@ -57,13 +60,15 @@ export default function AdminListingsPage() {
   };
 
   const statusLabel = (vehicle: Vehicle) => {
-    if (vehicle.isFeatured) return "Featured";
+    const tier = vehicle.tier ?? "free";
+    if (tier !== "free") return PLAN_TIER_LABELS[tier];
     if (vehicle.isActive) return "Active";
     return "Inactive";
   };
 
   const statusVariant = (vehicle: Vehicle) => {
-    if (vehicle.isFeatured) return "featured";
+    if (vehicle.tier === "premium") return "featured";
+    if (vehicle.tier === "basic") return "verified";
     if (vehicle.isActive) return "verified";
     return "status";
   };
@@ -101,13 +106,15 @@ export default function AdminListingsPage() {
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-charcoal/40" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive" | "featured")}
+                onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive" | VehicleTier)}
                 className="appearance-none pl-10 pr-8 py-2 rounded-premium border border-charcoal/10 dark:border-white/10 bg-white dark:bg-surface-dark-muted text-sm text-charcoal dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-gold-400/50 cursor-pointer"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
-                <option value="featured">Featured</option>
+                <option value="free">Free</option>
+                <option value="basic">Basic</option>
+                <option value="premium">Premium</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-charcoal/40 pointer-events-none" />
             </div>

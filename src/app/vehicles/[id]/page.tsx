@@ -51,5 +51,15 @@ async function VehicleDetailLoader({ vehicleId }: { vehicleId: string }) {
     userId: vehicle.ownerId,
   });
 
-  return <VehicleDetailContent vehicle={vehicle} owner={owner ?? undefined} />;
+  const ownerContact = await convex.query(api.vehicles.getVehicleOwnerContact, {
+    vehicleId: vehicle._id,
+  });
+
+  return (
+    <VehicleDetailContent
+      vehicle={vehicle}
+      owner={owner ?? undefined}
+      ownerPhone={ownerContact?.phone ?? null}
+    />
+  );
 }

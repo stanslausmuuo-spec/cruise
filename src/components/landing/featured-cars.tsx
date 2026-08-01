@@ -1,70 +1,68 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { VehicleCard } from "@/components/vehicles/vehicle-card";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Car } from "lucide-react";
 
 export function FeaturedCars() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-    layoutEffect: false,
-  });
-  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-20%"]);
-
-  const result = useQuery(api.vehicles.listVehicles, { limit: 4 });
-  const vehicles = result?.vehicles ?? [];
+  const featured = useQuery(api.vehicles.listVehicles, { tier: "premium", limit: 4 });
+  const recent = useQuery(api.vehicles.listVehicles, { limit: 4 });
+  const featuredVehicles = featured?.vehicles ?? [];
+  const recentVehicles = recent?.vehicles ?? [];
+  const vehicles = featuredVehicles.length > 0 ? featuredVehicles : recentVehicles;
 
   return (
-    <section ref={containerRef} className="min-h-screen snap-start flex items-center py-20 overflow-hidden">
-      {vehicles.length > 0 && (
-        <div className="w-full">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-6xl mx-auto px-4 mb-12"
+    <section className="py-24 px-4">
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="flex items-end justify-between mb-12"
+        >
+          <div>
+            <h2 className="text-charcoal dark:text-cream">
+              Featured vehicles
+            </h2>
+            <p className="text-charcoal/60 dark:text-cream/60 mt-2">
+              Cars their owners chose to promote — book them first.
+            </p>
+          </div>
+          <Link
+            href="/vehicles"
+            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-brand-gold-400 hover:text-brand-gold-500 transition-colors"
           >
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-brand-gold-400 font-medium text-sm tracking-widest uppercase mb-3">
-                  Premium Selection
-                </p>
-                <h2 className="text-charcoal dark:text-cream">
-                  Featured <span className="text-gradient-gold">Fleet</span>
-                </h2>
-              </div>
-              <Link href="/vehicles">
-                <Button variant="ghost" size="sm" icon={<ArrowRight className="h-4 w-4" />}>
-                  View All
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
+            View all cars
+          </Link>
+        </motion.div>
 
-          <motion.div style={{ x }} className="flex gap-6 px-4 pb-4 overflow-x-auto scrollbar-hide">
-            {vehicles.map((vehicle, i) => (
-              <motion.div
-                key={vehicle._id}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="min-w-[320px] md:min-w-[380px]"
-              >
-                <VehicleCard vehicle={vehicle} />
-              </motion.div>
+        {vehicles.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {vehicles.map((vehicle) => (
+              <VehicleCard key={vehicle._id} vehicle={vehicle} />
             ))}
-          </motion.div>
-        </div>
-      )}
+          </div>
+        ) : (
+          <EmptyState
+            icon={<Car className="h-8 w-8 text-charcoal/30 dark:text-cream/30" />}
+            title="No cars listed yet"
+            description="Be the first host on Cruise and start earning from your car today."
+            action={
+              <Link
+                href="/vehicles/new"
+                className="inline-flex items-center justify-center rounded-pill bg-brand-gold-500 px-6 py-3 text-sm font-medium text-white hover:brightness-110 transition-all"
+              >
+                List your car
+              </Link>
+            }
+          />
+        )}
+      </div>
     </section>
   );
 }

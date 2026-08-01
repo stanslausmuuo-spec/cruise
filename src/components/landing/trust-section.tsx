@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { staggerContainer, fadeUp } from "@/lib/animations";
 import { ShieldCheck, Camera, Lock, BadgeCheck } from "lucide-react";
 
 const features = [
@@ -29,8 +28,8 @@ const features = [
 
 export function TrustSection() {
   return (
-    <section className="min-h-screen snap-start flex items-center py-20 px-4">
-      <div className="max-w-6xl mx-auto w-full">
+    <section className="py-24 px-4">
+      <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -38,29 +37,23 @@ export function TrustSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <p className="text-brand-gold-400 font-medium text-sm tracking-widest uppercase mb-3">
-            Trust & Safety
-          </p>
           <h2 className="text-charcoal dark:text-cream">
-            Trust Built <span className="text-gradient-gold">In</span>
+            Trust &amp; safety
           </h2>
-          <p className="text-charcoal/60 dark:text-cream/60 mt-4 max-w-2xl mx-auto">
-            Every ride is protected by our verification system, secure payments, and photo documentation.
+          <p className="text-charcoal/60 dark:text-cream/60 mt-3 max-w-2xl mx-auto">
+            Every ride is protected by verification, secure payments, and photo documentation.
           </p>
         </motion.div>
 
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-        >
-          {features.map((feature) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((feature, index) => (
             <motion.div
               key={feature.title}
-              variants={fadeUp}
-              className="glass rounded-premium p-6 text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.5 }}
+              className="border border-charcoal/10 dark:border-white/10 rounded-2xl p-6 text-center bg-surface-light dark:bg-surface-dark-muted"
             >
               <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-brand-gold-400/10 mb-4">
                 <feature.icon className="h-6 w-6 text-brand-gold-400" />
@@ -73,7 +66,7 @@ export function TrustSection() {
               </p>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

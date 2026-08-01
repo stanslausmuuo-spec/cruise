@@ -1,24 +1,52 @@
 import { internalMutation, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 
-export const expireFeaturedListings = internalMutation({
+export const downgradeExpiredTiers = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
+
+    // Legacy: one-time migration of old featured vehicles into the tier system.
+    // Old documents may still carry isFeatured/featuredExpiresAt fields.
+    const legacyVehicles = (await ctx.db.query("vehicles").collect()) as Array<
+      Doc<"vehicles"> & { isFeatured?: boolean; featuredExpiresAt?: number }
+    >;
+
+    for (const vehicle of legacyVehicles) {
+      if (vehicle.isFeatured !== true) continue;
+
+      const expiresAt = vehicle.featuredExpiresAt;
+      if (expiresAt !== undefined && expiresAt > now) {
+        // Still-active legacy featured listing — carry it into the tier system
+        await ctx.db.patch(vehicle._id, {
+          tier: "premium",
+          tierExpiresAt: expiresAt,
+        });
+      } else {
+        // Expired legacy flag — return to free
+        await ctx.db.patch(vehicle._id, {
+          tier: "free",
+          tierExpiresAt: undefined,
+        });
+      }
+    }
+
+    // Downgrade expired paid tiers silently back to free.
+    // Expiry only affects listing visibility — never an active booking.
     const expired = await ctx.db
       .query("vehicles")
       .filter((q) =>
         q.and(
-          q.eq(q.field("isFeatured"), true),
-          q.lt(q.field("featuredExpiresAt"), now)
+          q.lt(q.field("tierExpiresAt"), now),
+          q.neq(q.field("tier"), "free")
         )
       )
       .collect();
 
     for (const vehicle of expired) {
       await ctx.db.patch(vehicle._id, {
-        isFeatured: false,
-        featuredExpiresAt: undefined,
-        featuredCategory: undefined,
+        tier: "free",
+        tierExpiresAt: undefined,
       });
     }
   },
@@ -104,20 +132,6 @@ export const cleanupOrphanedImages = internalMutation({
   },
 });
 
-export const cleanupExpiredReveals = internalMutation({
-  handler: async (ctx) => {
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const oldReveals = await ctx.db
-      .query("reveals")
-      .filter((q) => q.lt(q.field("createdAt"), thirtyDaysAgo))
-      .collect();
-
-    for (const reveal of oldReveals) {
-      await ctx.db.delete(reveal._id);
-    }
-  },
-});
-
 export const cleanupFailedTransactions = internalMutation({
   handler: async (ctx) => {
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
@@ -137,11 +151,10 @@ export const cleanupFailedTransactions = internalMutation({
 
 export const dailyCleanup = internalAction({
   handler: async (ctx) => {
-    await ctx.runMutation(internal.cron.expireFeaturedListings);
+    await ctx.runMutation(internal.cron.downgradeExpiredTiers);
     await ctx.runMutation(internal.cron.autoCompleteBookings);
     await ctx.runMutation(internal.cron.releaseDeposits);
     await ctx.runMutation(internal.cron.cleanupOrphanedImages);
-    await ctx.runMutation(internal.cron.cleanupExpiredReveals);
     await ctx.runMutation(internal.cron.cleanupFailedTransactions);
   },
 });
