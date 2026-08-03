@@ -50,7 +50,7 @@ export default function TrustSafetyPage() {
             <h1 className="font-heading text-4xl font-bold text-charcoal dark:text-cream mb-4">
               Trust & Safety
             </h1>
-            <p className="text-lg text-charcoal/60 dark:text-cream/60 max-w-2xl mx-auto">
+            <p className="text-lg text-charcoal/75 dark:text-cream/75 max-w-2xl mx-auto">
               Your safety is our priority. Every user is verified, every rental is documented,
               and every dispute is resolved with evidence.
             </p>
@@ -63,10 +63,10 @@ export default function TrustSafetyPage() {
                 className="glass rounded-2xl p-6"
               >
                 <f.icon className="h-8 w-8 text-brand-gold-400 mb-3" />
-                <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-2">
+                <h2 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-2">
                   {f.title}
-                </h3>
-                <p className="text-sm text-charcoal/60 dark:text-cream/60">{f.desc}</p>
+                </h2>
+                <p className="text-sm text-charcoal/75 dark:text-cream/75">{f.desc}</p>
               </div>
             ))}
           </div>

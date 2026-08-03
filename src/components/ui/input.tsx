@@ -37,7 +37,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={hasError ? true : undefined}
             aria-describedby={hasError ? `${id}-error` : hasSuccess ? `${id}-success` : undefined}
             className={cn(
-              "w-full rounded-premium border border-charcoal/10 dark:border-white/10 bg-white dark:bg-surface-dark-muted px-4 py-2.5 text-sm text-charcoal dark:text-cream placeholder:text-charcoal/40 dark:placeholder:text-cream/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-gold-400/50 focus:border-brand-gold-400/50 focus:scale-[1.01]",
+              "w-full rounded-premium border border-charcoal/10 dark:border-white/10 bg-white dark:bg-surface-dark-muted px-4 py-2.5 text-sm text-charcoal dark:text-cream placeholder:text-charcoal/70 dark:placeholder:text-cream/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-gold-400/50 focus:border-brand-gold-400/50 focus:scale-[1.01]",
               icon && "pl-10",
               hasError && "border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50",
               hasSuccess && "border-green-500/50 focus:ring-green-500/50 focus:border-green-500/50",

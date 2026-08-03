@@ -52,23 +52,30 @@ export default function VehiclesPage() {
     maxPrice: queryArgs.maxPrice,
   });
 
-  useEffect(() => {
+  const [previousFilterKey, setPreviousFilterKey] = useState(serverFilterKey);
+
+  if (serverFilterKey !== previousFilterKey) {
+    setPreviousFilterKey(serverFilterKey);
     setCursor(undefined);
     setVehicles([]);
-  }, [serverFilterKey]);
+  }
 
   useEffect(() => {
     if (result === undefined) return;
-    if (cursor === undefined) {
-      setVehicles(result.vehicles);
-    } else {
-      setVehicles((prev) => [...prev, ...result.vehicles]);
-    }
+    const frame = requestAnimationFrame(() => {
+      if (cursor === undefined) {
+        setVehicles(result.vehicles);
+      } else {
+        setVehicles((prev) => [...prev, ...result.vehicles]);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   }, [result, cursor]);
 
   useEffect(() => {
     if (isLoadingMore && result !== undefined) {
-      setIsLoadingMore(false);
+      const frame = requestAnimationFrame(() => setIsLoadingMore(false));
+      return () => cancelAnimationFrame(frame);
     }
   }, [result, isLoadingMore]);
 
@@ -122,7 +129,14 @@ export default function VehiclesPage() {
   if (result === undefined) {
     return (
       <div className="min-h-screen pt-24 pb-16 px-4">
-        <SkeletonScreen type="search" />
+        <div className="max-w-7xl mx-auto">
+          <h1 className="font-heading text-3xl md:text-4xl font-bold text-charcoal dark:text-cream">
+            Browse <span className="text-brand-gold-400">Vehicles</span>
+          </h1>
+          <div className="mt-8">
+            <SkeletonScreen type="search" />
+          </div>
+        </div>
       </div>
     );
   }

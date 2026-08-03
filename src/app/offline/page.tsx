@@ -16,8 +16,8 @@ export default function OfflinePage() {
           It looks like you&apos;ve lost your internet connection. Some features may be limited while you&apos;re offline.
         </p>
         <div className="space-y-3">
-          <p className="text-sm text-charcoal/40 dark:text-cream/40">
-            You can still browse previously loaded vehicles and view your saved information.
+<p className="text-sm text-charcoal/70 dark:text-cream/70">
+              You can still browse previously loaded vehicles and view your saved information.
           </p>
           <button
             onClick={() => window.location.reload()}

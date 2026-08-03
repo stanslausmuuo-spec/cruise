@@ -32,7 +32,7 @@ export default function ContactPage() {
             <h1 className="font-heading text-4xl font-bold text-charcoal dark:text-cream mb-4">
               Contact Us
             </h1>
-            <p className="text-lg text-charcoal/60 dark:text-cream/60">
+            <p className="text-lg text-charcoal/75 dark:text-cream/75">
               We would love to hear from you. Get in touch with our team.
             </p>
           </div>
@@ -44,7 +44,7 @@ export default function ContactPage() {
                 className="glass rounded-2xl p-5 text-center"
               >
                 <m.icon className="h-6 w-6 text-brand-gold-400 mx-auto mb-2" />
-                <p className="text-xs text-charcoal/50 dark:text-cream/50 mb-1">
+                <p className="text-xs text-charcoal/75 dark:text-cream/75 mb-1">
                   {m.label}
                 </p>
                 <p className="text-sm font-medium text-charcoal dark:text-cream">
@@ -61,7 +61,7 @@ export default function ContactPage() {
                 <h2 className="font-heading text-xl font-bold text-charcoal dark:text-cream mb-2">
                   Message Sent!
                 </h2>
-                <p className="text-sm text-charcoal/60 dark:text-cream/60">
+                <p className="text-sm text-charcoal/75 dark:text-cream/75">
                   We will get back to you within 24 hours.
                 </p>
               </div>

@@ -121,4 +121,36 @@ describe("POST /api/mpesa/stkpush", () => {
     const body = await res.json();
     expect(body.metadata).toEqual({ vehicleId: "v1" });
   });
+
+  it("rate-limits repeat requests from the same IP after 5 attempts (429)", async () => {
+    const rateRequest = (ip: string) =>
+      new Request("http://localhost:3000/api/mpesa/stkpush", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": ip },
+        body: JSON.stringify({ phoneNumber: "0712345678", amount: 1000, type: "featured" }),
+      });
+
+    for (let i = 0; i < 5; i++) {
+      const res = await POST(rateRequest("198.51.100.99"));
+      expect(res.status).toBe(200);
+    }
+
+    const blocked = await POST(rateRequest("198.51.100.99"));
+    expect(blocked.status).toBe(429);
+    const body = await blocked.json();
+    expect(body.error).toMatch(/Too many payment requests/);
+  });
+
+  it("rate-limits by IP independently (different IP not blocked)", async () => {
+    const rateRequest = (ip: string) =>
+      new Request("http://localhost:3000/api/mpesa/stkpush", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": ip },
+        body: JSON.stringify({ phoneNumber: "0712345678", amount: 1000, type: "featured" }),
+      });
+
+    for (let i = 0; i < 6; i++) await POST(rateRequest("198.51.100.100"));
+    expect((await POST(rateRequest("198.51.100.100"))).status).toBe(429);
+    expect((await POST(rateRequest("198.51.100.101"))).status).toBe(200);
+  });
 });

@@ -136,6 +136,25 @@ test.describe("API contract smoke", () => {
     expect(res.status()).toBe(401);
   });
 
+  test("POST /api/mpesa/stkpush enforces per-IP rate limit (429 after 5 attempts)", async ({
+    request,
+  }) => {
+    const headers = {
+      origin: "http://localhost:3000",
+      "x-forwarded-for": "198.51.100.200",
+    };
+    let lastStatus = 200;
+    for (let i = 0; i < 6; i++) {
+      const res = await http(request, "/api/mpesa/stkpush", {
+        method: "POST",
+        data: { phoneNumber: "0712345678", amount: 1000, type: "featured" },
+        headers,
+      });
+      lastStatus = res.status();
+    }
+    expect(lastStatus).toBe(429);
+  });
+
   test("POST /api/auth/otp/send enforces rate limit after repeated attempts (same email)", async ({
     request,
   }) => {

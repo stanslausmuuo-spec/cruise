@@ -66,9 +66,9 @@ export default function HowItWorksPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold text-brand-gold-400">STEP {i + 1}</span>
                   </div>
-                  <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-1">
+                  <h2 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-1">
                     {s.title}
-                  </h3>
+                  </h2>
                   <p className="text-sm text-charcoal/60 dark:text-cream/60">{s.desc}</p>
                 </div>
               </div>

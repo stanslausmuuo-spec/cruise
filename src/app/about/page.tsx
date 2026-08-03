@@ -65,9 +65,9 @@ export default function AboutPage() {
                 className="glass rounded-2xl p-6"
               >
                 <v.icon className="h-8 w-8 text-brand-gold-400 mb-3" />
-                <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-2">
+                <h2 className="font-heading text-lg font-bold text-charcoal dark:text-cream mb-2">
                   {v.title}
-                </h3>
+                </h2>
                 <p className="text-sm text-charcoal/60 dark:text-cream/60">{v.desc}</p>
               </div>
             ))}

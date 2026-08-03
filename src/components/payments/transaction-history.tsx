@@ -26,7 +26,7 @@ function TransactionHistory({ transactions }: TransactionHistoryProps) {
   if (transactions.length === 0) {
     return (
       <div className="glass rounded-premium p-8 text-center">
-        <p className="text-charcoal/40 dark:text-cream/40">No transactions yet</p>
+        <p className="text-charcoal/70 dark:text-cream/70">No transactions yet</p>
       </div>
     );
   }

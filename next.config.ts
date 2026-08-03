@@ -70,33 +70,7 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        source: "/api/:path*",
-        methods: ["OPTIONS"],
-        headers: [
-          {
-            key: "Access-Control-Allow-Origin",
-            value: allowedOrigin,
-          },
-          {
-            key: "Access-Control-Allow-Credentials",
-            value: "true",
-          },
-          {
-            key: "Access-Control-Allow-Methods",
-            value: "GET,POST,PUT,DELETE,OPTIONS",
-          },
-          {
-            key: "Access-Control-Allow-Headers",
-            value: "Content-Type, Authorization, x-csrf-token",
-          },
-          {
-            key: "Access-Control-Max-Age",
-            value: "86400",
-          },
-        ],
-      },
-    ];
+      ];
   },
 };
 
