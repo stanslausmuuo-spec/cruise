@@ -6,39 +6,76 @@
   --font-heading: "Playfair Display", serif;
   --font-body: "Inter", sans-serif;
 
-  --color-brand-gold-50: #fdf8e8;
-  --color-brand-gold-100: #f9eec4;
-  --color-brand-gold-200: #f3dd8a;
-  --color-brand-gold-300: #edcc50;
-  --color-brand-gold-400: #c9a84c;
-  --color-brand-gold-500: #b8922e;
+  --color-brand-gold-50: #fcf9ef;
+  --color-brand-gold-100: #f7f0d7;
+  --color-brand-gold-200: #ece1af;
+  --color-brand-gold-300: #dfcb7b;
+  --color-brand-gold-400: #d4af37;
+  --color-brand-gold-500: #bc9328;
   --color-brand-gold-600: #9a7824;
   --color-brand-gold-700: #7a5e1d;
   --color-brand-gold-800: #5a4415;
 
-  --color-brand-burgundy-400: #8b3a4a;
-  --color-brand-burgundy-500: #6b2737;
-  --color-brand-burgundy-600: #4a1a25;
-  --color-brand-burgundy-700: #331118;
+  --color-brand-burgundy-400: #a8384e;
+  --color-brand-burgundy-500: #842839;
+  --color-brand-burgundy-600: #601a26;
+  --color-brand-burgundy-700: #3c1018;
 
   --color-surface-light: #ffffff;
-  --color-surface-muted: #f5f5f3;
-  --color-surface-dark: #0a0a0a;
-  --color-surface-dark-muted: #1c1c1e;
-  --color-charcoal: #1a1a1a;
-  --color-cream: #fafaf8;
+  --color-surface-muted: #f4f2ee;
+  --color-surface-dark: #0b0d12;
+  --color-surface-dark-muted: #151821;
+  --color-surface-dark-card: #1e222f;
+  --color-surface-dark-elevated: #252a3a;
+  --color-charcoal: #12141a;
+  --color-cream: #f9f7f2;
+
+  --color-success-light: #10b981;
+  --color-success-dark: #34d399;
+  --color-success-bg-light: #ecfdf5;
+  --color-success-bg-dark: #064e3b;
+  --color-warning-light: #f59e0b;
+  --color-warning-dark: #fbbf24;
+  --color-warning-bg-light: #fffbeb;
+  --color-warning-bg-dark: #451a03;
+  --color-error-light: #ef4444;
+  --color-error-dark: #f87171;
+  --color-error-bg-light: #fef2f2;
+  --color-error-bg-dark: #450a0a;
+  --color-info-light: #3b82f6;
+  --color-info-dark: #60a5fa;
+  --color-info-bg-light: #eff6ff;
+  --color-info-bg-dark: #0c1a3a;
 
   --radius-premium: 1rem;
   --radius-pill: 9999px;
 
-  --shadow-premium: 0 4px 30px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
-  --shadow-premium-hover: 0 20px 60px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-premium: 0 10px 30px -5px rgba(212, 175, 55, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-premium-hover: 0 20px 40px -10px rgba(212, 175, 55, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+  --shadow-dark-premium: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(212, 175, 55, 0.15);
+  --shadow-dark-glow: 0 0 40px rgba(212, 175, 55, 0.06), 0 10px 30px -5px rgba(0, 0, 0, 0.5);
 
   --animate-shimmer: shimmer 2s infinite;
 
   @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
   }
 }
 
@@ -82,11 +119,49 @@
     font-size: clamp(0.9375rem, 1.2vw, 1.125rem);
     line-height: 1.7;
   }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand-gold-400 ring-offset-2 ring-offset-surface-light dark:ring-offset-surface-dark;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-white dark:bg-surface-dark-muted border border-charcoal/5 dark:border-white/5;
+    @apply bg-white/95 dark:bg-surface-dark-muted/90 backdrop-blur-md border border-charcoal/10 dark:border-white/10 shadow-xs;
+  }
+
+  .glass-card {
+    @apply bg-white dark:bg-surface-dark-card border border-charcoal/10 dark:border-white/10 shadow-sm;
+  }
+
+  .surface-elevated {
+    @apply bg-surface-dark-elevated border border-white/5 dark:border-white/5 shadow-sm;
+  }
+
+  .gold-accent {
+    @apply text-brand-gold-400;
+  }
+
+  .gold-bg {
+    @apply bg-brand-gold-400;
+  }
+
+  .gold-bg-hover {
+    @apply bg-brand-gold-500 hover:bg-brand-gold-600;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-light dark:focus-visible:ring-offset-surface-dark;
   }
 
   .scroll-snap-y {
@@ -110,10 +185,42 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(201, 168, 76, 0.08) 50%,
+      rgba(212, 175, 55, 0.12) 50%,
       transparent 100%
     );
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out both;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out both;
+  }
+
+  .animate-shake {
+    animation: shake 0.4s ease-in-out;
+  }
+
+  .transition-gold {
+    @apply transition-colors duration-200;
+  }
+
+  .transition-gold-shadow {
+    @apply transition-all duration-300;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 }

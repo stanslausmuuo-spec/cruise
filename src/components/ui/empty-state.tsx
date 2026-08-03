@@ -16,12 +16,12 @@ function EmptyState({ icon, title, description, action, className }: EmptyStateP
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center py-16 px-4 text-center",
+        "flex flex-col items-center justify-center py-16 px-4 text-center animate-fade-in",
         className
       )}
     >
-      <div className="h-16 w-16 rounded-full bg-charcoal/5 dark:bg-white/5 flex items-center justify-center mb-4">
-        {icon || <Inbox className="h-8 w-8 text-charcoal/30 dark:text-cream/30" />}
+      <div className="h-16 w-16 rounded-full bg-brand-gold-400/10 border border-brand-gold-400/20 flex items-center justify-center mb-4">
+        {icon || <Inbox className="h-8 w-8 text-brand-gold-400/50" />}
       </div>
       <h3 className="text-lg font-heading font-semibold text-charcoal dark:text-cream mb-1">
         {title}

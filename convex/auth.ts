@@ -133,16 +133,27 @@ export const getUser = query({
     const identity = await ctx.auth.getUserIdentity();
     const callerEmail = identity?.email;
     if (!callerEmail) return null;
-    if (callerEmail !== args.userId) {
-      const caller = await ctx.db
-        .query("users")
-        .withIndex("by_email", (q) => q.eq("email", callerEmail))
-        .first();
-      if (!caller?.roles?.includes("admin")) return null;
-    }
-    const user = await ctx.db.get(args.userId);
-    if (!user) return null;
-    return { _id: user._id, name: user.name, email: user.email, verified: user.verified, avatarUrl: user.avatarUrl, rating: user.rating, reviewCount: user.reviewCount };
+
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) return null;
+
+    const caller = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", callerEmail))
+      .first();
+
+    const isSelfOrAdmin = caller && (caller._id === targetUser._id || caller.roles?.includes("admin"));
+
+    return {
+      _id: targetUser._id,
+      name: targetUser.name,
+      email: isSelfOrAdmin ? targetUser.email : undefined,
+      phone: isSelfOrAdmin ? targetUser.phone : undefined,
+      verified: targetUser.verified,
+      avatarUrl: targetUser.avatarUrl,
+      rating: targetUser.rating,
+      reviewCount: targetUser.reviewCount,
+    };
   },
 });
 

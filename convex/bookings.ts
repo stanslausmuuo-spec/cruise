@@ -336,10 +336,13 @@ export const listBookings = query({
     const cursor = args.cursor ?? null;
     const page = await query.order("desc").paginate({ cursor, numItems: limit + 1 });
 
+    const hasMore = page.page.length > limit;
+    const bookings = hasMore ? page.page.slice(0, limit) : page.page;
+
     return {
-      bookings: page.page,
-      nextCursor: page.continueCursor,
-      hasMore: page.page.length > limit,
+      bookings,
+      nextCursor: hasMore ? page.continueCursor : undefined,
+      hasMore,
     };
   },
 });

@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
   
   // Security headers
   async headers() {
+    const allowedOrigin = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+
     return [
       {
         source: "/:path*",
@@ -33,6 +35,14 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(), payment=()",
           },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
         ],
       },
       {
@@ -44,7 +54,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Access-Control-Allow-Origin",
-            value: process.env.NEXT_PUBLIC_URL || "",
+            value: allowedOrigin,
           },
           {
             key: "Access-Control-Allow-Methods",
@@ -53,6 +63,36 @@ const nextConfig: NextConfig = {
           {
             key: "Access-Control-Allow-Headers",
             value: "Content-Type, Authorization, x-csrf-token",
+          },
+          {
+            key: "Access-Control-Max-Age",
+            value: "86400",
+          },
+        ],
+      },
+      {
+        source: "/api/:path*",
+        methods: ["OPTIONS"],
+        headers: [
+          {
+            key: "Access-Control-Allow-Origin",
+            value: allowedOrigin,
+          },
+          {
+            key: "Access-Control-Allow-Credentials",
+            value: "true",
+          },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET,POST,PUT,DELETE,OPTIONS",
+          },
+          {
+            key: "Access-Control-Allow-Headers",
+            value: "Content-Type, Authorization, x-csrf-token",
+          },
+          {
+            key: "Access-Control-Max-Age",
+            value: "86400",
           },
         ],
       },

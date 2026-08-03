@@ -19,18 +19,21 @@ function VehicleCard({ vehicle, href }: VehicleCardProps) {
   const imageUrl = vehicle.images[0] || "/placeholder-car.jpg";
 
   return (
-    <Link href={link}>
-      <Card className="group h-full">
+    <Link href={link} aria-label={`View ${vehicle.make} ${vehicle.model} details`}>
+      <Card className="group h-full transition-shadow duration-300 hover:shadow-premium-hover hover:border-brand-gold-400/20">
         <div className="relative h-48 overflow-hidden">
           <Image
             src={imageUrl}
             alt={`${vehicle.make} ${vehicle.model}`}
             fill
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            loading="lazy"
+            decoding="async"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             placeholder={vehicle.blurDataUrls?.[0] ? "blur" : undefined}
             blurDataURL={vehicle.blurDataUrls?.[0]}
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="absolute top-3 left-3">
             <Badge variant={vehicle.type === "luxury" ? "premium" : "status"}>
               {VEHICLE_TYPE_LABELS[vehicle.type] || vehicle.type}
@@ -42,7 +45,7 @@ function VehicleCard({ vehicle, href }: VehicleCardProps) {
             </div>
           )}
           {vehicle.isVerified && (
-            <div className="absolute bottom-3 left-3 bg-black/70 border border-white/15 rounded-pill px-2 py-0.5 flex items-center gap-1">
+            <div className="absolute bottom-3 left-3 bg-black/60 border border-white/10 rounded-pill px-2 py-0.5 flex items-center gap-1">
               <Star className="h-3 w-3 text-brand-gold-400 fill-brand-gold-400" />
               <span className="text-xs font-medium text-white">
                 Verified
@@ -52,7 +55,7 @@ function VehicleCard({ vehicle, href }: VehicleCardProps) {
         </div>
         <div className="p-5">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream">
+            <h3 className="font-heading text-lg font-bold text-charcoal dark:text-cream group-hover:text-brand-gold-500 transition-colors duration-200">
               {vehicle.make} {vehicle.model}
             </h3>
           </div>
@@ -74,7 +77,7 @@ function VehicleCard({ vehicle, href }: VehicleCardProps) {
             </span>
           </div>
           <div className="flex items-center justify-between pt-3 border-t border-charcoal/5 dark:border-white/5">
-            <span className="font-heading text-xl font-bold text-brand-gold-400">
+            <span className="font-heading text-xl font-bold text-brand-gold-400 group-hover:text-brand-gold-500 transition-colors duration-200">
               {formatCurrency(vehicle.pricePerDay)}
               <span className="text-xs font-normal text-charcoal/50 dark:text-cream/50">
                 {" "}/day

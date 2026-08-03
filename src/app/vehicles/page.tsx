@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -19,6 +20,7 @@ import type { VehicleType } from "@/lib/types";
 
 export default function VehiclesPage() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     types: [] as string[],
@@ -43,17 +45,32 @@ export default function VehiclesPage() {
 
   const result = useQuery(api.vehicles.listVehicles, queryArgs);
 
+  const serverFilterKey = JSON.stringify({
+    type: queryArgs.type,
+    transmission: queryArgs.transmission,
+    minPrice: queryArgs.minPrice,
+    maxPrice: queryArgs.maxPrice,
+  });
+
+  useEffect(() => {
+    setCursor(undefined);
+    setVehicles([]);
+  }, [serverFilterKey]);
+
   useEffect(() => {
     if (result === undefined) return;
-    const id = requestAnimationFrame(() => {
-      if (cursor === undefined) {
-        setVehicles(result.vehicles);
-      } else {
-        setVehicles(prev => [...prev, ...result.vehicles]);
-      }
-    });
-    return () => cancelAnimationFrame(id);
+    if (cursor === undefined) {
+      setVehicles(result.vehicles);
+    } else {
+      setVehicles((prev) => [...prev, ...result.vehicles]);
+    }
   }, [result, cursor]);
+
+  useEffect(() => {
+    if (isLoadingMore && result !== undefined) {
+      setIsLoadingMore(false);
+    }
+  }, [result, isLoadingMore]);
 
   const clearFilters = useCallback(() => {
     setFilters({
@@ -73,7 +90,6 @@ export default function VehiclesPage() {
     if (!result?.nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
     setCursor(result.nextCursor);
-    setTimeout(() => setIsLoadingMore(false), 100);
   }, [result, isLoadingMore]);
 
   const activeFilterCount =
@@ -87,9 +103,9 @@ export default function VehiclesPage() {
   const filtered = useMemo(() => {
     return vehicles.filter((v: typeof vehicles[0]) => {
       const matchesSearch =
-        !search ||
-        v.make.toLowerCase().includes(search.toLowerCase()) ||
-        v.model.toLowerCase().includes(search.toLowerCase());
+        !debouncedSearch ||
+        v.make.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        v.model.toLowerCase().includes(debouncedSearch.toLowerCase());
 
       const matchesType = !filters.types.length || filters.types.includes(v.type);
       const matchesTransmission = !filters.transmissions.length || filters.transmissions.includes(v.transmission);
@@ -101,7 +117,7 @@ export default function VehiclesPage() {
 
       return matchesSearch && matchesType && matchesTransmission && matchesCounty && matchesPriceRange;
     });
-  }, [vehicles, search, filters]);
+  }, [vehicles, debouncedSearch, filters]);
 
   if (result === undefined) {
     return (

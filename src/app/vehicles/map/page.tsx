@@ -6,7 +6,7 @@ import { VehicleMap } from "@/components/vehicles/VehicleMap";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 
 export default function VehicleMapPage() {
-  const vehiclesData = useQuery(api.vehicles.listVehicles, { limit: 500 });
+  const vehiclesData = useQuery(api.vehicles.listVehicles, { limit: 100 });
   const vehicles = vehiclesData?.vehicles ?? [];
 
   return (

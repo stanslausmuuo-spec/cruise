@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { initiateSTKPush, generateReference } from "@/lib/mpesa";
 import { z } from "zod";
 import { cookies } from "next/headers";
+import { authRateLimit } from "@/lib/rate-limit";
 
 const stkPushSchema = z.object({
   phoneNumber: z.string().min(10, "Valid phone number required"),
@@ -18,6 +19,20 @@ const FEATURED_PLAN_AMOUNTS = new Set([1000, 10000, 2500, 25000]);
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+
+    const rateLimit = authRateLimit(`mpesa_stk:${ip}`);
+    if (!rateLimit.allowed) {
+      const diff = rateLimit.resetTime - Date.now();
+      const retryAfter = Number.isFinite(diff) ? Math.max(1, Math.ceil(diff / 60000)) : 1;
+      return NextResponse.json(
+        { error: `Too many payment requests. Try again in ${retryAfter} minute${retryAfter === 1 ? "" : "s"}.` },
+        { status: 429 }
+      );
+    }
+
     const cookieStore = await cookies();
     const token = cookieStore.get("__convexAuthToken");
     if (!token) {

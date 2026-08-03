@@ -19,24 +19,30 @@ async function logAudit(ctx: MutationCtx, action: string, metadata: Record<strin
 
 type Vehicle = Doc<"vehicles">;
 
-// Simple geocoding using Nominatim (OpenStreetMap) - free but rate limited
+// Fast, non-blocking geocoding with strict 1.5s timeout and instant fallback
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const encodedAddress = encodeURIComponent(address);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1`,
       {
         headers: {
-          "User-Agent": "CruiseLinx/1.0 (stanslaus.muuo@example.com)",
+          "User-Agent": "CruiseLinx/1.0 (contact@cruiselinx.com)",
         },
+        signal: controller.signal,
       }
     );
-    const data = await response.json();
-    if (data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      }
     }
-  } catch (error) {
-    console.error("Geocoding failed:", error);
+  } catch {
+    // Instant fallback on error or timeout
   }
   return null;
 }

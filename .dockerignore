@@ -1,0 +1,12 @@
+.git
+node_modules
+.next
+coverage
+test-results
+*.md
+.env*.local
+.nyc_output
+dist
+build
+.vscode
+.idea
