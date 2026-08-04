@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=18.17.0"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "dev": "next dev --webpack",
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.94",
+    "@sentry/nextjs": "^10.69.0",
     "@serwist/next": "^9.0.0",
     "@t3-oss/env-nextjs": "^0.13.11",
     "@tanstack/react-virtual": "^3.14.7",

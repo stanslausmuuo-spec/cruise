@@ -58,10 +58,18 @@ npx convex deploy
 
 ### Docker
 
+A standalone, non-root container image is built and published to GHCR on every push to `main` (`ghcr.io/<owner>/cruiselinx`):
+
 ```bash
-docker build -t cruiselinx .
-docker run -p 3000:3000 -e NEXT_PUBLIC_CONVEX_URL=<url> cruiselinx
+docker pull ghcr.io/<owner>/cruiselinx:latest
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_CONVEX_URL=<url> \
+  -e NEXT_PUBLIC_URL=<url> \
+  -e MPESA_CALLBACK_SECRET=<secret> \
+  cruiselinx:latest
 ```
+
+The image is tagged `latest` + short SHA, built with BuildKit cache in CI, and includes a healthcheck against `/api/health`. Only `NEXT_PUBLIC_*` vars are baked at build time; server secrets must be passed at runtime via `-e`.
 
 ## CI/CD
 

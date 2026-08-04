@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 import withSerwist from "@serwist/next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  output: "standalone",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
@@ -74,8 +76,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSerwist({
-  swSrc: "src/app/sw.ts",
-  swDest: "public/sw.js",
-  reloadOnOnline: true,
-})(nextConfig);
+export default withSentryConfig(
+  withSerwist({
+    swSrc: "src/app/sw.ts",
+    swDest: "public/sw.js",
+    reloadOnOnline: true,
+  })(nextConfig),
+  {
+    silent: !process.env.SENTRY_AUTH_TOKEN,
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+  }
+);
