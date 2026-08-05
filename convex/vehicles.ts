@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, type QueryCtx, type MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
-import { getCurrentUser } from "./lib/auth";
+import { getCurrentUser, userIdFromSubject } from "./lib/auth";
 import { validateFile } from "./lib/validateFile";
 import { internal } from "./_generated/api";
 import { sanitizeDescription, sanitizeFeatures, sanitizeAddress } from "./lib/sanitize";
@@ -250,12 +250,8 @@ export const getVehicle = query({
     if (!vehicle) return null;
     if (!vehicle.isActive) {
       const identity = await ctx.auth.getUserIdentity();
-      const callerEmail = identity?.email;
-      if (callerEmail) {
-        const user = await ctx.db
-          .query("users")
-          .withIndex("by_email", (q) => q.eq("email", callerEmail))
-          .first();
+      if (identity) {
+        const user = await ctx.db.get(userIdFromSubject(identity.subject));
         if (user && (vehicle.ownerId === user._id || user.roles?.includes("admin"))) {
           return vehicle;
         }
@@ -288,12 +284,8 @@ export const getOwnerVehicles = query({
   handler: async (ctx, args) => {
     let vehicles;
     const identity = await ctx.auth.getUserIdentity();
-    const callerEmail = identity?.email;
-    if (callerEmail) {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_email", (q) => q.eq("email", callerEmail))
-        .first();
+    if (identity) {
+      const user = await ctx.db.get(userIdFromSubject(identity.subject));
       if (user && (user._id === args.ownerId || user.roles?.includes("admin"))) {
         vehicles = await ctx.db
           .query("vehicles")

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getCurrentUser } from "./lib/auth";
+import { getCurrentUser, userIdFromSubject } from "./lib/auth";
 
 export const subscribe = mutation({
   args: {
@@ -61,12 +61,8 @@ export const getSubscriptionsByUserId = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    const callerEmail = identity?.email;
-    if (callerEmail) {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_email", (q) => q.eq("email", callerEmail))
-        .first();
+    if (identity) {
+      const user = await ctx.db.get(userIdFromSubject(identity.subject));
       if (!user || (user._id !== args.userId && !user.roles?.includes("admin"))) {
         return [];
       }
@@ -89,12 +85,8 @@ export const removeSubscription = mutation({
     if (!sub) return { success: true };
 
     const identity = await ctx.auth.getUserIdentity();
-    const callerEmail = identity?.email;
-    if (callerEmail) {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_email", (q) => q.eq("email", callerEmail))
-        .first();
+    if (identity) {
+      const user = await ctx.db.get(userIdFromSubject(identity.subject));
       if (!user || (sub.userId !== user._id && !user.roles?.includes("admin"))) {
         throw new Error("Not authorized");
       }

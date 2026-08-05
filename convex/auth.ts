@@ -2,6 +2,7 @@ import { convexAuth } from "@convex-dev/auth/server";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { userIdFromSubject } from "./lib/auth";
 
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
@@ -70,11 +71,7 @@ export const getMe = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-    return user;
+    return await ctx.db.get(userIdFromSubject(identity.subject));
   },
 });
 
@@ -87,12 +84,9 @@ export const registerUser = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-      
+
+    const user = await ctx.db.get(userIdFromSubject(identity.subject));
+
     if (!user) throw new Error("User not found");
     
     await ctx.db.patch(user._id, {
@@ -110,10 +104,7 @@ export const isAdmin = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return false;
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
+    const user = await ctx.db.get(userIdFromSubject(identity.subject));
     return user?.roles?.includes("admin") ?? false;
   },
 });
@@ -137,10 +128,7 @@ export const getUser = query({
     const targetUser = await ctx.db.get(args.userId);
     if (!targetUser) return null;
 
-    const caller = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", callerEmail))
-      .first();
+    const caller = await ctx.db.get(userIdFromSubject(identity.subject));
 
     const isSelfOrAdmin = caller && (caller._id === targetUser._id || caller.roles?.includes("admin"));
 
