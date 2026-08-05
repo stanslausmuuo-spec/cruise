@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useCSRF, getCSRFHeaders } from "@/hooks/use-csrf";
 import { Upload, X, Loader2, CheckCircle, AlertCircle, Image as ImageIcon } from "lucide-react";
 
 interface FileState {
@@ -33,6 +34,7 @@ export function FileUpload({
   const [files, setFiles] = useState<FileState[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const csrfToken = useCSRF();
 
   const updateFiles = useCallback(
     (newFiles: FileState[]) => {
@@ -47,7 +49,7 @@ export function FileUpload({
       try {
         const response = await fetch("/api/upload", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...getCSRFHeaders(csrfToken) },
           body: JSON.stringify({ fileName: file.name, contentType: file.type }),
         });
 
@@ -76,7 +78,7 @@ export function FileUpload({
         );
       }
     },
-    [files, updateFiles]
+    [files, updateFiles, csrfToken]
   );
 
   const addFiles = useCallback(

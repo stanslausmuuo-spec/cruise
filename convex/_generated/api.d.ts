@@ -16,6 +16,7 @@ import type * as cleanup from "../cleanup.js";
 import type * as cron from "../cron.js";
 import type * as crons from "../crons.js";
 import type * as disputes from "../disputes.js";
+import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   cron: typeof cron;
   crons: typeof crons;
   disputes: typeof disputes;
+  http: typeof http;
   "lib/auth": typeof lib_auth;
   "lib/crypto": typeof lib_crypto;
   "lib/sanitize": typeof lib_sanitize;

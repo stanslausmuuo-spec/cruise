@@ -2,14 +2,18 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import { hashCSRFToken, generateCSRFToken, CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/lib/csrf";
 
+vi.mock("@convex-dev/auth/nextjs/server", () => ({
+  convexAuthNextjsMiddleware: (handler: (req: NextRequest) => unknown) => handler,
+}));
+
 const ALLOWED_ORIGIN = "http://localhost:3000";
 
-let middleware: typeof import("../../middleware").middleware;
+let middleware: typeof import("../../middleware").handler;
 
 beforeEach(async () => {
   vi.resetModules();
   vi.stubEnv("NEXT_PUBLIC_URL", ALLOWED_ORIGIN);
-  middleware = (await import("../../middleware")).middleware;
+  middleware = (await import("../../middleware")).handler;
 });
 
 function makeRequest({
@@ -149,7 +153,7 @@ describe("middleware — rate limiting", () => {
   });
 
   it("returns 429 after exhausting payment rate limit", async () => {
-    const { middleware: mw } = await import("../../middleware");
+    const { handler: mw } = await import("../../middleware");
     let last: NextResponse = new NextResponse();
     for (let i = 0; i < 6; i++) {
       last = await mw(
@@ -160,7 +164,7 @@ describe("middleware — rate limiting", () => {
   });
 
   it("does not rate limit the M-Pesa callback", async () => {
-    const { middleware: mw } = await import("../../middleware");
+    const { handler: mw } = await import("../../middleware");
     let last: NextResponse = new NextResponse();
     for (let i = 0; i < 6; i++) {
       last = await mw(makeRequest({ path: "/api/mpesa/callback", method: "POST", ip: "9.9.9.9" }));

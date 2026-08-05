@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Loader2, Check, Star, Phone, Crown, ShieldCheck, ArrowRight } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { useToast } from "@/components/ui/toast";
+import { useCSRF, getCSRFHeaders } from "@/hooks/use-csrf";
 import { PLANS, getPlan, type PlanTier, type PlanPeriod } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Id } from "convex/_generated/dataModel";
@@ -30,6 +31,7 @@ export default function PlansPage() {
     vehicleId ? { vehicleId } : "skip"
   );
   const createPlanPurchase = useMutation(api.payments.createPlanPurchase);
+  const csrfToken = useCSRF();
 
   const [step, setStep] = useState<"input" | "polling" | "success" | "error">("input");
   const [period, setPeriod] = useState<PlanPeriod>("annual");
@@ -118,7 +120,7 @@ export default function PlansPage() {
     try {
       const response = await fetch("/api/mpesa/stkpush", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getCSRFHeaders(csrfToken) },
         body: JSON.stringify({
           phoneNumber: currentUser.phone,
           amount,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { convexAuthNextjsMiddleware } from "@convex-dev/auth/nextjs/server";
 import { authRateLimit } from "@/lib/rate-limit";
 import {
   validateCSRFToken,
@@ -17,7 +18,7 @@ function isValidOrigin(origin: string | null, referer: string | null): boolean {
   return ALLOWED_ORIGINS.some((allowed) => allowed && source.startsWith(allowed));
 }
 
-export async function middleware(request: NextRequest) {
+export async function handler(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -118,3 +119,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: "/:path*",
 };
+
+export const middleware = convexAuthNextjsMiddleware(handler, {
+  apiRoute: "/api/auth",
+});
